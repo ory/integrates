@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-11T20:46:18Z
+  generated: 2026-05-11T21:13:13Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -346,10 +346,24 @@ integrations:
     maintainedBy: Ory Engineering
     type: webhook
     description: >-
-      Sync Ory identities to HubSpot contacts automatically using Ory Actions webhooks. When a user registers or updates
-      their profile, a webhook fires and creates or updates the corresponding HubSpot contact record.
+      HubSpot is a CRM, marketing, and sales platform. This integration syncs Ory identities to HubSpot CRM contacts via
+      an Ory Action webhook — on registration or profile update, the handler creates the contact or PATCHes the existing
+      one on 409 Existing ID so the sync is idempotent.
     status: active
     vendor: HubSpot
+    useCase: >-
+      A sales/marketing team running HubSpot wants every Ory-managed sign-up to land in HubSpot CRM in near-real-time,
+      with the Ory identity id stored on a custom property so any system can reverse-lookup. The integration upserts the
+      contact via HubSpot's 409 Existing ID pattern so retries never duplicate.
+    coreFunctionality: >-
+      - Sync Ory Action webhook (response.parse: true) on after:registration and (optionally) after:settings.
+
+      - POST https://api.hubapi.com/crm/v3/objects/contacts with email, firstname, lastname, ory_identity_id.
+
+      - On 409 Existing ID: parses the existing contact ID out of HubSpot's error message and PATCHes onto it for
+      idempotent upsert.
+
+      - 502 on HubSpot errors so the failure surfaces in Ory instead of being silently dropped.
     oryMechanism:
       - actions-webhook
   - name: microsoft-dynamics-365
@@ -425,11 +439,28 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      BambooHR is a popular HRIS for SMB and mid-market companies. This integration enriches Ory identities with employee
-      data from BambooHR via an Ory Actions webhook on login or registration, optionally gating access based on employment
-      status. BambooHR is the source of truth for employment data; Ory remains the source of truth for identity.
+      BambooHR is an HRIS popular with SMB and mid-market companies. This integration enriches Ory identities with
+      employee data from BambooHR via an Ory Action webhook on login or registration, returning employment status, job
+      title, department, and hire date so a post-flow Action can gate access or write the fields into identity metadata.
     status: active
     vendor: BambooHR
+    useCase: >-
+      A company runs internal SaaS for employees and wants login to gate on employment status — off-boarded employees lose
+      access automatically without a separate deprovision step. BambooHR is the HRIS source of truth; the integration
+      looks up the user's BambooHR record at login and returns the employment flag so Ory can fail the flow on employed:
+      false.
+    coreFunctionality: >-
+      - Sync Ory Action webhook (response.parse: true) on after:login and optionally after:registration.
+
+      - Looks up the employee via /employees/directory filtered by workEmail (BambooHR has no direct lookup-by-email API).
+
+      - Fetches detail fields (status, jobTitle, department, hireDate, terminationDate) and returns { employed,
+      employee_id, job_title, department, hire_date }.
+
+      - Returns { employed: false } on no match so Ory can branch on member-vs-non-member traffic instead of erroring.
+
+      - BambooHR Basic auth: API key as username, literal "x" as password — documented in code so it doesn't look like a
+      typo.
     oryMechanism:
       - actions-webhook
   - name: google-workspace-scim
@@ -514,16 +545,36 @@ integrations:
     oryMechanism:
       - standards
   - name: cloudflare-workers
-    displayName: Cloudflare Workers — Ory Session & JWT Validation at the Edge
+    displayName: Cloudflare Workers
     category: edge-token-validation
     path: edge-token-validation/cloudflare-workers
     maintainedBy: Community contributors
-    type: webhook
-    description: Validate Ory Network session tokens and JWTs at Cloudflare's edge, before requests reach your origin server.
+    type: session-validation
+    description: >-
+      A Cloudflare Worker that validates Ory Network session cookies (via /sessions/whoami) or JWT Bearer tokens (locally
+      against Ory's JWKS) at the Cloudflare edge before requests reach origin. Successful requests are forwarded with
+      identity headers (X-User-Id, X-User-Email, X-Auth-AAL, ...) attached; unauthenticated requests are rejected at the
+      edge with zero load on the backend.
     status: active
-    vendor: Cloudflare Workers — Ory Session & JWT Validation at the Edge
+    vendor: Cloudflare
+    useCase: >-
+      A high-traffic product wants identity enforcement to happen at the CDN tier rather than at every backend service.
+      The Worker validates each request before it reaches origin, reducing latency and offloading auth from the backend,
+      and adds identity headers so downstream services can attribute the request without re-validating.
+    coreFunctionality: >-
+      - Cloudflare Worker deployed via wrangler — runs in V8 isolates at the Cloudflare edge.
+
+      - Two validation modes: session cookie (forwards to Ory /sessions/whoami with 30 s edge cache) and JWT Bearer token
+      (validates RSASSA-PKCS1-v1_5 signatures against Ory's JWKS, JWKS cached at the edge for 1 h).
+
+      - Forwards authenticated requests to origin with X-User-Id, X-Session-Id, X-User-Email, X-User-Name, X-Auth-AAL,
+      X-User-Metadata headers.
+
+      - Configurable PUBLIC_PATHS to skip auth on health, public, and static paths.
+
+      - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to login with return_to.
     oryMechanism:
-      - actions-webhook
+      - session-validation
   - name: fastly-compute
     displayName: Fastly Compute@Edge — Ory Token Validation
     category: edge-token-validation
@@ -880,16 +931,34 @@ integrations:
     category: feature-flags
     path: feature-flags/launchdarkly
     maintainedBy: Community contributors
-    type: webhook
+    type: sdk-client
     description: >-
-      LaunchDarkly is a feature management platform that enables teams to control feature rollouts, run experiments, and
-      manage feature flags at scale. This integration passes Ory Network session traits and identity attributes as
-      LaunchDarkly user context, enabling identity-aware feature flag evaluation based on user properties, organization
-      membership, subscription tier, and othe...
+      LaunchDarkly is a feature-management platform for controlled rollouts, experiments, and runtime flag evaluation.
+      This integration is a TypeScript helper (OryLaunchDarkly) that maps Ory session and identity data into
+      LaunchDarkly's multi-kind context shape so feature-flag evaluation rules can target on Ory traits, metadata_public,
+      and authenticator_assurance_level without ad-hoc mapping in every call site.
     status: active
     vendor: LaunchDarkly
+    useCase: >-
+      A product wants feature flags that target on identity attributes (subscription plan, role, MFA status) sourced from
+      Ory. Rather than writing the Ory → LaunchDarkly context mapping in every request handler, the helper centralizes the
+      mapping into one class and exposes typed boolVariation / stringVariation / numberVariation / jsonVariation /
+      allFlagsState methods that accept an Ory session directly.
+    coreFunctionality: >-
+      - OryLaunchDarkly class wraps an LDClient, takes Ory session shape (id, identity, traits, metadata_public,
+      authenticator_assurance_level).
+
+      - Builds a LaunchDarkly multi-kind context: { user: {key=identity.id, email, firstName, lastName, plan,
+      ...metadata}, session: {key=session.id, aal} }.
+
+      - boolVariation / stringVariation / numberVariation / jsonVariation pass through to LDClient.variation with the
+      constructed context.
+
+      - allFlagsState lets you bootstrap client-side flag state for the current Ory session in one call.
+
+      - Ships as an importable library (peer-depends on @launchdarkly/node-server-sdk ^9) — not a deployed HTTP service.
     oryMechanism:
-      - actions-webhook
+      - sdk-client
   - name: split-io
     displayName: Split.io
     category: feature-flags
@@ -1320,11 +1389,27 @@ integrations:
     type: webhook
     description: >-
       Okta Verify is Okta's first-party MFA app supporting push notifications and TOTP. This integration sends an Okta
-      Verify push from an Ory Actions webhook on login, polls Okta for the user's response, and returns the verdict so Ory
-      can step up authentication or fail the flow. This is the right choice when the customer's workforce is already
-      enrolled in Okta Verify and you want to reuse that factor enrollment from Ory.
+      Verify push from an Ory Action webhook on login, polls Okta for the user's response, and returns the verdict so Ory
+      can step up authentication or fail the flow.
     status: active
-    vendor: Okta Verify
+    vendor: Okta
+    useCase: >-
+      An enterprise has already standardized its workforce on Okta Verify for MFA and wants to reuse that factor
+      enrollment from Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Okta Verify push
+      runs inline with Ory login and relays the verdict so Ory issues the session only on approval.
+    coreFunctionality: >-
+      - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
+
+      - GET /api/v1/users/{user_id}/factors → finds the active push factor.
+
+      - POST /api/v1/users/{user_id}/factors/{factor_id}/verify → sends the push, gets a poll URL.
+
+      - Polls the poll URL every 2 s until factorResult ≠ WAITING or OKTA_POLL_DEADLINE_SECONDS elapses.
+
+      - Returns { result: SUCCESS / REJECTED / TIMEOUT / WAITING, mfa_passed } so the post-flow Action can gate the
+      session.
+
+      - 502 on Okta errors (SSWS revoked, factor lookup 404) so Okta outages never silently grant MFA.
     oryMechanism:
       - actions-webhook
   - name: yubikey
@@ -1592,7 +1677,7 @@ integrations:
     oryMechanism:
       - courier-spi
   - name: whatsapp
-    displayName: WhatsApp Business — OTP Delivery
+    displayName: WhatsApp Business
     category: sms-providers
     path: sms-providers/whatsapp
     maintainedBy: Community contributors
@@ -1600,10 +1685,27 @@ integrations:
     description: >-
       WhatsApp Business Cloud API as a delivery channel for Ory Kratos OTPs and verification codes. This integration takes
       the same Kratos courier-spi mechanism used for SMS providers like Twilio and routes the message through WhatsApp
-      Business instead, using a pre-approved authentication template. WhatsApp does not provide a standard OAuth login
-      flow, so this is the practical path for "WhatsApp login" — passwordless OTP via WhatsApp.
+      Business instead, using a pre-approved AUTHENTICATION-category template. WhatsApp does not provide standard
+      OAuth/OIDC login, so this is the practical path for "WhatsApp login" — passwordless OTP via WhatsApp.
     status: active
-    vendor: WhatsApp Business — OTP Delivery
+    vendor: WhatsApp Business
+    useCase: >-
+      A consumer product wants WhatsApp as the OTP channel for verification, recovery, and MFA (instead of SMS) — a common
+      request in markets where WhatsApp adoption is higher than SMS deliverability. Kratos generates the OTP exactly as it
+      would for SMS; the integration intercepts the courier delivery and sends it through WhatsApp's Cloud API as an
+      authentication-template message.
+    coreFunctionality: >-
+      - Kratos courier-spi HTTP target (configured via kratos-courier.yaml, not ory-actions.yaml).
+
+      - Extracts the OTP from the rendered Kratos body via strict regex /\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i.
+
+      - Normalizes recipient to E.164 (leading "+" then digits).
+
+      - POSTs to graph.facebook.com/{version}/{phone_id}/messages with type: template, sending the OTP as both the body
+      parameter and the copy-code button parameter.
+
+      - 422 otp_extract_failed when the message body doesn't yield a digit run — explicit instead of silently sending an
+      empty template.
     oryMechanism:
       - courier-spi
   - name: amazon-lwa
@@ -1961,11 +2063,26 @@ integrations:
     type: webhook
     description: >-
       Telegram does not implement OAuth 2.0 / OIDC; it provides a Login Widget that posts an HMAC-SHA256-signed payload to
-      a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot token,
-      returns the verified profile, and gives applications a clean place to plug in Ory Admin API calls to upsert the
-      matching identity and issue a session.
+      a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot token
+      and returns the verified profile so applications can call the Ory Admin API to upsert the matching identity and
+      issue a session.
     status: active
-    vendor: Telegram Login
+    vendor: Telegram
+    useCase: >-
+      A consumer app wants Telegram as a sign-in option but Telegram has no OIDC, so Ory's native social-sign-in providers
+      don't apply. The bridge validates the Login Widget HMAC inline, returns suggested identity traits, and the
+      application uses Ory's Admin API to upsert the identity and start a session.
+    coreFunctionality: >-
+      - POST /telegram/validate verifies X-Webhook-Secret, computes HMAC-SHA256 over the sorted data_check_string with key
+      SHA256(bot_token), and rejects expired auth_date.
+
+      - Returns the verified profile plus suggested_identity_traits (telegram_id, name, username) for the application's
+      Admin API upsert.
+
+      - Configurable TELEGRAM_AUTH_MAX_AGE_SECONDS for replay window (default 24h per Telegram's recommendation; tighten
+      for stricter session creation).
+
+      - Stateless and read-only — does not touch Ory directly; the application owns the upsert and session-bootstrap.
     oryMechanism:
       - actions-webhook
   - name: tiktok
