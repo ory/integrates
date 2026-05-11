@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-04T22:37:38Z
+  generated: 2026-05-11T15:01:52Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -68,19 +68,40 @@ integrations:
     oryMechanism:
       - standards
   - name: traefik
-    displayName: Traefik Proxy + Ory Network
+    displayName: Traefik
     category: api-gateways
     path: api-gateways/traefik
     maintainedBy: Community contributors
-    type: webhook
+    type: session-validation
     description: >-
-      Traefik is a modern, cloud-native reverse proxy and load balancer that integrates natively with container
-      orchestrators (Docker, Kubernetes, etc.). This integration uses Traefik's **ForwardAuth middleware** to delegate
-      authentication decisions to Ory Network's session and token validation endpoints.
+      Traefik is a cloud-native reverse proxy and load balancer with native integrations for Docker and Kubernetes. This
+      integration ships a small Ory session validator that plugs into Traefik's ForwardAuth middleware: Traefik calls the
+      validator on every inbound request; the validator exchanges the user's session cookie or token for an
+      /sessions/whoami lookup and returns identity headers (X-User-Id, X-User-Email, X-Auth-AAL, ...) that Traefik
+      attaches to the upstream request.
     status: active
-    vendor: Traefik Proxy + Ory Network
+    vendor: Traefik
+    useCase: >-
+      A platform team runs Traefik as the cluster's ingress and wants Ory to be the single authority on "who is calling
+      this API?" without making each upstream service re-implement session validation. The validator centralizes session
+      checks at the edge so unauthorized requests never reach the backend, and valid requests reach it with identity
+      headers already populated.
+    coreFunctionality: >-
+      - Stateless HTTP service designed for Traefik's forwardAuth middleware (default port 4181).
+
+      - On every request: forwards Cookie / Authorization / X-Session-Token to Ory's /sessions/whoami.
+
+      - Sets X-User-Id, X-User-Email, X-User-Name, X-Session-Id, X-Auth-AAL, and X-User-Metadata response headers so
+      Traefik can copy them onto the upstream request.
+
+      - Public paths via ALLOWED_PATHS (exact match or prefix-with-slash, so /health doesn't accidentally match
+      /healthadmin).
+
+      - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to the login page with return_to=<original-path> preserved.
+
+      - 503 on Ory outages so Traefik surfaces a clear gateway error instead of treating an outage as "unauthorized".
     oryMechanism:
-      - actions-webhook
+      - session-validation
   - name: amplitude
     displayName: Amplitude
     category: cdp-analytics
@@ -127,10 +148,30 @@ integrations:
     maintainedBy: Ory Engineering
     type: webhook
     description: >-
-      Send `identify` and `track` calls to Segment when users register or log in via Ory. Uses Ory Actions webhooks to
-      call Segment's HTTP Tracking API.
+      Segment is a customer data platform that ingests user events and fans them out to downstream marketing, analytics,
+      and warehouse destinations. This integration sends Ory identity-lifecycle events to Segment's HTTP Tracking API:
+      identify calls keep Segment's traits in sync with Ory's identity traits, and track calls record "User Registered"
+      and "User Logged In" events for downstream activation.
     status: active
     vendor: Segment
+    useCase: >-
+      A product team wants user-lifecycle events in Segment so the rest of their CDP graph (Marketo, Iterable, Mixpanel,
+      the data warehouse) gets the same view of who registered, who logged in, and whose profile changed, without making
+      Segment a critical-path dependency of authentication.
+    coreFunctionality: >-
+      - Three async Ory Action endpoints (/segment/registration, /segment/login, /segment/settings); each returns 200
+      immediately so user flows are never blocked.
+
+      - Registration → identify (with traits) + track "User Registered" in parallel.
+
+      - Login → track "User Logged In".
+
+      - Settings → identify to refresh traits.
+
+      - HTTP Basic auth to Segment (write key as username, empty password); IP and User-Agent passed through Segment's
+      context for server-side / client-side correlation.
+
+      - Fire-and-forget: Segment outages and 5xx responses are logged but never propagate to Ory.
     oryMechanism:
       - actions-webhook
   - name: aws
@@ -230,12 +271,29 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      OneTrust is a privacy, security, and governance platform that enables organizations to manage consent, fulfill data
-      subject requests (DSRs), and maintain compliance with privacy regulations including GDPR, CCPA, LGPD, and PIPA. This
-      integration connects OneTrust to Ory Network to synchronize consent records at registration and handle
-      identity-related data subject requests th...
+      OneTrust is a privacy, security, and governance platform for managing consent, fulfilling Data Subject Requests, and
+      maintaining compliance with GDPR, CCPA, LGPD, and PIPA. This integration writes a consent receipt to OneTrust on
+      every registration and exposes a DSR callback endpoint that lets OneTrust's Privacy Rights Automation workflow
+      delete, export, or rectify identities in Ory.
     status: active
     vendor: OneTrust
+    useCase: >-
+      A regulated B2C product needs a defensible audit trail of consent (marketing, analytics, personalization) for every
+      signup, plus a single button in the OneTrust UI that fulfills a deletion or export request across all downstream
+      systems including the identity store.
+    coreFunctionality: >-
+      - Captures consent choices from transient_payload.consent on the sync post-registration webhook, returns them in
+      metadata_public.consent immediately so Ory records the user's choices even if OneTrust is unreachable.
+
+      - Exchanges OAuth2 client credentials for a OneTrust access token (cached in memory until 30 s before expiry) and
+      POSTs a consent receipt to the Consent Manager API mapping each category to a configured Purpose ID.
+
+      - Exposes a separate /onetrust/dsr endpoint gated by ONETRUST_DSR_SECRET that fulfills DELETE/ERASURE,
+      EXPORT/ACCESS, and RECTIFICATION DSRs against Ory's Admin API.
+
+      - Distinct shared secrets for the two surfaces so a leak of one credential can't be used to call the other.
+
+      - Skips unmapped consent categories silently so partial Purpose ID configuration doesn't break registration.
     oryMechanism:
       - actions-webhook
   - name: osano
@@ -868,11 +926,26 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Castle is an adaptive risk scoring platform that provides real-time threat detection for authentication flows. It
-      analyzes device context, IP addresses, user behavior, and network signals to produce a risk score and recommended
-      action for each authentication event.
+      Castle.io is an adaptive risk-scoring platform for authentication flows. It evaluates device fingerprints, IP
+      reputation, and behavioral signals to produce a real-time risk score and a recommended action (allow, challenge, or
+      deny) for each login or registration event.
     status: active
-    vendor: Castle.io
+    vendor: Castle
+    useCase: >-
+      A B2C product wants to keep credential-stuffing and account-takeover attempts out of its login flow without blocking
+      legitimate users behind a CAPTCHA. Castle scores each login in real time; the integration applies an allow /
+      challenge / deny decision before the session is issued, with challenge events flagged for MFA step-up in the client.
+    coreFunctionality: >-
+      - Receives Ory post-login and post-registration Action webhooks.
+
+      - Forwards the identity, request context, and Castle device token to Castle's Risk API.
+
+      - Translates Castle's response into Ory flow control: 400 to block, 200 + requires_mfa_stepup=true to step up, 200
+      with risk score in metadata to allow.
+
+      - Records the risk assessment in identity metadata for downstream auditing and policy decisions.
+
+      - Fails open on Castle outages so authentication never breaks because of Castle availability.
     oryMechanism:
       - actions-webhook
   - name: cloudflare-turnstile
@@ -904,14 +977,36 @@ integrations:
     oryMechanism:
       - standards
   - name: recaptcha
-    displayName: Google reCAPTCHA v2/v3
+    displayName: Google reCAPTCHA
     category: fraud-bot-protection
     path: fraud-bot-protection/recaptcha
     maintainedBy: Community contributors
     type: webhook
-    description: 'Google reCAPTCHA is a CAPTCHA service that protects websites from spam and abuse. It offers two primary versions:'
+    description: >-
+      Google reCAPTCHA protects authentication flows from automated abuse. v2 issues a visible or invisible challenge and
+      returns a pass/fail token; v3 runs entirely in the background and returns a score from 0.0 (bot) to 1.0 (human).
+      This integration adds reCAPTCHA support to Ory Network (which natively integrates Cloudflare Turnstile only) via a
+      sync pre-flow Action webhook that validates the client-side token against Google's siteverify API and interrupts the
+      flow on a fail.
     status: active
-    vendor: Google reCAPTCHA v2/v3
+    vendor: Google
+    useCase: >-
+      A consumer-facing product wants to stop bot signups and credential-stuffing attempts without enrolling in Cloudflare
+      Turnstile. The team already runs Google reCAPTCHA elsewhere and wants the same protection on Ory-hosted registration
+      and login flows.
+    coreFunctionality: >-
+      - Sync pre-registration and pre-login hook (response.parse: true, can_interrupt: true).
+
+      - Extracts the reCAPTCHA token from transient_payload.recaptcha_token and verifies it against
+      https://www.google.com/recaptcha/api/siteverify.
+
+      - For v2 returns pass on success: true; for v3 also enforces RECAPTCHA_SCORE_THRESHOLD and optional
+      RECAPTCHA_EXPECTED_ACTION.
+
+      - Returns 400 + a flow-level error message ("CAPTCHA verification failed") to interrupt the flow, or 200 + empty
+      body to let it proceed.
+
+      - Fails closed on a siteverify outage so a Google-API hiccup doesn't silently disable bot protection.
     oryMechanism:
       - actions-webhook
   - name: sift
@@ -1291,10 +1386,29 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Bidirectional integration between Ory Network and Stripe for customer lifecycle management and subscription-aware
-      authentication.
+      Stripe is a payment-processing and subscription-billing platform. This integration creates a Stripe Customer for
+      every Ory identity on registration and refreshes the identity's metadata_public.billing with the current
+      subscription status on every login, so the application can gate features by plan without an extra round trip to
+      Stripe.
     status: active
     vendor: Stripe
+    useCase: >-
+      A SaaS product wants its session to know "is this user on Free, Pro, or Enterprise?" without each protected route
+      reading from Stripe directly. The integration links the Stripe Customer to the Ory identity at registration and
+      refreshes the cached billing state at every login so feature gates, billing pages, and admin tools can read
+      session.identity.metadata_public.billing instead of calling Stripe.
+    coreFunctionality: >-
+      - Sync post-registration hook: stripe.customers.create with an idempotency key derived from identity.id, then
+      returns metadata_admin.stripe_customer_id and a "free / none" baseline in metadata_public.billing.
+
+      - Sync post-login hook: stripe.subscriptions.list for the linked customer, projects the latest subscription into
+      metadata_public.billing (status, plan, current_period_end), returns it for Ory to apply.
+
+      - Idempotency key ory-customer-<identity.id> prevents duplicate Customer creation on webhook retry.
+
+      - Both hooks fail open: a Stripe outage returns 200 with no metadata changes so authentication never breaks.
+
+      - Stripe API version pinned via STRIPE_API_VERSION env; bumps are explicit decisions, not silent updates.
     oryMechanism:
       - actions-webhook
   - name: elastic-siem
@@ -1328,18 +1442,34 @@ integrations:
     oryMechanism:
       - standards
   - name: splunk
-    displayName: Splunk + Ory Network
+    displayName: Splunk
     category: siem-security-analytics
     path: siem-security-analytics/splunk
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Splunk is a leading platform for security information and event management (SIEM), log analysis, and operational
-      intelligence. This integration ingests Ory Network identity and authentication events into Splunk via the HTTP Event
-      Collector (HEC), mapping them to Splunk's Common Information Model (CIM) Authentication data model for standardized
-      security monitoring.
+      Splunk is a SIEM and operational-intelligence platform. This integration forwards Ory identity-flow events
+      (registration, login, recovery, settings) to Splunk's HTTP Event Collector, shaped to the Common Information Model
+      Authentication data model so search, dashboards, and alerts work without per-event extraction.
     status: active
-    vendor: Splunk + Ory Network
+    vendor: Splunk
+    useCase: >-
+      A security team needs Ory authentication events in their existing Splunk SIEM so credential-stuffing, brute-force,
+      impossible-travel, MFA-disabled, and account-takeover detections can run against identity activity alongside the
+      rest of their telemetry, without making Splunk a critical-path dependency of user flows.
+    coreFunctionality: >-
+      - Four async Ory Action endpoints (/splunk/registration, /splunk/login, /splunk/recovery, /splunk/settings); each
+      returns 200 immediately so user flows are never blocked.
+
+      - Builds a CIM Authentication event with action, app, src, src_user, user, authentication_method, signature, and
+      signature_id fields.
+
+      - POSTs to Splunk HEC at /services/collector/event with Authorization: Splunk <token>, configurable
+      index/source/sourcetype/host.
+
+      - Fire-and-forget: HEC errors and timeouts are logged but dropped so Splunk outages never affect Ory.
+
+      - Authentication method inference from flow.type (oidc / totp / webauthn / lookup_secret / fallback password).
     oryMechanism:
       - actions-webhook
   - name: sumo-logic
@@ -1941,26 +2071,62 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Zendesk is a customer service platform providing ticketing, live chat, and knowledge base capabilities. This
-      integration connects Zendesk to Ory Network to display identity context in the agent sidebar, synchronize users for
-      ticket correlation, and enable identity-aware support workflows.
+      Zendesk is a customer-service platform for ticketing, live chat, and knowledge bases. This integration mirrors Ory
+      identities into Zendesk users via async lifecycle webhooks and exposes a sidebar lookup endpoint that a Zendesk app
+      can call to render identity context (state, MFA, sessions, plan, risk) inline on every ticket.
     status: active
     vendor: Zendesk
+    useCase: >-
+      A B2B SaaS support team wants the Zendesk agent view to surface "who is this customer" without leaving the ticket —
+      subscription plan, MFA status, active sessions, last login — and wants tickets correlated cleanly back to the Ory
+      identity record for downstream reporting.
+    coreFunctionality: >-
+      - Receives async post-registration and post-settings Ory Action webhooks, returns 200 immediately so user flows are
+      never blocked.
+
+      - Calls Zendesk POST /api/v2/users/create_or_update to upsert the corresponding Zendesk user, copying identity.id
+      into external_id and selected metadata into Zendesk user_fields.
+
+      - Exposes GET /zendesk/sidebar/identity?email=... for a Zendesk sidebar app, gated by a separate
+      ZENDESK_SIDEBAR_SECRET so the Ory webhook secret can't be reused to enumerate identities.
+
+      - Sidebar response includes state, MFA enrollment, active session count, last login, and metadata_public for inline
+      agent-side rendering.
+
+      - Distinguishes ory_lookup_failed (502) from no-match (404) so the sidebar can render "no Ory identity found"
+      without false alarms.
     oryMechanism:
       - actions-webhook
   - name: clearbit
-    displayName: Clearbit (HubSpot)
+    displayName: Clearbit
     category: user-enrichment
     path: user-enrichment/clearbit
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Clearbit (now part of HubSpot) is a data enrichment platform that provides company and person data from email
-      addresses and domains. This integration enriches Ory Network identities with firmographic and demographic data after
-      registration, enabling personalized onboarding, lead scoring, and account-based experiences without requiring users
-      to fill in lengthy forms.
-    status: active
-    vendor: Clearbit (HubSpot)
+      DEPRECATED. Clearbit's standalone enrichment API is closed to new customers after the HubSpot acquisition; its
+      capabilities now live inside HubSpot Breeze Intelligence (a CRM UI feature with no external API). This integration
+      retains the original async post-registration webhook that calls Clearbit's Combined API and writes person and
+      company data to identity metadata_admin, kept for legacy contracts only.
+    status: deprecated
+    vendor: Clearbit
+    useCase: >-
+      A B2B SaaS with a legacy Clearbit contract wants firmographic and demographic context (company name, industry,
+      headcount, role, seniority) on every signup for lead routing, feature gating, and personalized onboarding, without
+      expanding the registration form. New customers should use user-enrichment/fullcontact or user-enrichment/zoominfo.
+    coreFunctionality: >-
+      - Receives the async post-registration Ory Action webhook, returns 200 immediately so registration is never blocked
+      by enrichment.
+
+      - Calls Clearbit's /v2/combined/find endpoint with the user's email to retrieve person and company data.
+
+      - Projects the response to a compact metadata shape (person.name/role/title/seniority,
+      company.name/domain/industry/employees/raised/etc.).
+
+      - Fetches the identity via the Ory Admin API, merges the projection into metadata_admin.clearbit, and PUTs the
+      identity back.
+
+      - Silently no-ops when Clearbit returns 404/422 (free email providers, missing data).
     oryMechanism:
       - actions-webhook
   - name: fullcontact
@@ -2007,13 +2173,34 @@ integrations:
     oryMechanism:
       - standards
   - name: svix
-    displayName: Svix — Reliable Webhook Delivery
+    displayName: Svix
     category: webhook-infrastructure
     path: webhook-infrastructure/svix
     maintainedBy: Community contributors
     type: webhook
-    description: Route Ory Network events through Svix for reliable fan-out, automatic retries, and delivery monitoring.
+    description: >-
+      Svix is a managed webhook-delivery platform that handles fan-out, retries with exponential backoff, payload signing,
+      delivery monitoring, and replay. This integration routes Ory identity-flow events through Svix so multiple
+      downstream consumers can subscribe to Ory events with operational guarantees Ory itself doesn't provide directly.
     status: active
-    vendor: Svix — Reliable Webhook Delivery
+    vendor: Svix
+    useCase: >-
+      A platform product wants to expose identity-lifecycle events to its own customers as webhooks but doesn't want to
+      build webhook plumbing (retries, exponential backoff, replay, per-endpoint signing, dashboards, alerts). Ory Actions
+      fire on the events; this router relays them to Svix, which fans out to consumer endpoints with at-least-once
+      delivery.
+    coreFunctionality: >-
+      - Five async Ory Action endpoints (/svix/registration, /svix/login, /svix/settings, /svix/recovery,
+      /svix/verification); each returns 200 immediately so user flows are never blocked.
+
+      - Publishes to Svix's REST API (POST /api/v1/app/{appId}/msg/) with built-in fetch — no svix SDK dependency,
+      consistent with the rest of the integration family.
+
+      - Each message uses a deterministic eventId of ory-<eventType>-<flowId> so duplicates are deduped at the Svix layer.
+
+      - Standardized event type names (ory.identity.registered, .logged_in, .updated, .recovery_initiated, .verified) so
+      consumer endpoints filter cleanly.
+
+      - Fire-and-forget: Svix outages and 5xx responses are logged but never propagate to Ory.
     oryMechanism:
       - actions-webhook
