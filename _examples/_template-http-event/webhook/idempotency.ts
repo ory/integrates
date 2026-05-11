@@ -5,10 +5,10 @@
 // across restarts and survive horizontal scale-out.
 
 const TTL_MS = 5 * 60 * 1000; // 5 minutes; tune to be longer than Ory's retry window
-const seen = new Map();
+const seen = new Map<string, number>();
 
 // Returns true if the key is new (caller should proceed); false if already seen.
-function remember(key) {
+export function remember(key: string): boolean {
   const now = Date.now();
   for (const [k, expiresAt] of seen) {
     if (expiresAt < now) seen.delete(k);
@@ -17,5 +17,3 @@ function remember(key) {
   seen.set(key, now + TTL_MS);
   return true;
 }
-
-module.exports = { remember };

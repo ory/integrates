@@ -42,7 +42,7 @@ cd webhook/
 cp .env.example .env
 # Fill in the values in .env
 npm install
-node server.js
+npm start
 ```
 
 The handler exposes:

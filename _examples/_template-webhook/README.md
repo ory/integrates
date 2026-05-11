@@ -31,7 +31,7 @@ cd webhook/
 cp .env.example .env
 # Fill in the values in .env
 npm install
-node server.js
+npm start
 ```
 
 The server listens on the port specified in `.env` (default 3000) and exposes:
