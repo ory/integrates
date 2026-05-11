@@ -1,17 +1,32 @@
 # This file is the source of truth for this integration's registry metadata.
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+#
+# Variant note: this integration is configured via Kratos's courier-spi
+# (kratos-courier.yaml), NOT an Ory Action (ory-actions.yaml). The handler
+# shape is the same as a regular webhook integration; only the wiring differs.
 
 name: whatsapp
-displayName: WhatsApp Business — OTP Delivery
-vendor: WhatsApp Business — OTP Delivery
+displayName: WhatsApp Business
+vendor: WhatsApp Business
 category: sms-providers
 type: webhook
 maintainedBy: Community contributors
 description: >-
   WhatsApp Business Cloud API as a delivery channel for Ory Kratos OTPs and verification codes. This integration takes
   the same Kratos courier-spi mechanism used for SMS providers like Twilio and routes the message through WhatsApp
-  Business instead, using a pre-approved authentication template. WhatsApp does not provide a standard OAuth login flow,
-  so this is the practical path for "WhatsApp login" — passwordless OTP via WhatsApp.
+  Business instead, using a pre-approved AUTHENTICATION-category template. WhatsApp does not provide standard
+  OAuth/OIDC login, so this is the practical path for "WhatsApp login" — passwordless OTP via WhatsApp.
+useCase: >-
+  A consumer product wants WhatsApp as the OTP channel for verification, recovery, and MFA (instead of SMS) — a common
+  request in markets where WhatsApp adoption is higher than SMS deliverability. Kratos generates the OTP exactly as it
+  would for SMS; the integration intercepts the courier delivery and sends it through WhatsApp's Cloud API as an
+  authentication-template message.
+coreFunctionality: |-
+  - Kratos courier-spi HTTP target (configured via kratos-courier.yaml, not ory-actions.yaml).
+  - Extracts the OTP from the rendered Kratos body via strict regex /\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i.
+  - Normalizes recipient to E.164 (leading "+" then digits).
+  - POSTs to graph.facebook.com/{version}/{phone_id}/messages with type: template, sending the OTP as both the body parameter and the copy-code button parameter.
+  - 422 otp_extract_failed when the message body doesn't yield a digit run — explicit instead of silently sending an empty template.
 oryMechanism:
   - courier-spi
 status: active

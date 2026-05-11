@@ -1,19 +1,22 @@
 {
-  "name": "@ory-integrates/cloudflare-workers",
+  "name": "ory-cloudflare-workers",
   "version": "1.0.0",
-  "description": "Cloudflare Worker for validating Ory sessions and JWTs at the edge",
-  "main": "dist/worker.js",
+  "description": "Cloudflare Worker that validates Ory sessions and JWTs at the edge before requests reach origin.",
+  "main": "src/worker.ts",
   "scripts": {
     "build": "esbuild src/worker.ts --bundle --outfile=dist/worker.js --format=esm --target=es2022",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit"
   },
+  "license": "Apache-2.0",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240109.0",
     "esbuild": "^0.19.0",
-    "vitest": "^1.2.0",
+    "typescript": "^5.6.0",
     "wrangler": "^3.22.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

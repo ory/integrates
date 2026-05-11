@@ -1,55 +1,61 @@
-# HubSpot CRM Integration
+# HubSpot
 
 > **Maintained by:** Ory Engineering
 
-Sync Ory identities to HubSpot contacts. When a user registers or updates their profile in your Ory-powered application, this integration creates or updates the corresponding contact in HubSpot CRM.
+[HubSpot](https://hubspot.com) is a CRM, marketing, and sales platform. This integration syncs Ory identities to HubSpot CRM contacts via an Ory Action webhook — on registration or profile update, the handler creates the corresponding HubSpot contact, or PATCHes the existing one on `409 Existing ID:` so the sync is idempotent.
 
-**Docs page:** [ory.com/docs/integrations/hubspot](https://ory.com/docs/integrations/hubspot)
+**Type:** webhook (Ory Action calls a handler during a flow)
+**Docs page:** [ory.com/docs/integrations/crm/hubspot](https://ory.com/docs/integrations/crm/hubspot)
 
 ## Use case
 
-You're using Ory for authentication and want your sales/marketing team to see new sign-ups in HubSpot in near-real-time, without manually exporting users.
+A sales/marketing team running HubSpot wants every Ory-managed sign-up to land in HubSpot CRM in near-real-time, with the Ory identity id stored on a custom property so any system can reverse-lookup. The integration runs at registration and settings time, idempotently upserting the contact via HubSpot's `409 Existing ID` pattern.
 
 ## How it works
 
-1. A user registers in your Ory-powered application.
-2. Ory fires a webhook to this integration's `/hubspot/sync-user` endpoint.
-3. The handler authenticates with HubSpot using a private app token.
-4. The handler creates or updates the matching HubSpot contact, using email as the unique key.
+1. A user registers or updates their profile in an Ory flow.
+2. Ory fires the Action webhook to this handler. The handler verifies the shared secret.
+3. The handler POSTs `https://api.hubapi.com/crm/v3/objects/contacts` with `email`, `firstname`, `lastname`, `ory_identity_id`.
+4. If HubSpot returns `409` because the contact already exists, the handler parses the existing ID out of HubSpot's error message and PATCHes the same properties onto that contact — idempotent upsert.
+5. The handler returns `200` to Ory.
 
 ## Prerequisites
 
-- An Ory Network project
-- A HubSpot account with a private app token (Settings → Integrations → Private Apps → Create a private app). Required scopes: `crm.objects.contacts.read` and `crm.objects.contacts.write`.
-- A Node.js 20+ deployment target
+- An Ory Network project.
+- A HubSpot account with a **private app token** (Settings → Integrations → Private Apps). Required scopes: `crm.objects.contacts.read` and `crm.objects.contacts.write`.
+- An `ory_identity_id` custom property on the HubSpot Contact object (HubSpot → Settings → Properties → Contacts → Create property).
+- A deployment target for the webhook handler.
 
 ## Deploy the webhook handler
 
 ```bash
 cd webhook/
 cp .env.example .env
-# Fill in HUBSPOT_PRIVATE_APP_TOKEN, ORY_WEBHOOK_SECRET, and PORT
+# Fill ORY_WEBHOOK_SECRET and HUBSPOT_PRIVATE_APP_TOKEN.
 npm install
-node server.js
+npm start
 ```
 
-The handler exposes:
-- `GET /health` — readiness check
-- `POST /hubspot/sync-user` — Ory webhook target
+The server listens on the port specified in `.env` (default 3000) and exposes:
+
+- `GET /health` — readiness check.
+- `POST /hubspot/sync-user` — Ory Action target.
 
 ## Configure Ory
 
-1. In the Ory Console, configure a registration post-hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml).
-2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet) — it forwards the identity payload to the handler.
+1. Configure the Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml) — register on `after:registration` and (optionally) `after:settings`.
+2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet).
+3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
-Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the Ory hook config.
+Private app provisioning, custom-property setup, and HubSpot workflow patterns: see the [docs page](https://ory.com/docs/integrations/crm/hubspot).
 
 ## Troubleshooting
 
-- **401 from the handler** — `X-Webhook-Secret` mismatch.
-- **HubSpot 401** — private app token expired or scopes missing.
-- **Contact not appearing in HubSpot** — confirm the handler logs show a 2xx response from HubSpot. If yes, check the HubSpot UI filter (sometimes new contacts land in a default segment that's filtered out of the main view).
+- **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` doesn't match `X-Webhook-Secret` in the Ory Action config.
+- **`HubSpot 401`** — private app token is invalid or doesn't have the right scopes. Confirm `crm.objects.contacts.read` and `crm.objects.contacts.write`.
+- **Contact not appearing in HubSpot main view** — new contacts can land in a default lifecycle segment that's filtered out of the default view. Check the underlying contact list, not the filtered "active" view.
+- **`502 hubspot_error` on PATCH after 409** — the existing-ID parser couldn't extract the ID from HubSpot's error message format. HubSpot occasionally changes the message text; fall back to a search-by-email call if this happens.
 
 ## License
 
-Apache-2.0.
+Apache-2.0. SPDX header at the top of each source file.

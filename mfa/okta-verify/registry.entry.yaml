@@ -3,15 +3,25 @@
 
 name: okta-verify
 displayName: Okta Verify
-vendor: Okta Verify
+vendor: Okta
 category: mfa
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Okta Verify is Okta's first-party MFA app supporting push notifications and TOTP. This integration sends an Okta Verify
-  push from an Ory Actions webhook on login, polls Okta for the user's response, and returns the verdict so Ory can step
-  up authentication or fail the flow. This is the right choice when the customer's workforce is already enrolled in Okta
-  Verify and you want to reuse that factor enrollment from Ory.
+  Okta Verify is Okta's first-party MFA app supporting push notifications and TOTP. This integration sends an Okta
+  Verify push from an Ory Action webhook on login, polls Okta for the user's response, and returns the verdict so Ory
+  can step up authentication or fail the flow.
+useCase: >-
+  An enterprise has already standardized its workforce on Okta Verify for MFA and wants to reuse that factor enrollment
+  from Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Okta Verify push runs inline
+  with Ory login and relays the verdict so Ory issues the session only on approval.
+coreFunctionality: |-
+  - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
+  - GET /api/v1/users/{user_id}/factors → finds the active push factor.
+  - POST /api/v1/users/{user_id}/factors/{factor_id}/verify → sends the push, gets a poll URL.
+  - Polls the poll URL every 2 s until factorResult ≠ WAITING or OKTA_POLL_DEADLINE_SECONDS elapses.
+  - Returns { result: SUCCESS / REJECTED / TIMEOUT / WAITING, mfa_passed } so the post-flow Action can gate the session.
+  - 502 on Okta errors (SSWS revoked, factor lookup 404) so Okta outages never silently grant MFA.
 oryMechanism:
   - actions-webhook
 status: active

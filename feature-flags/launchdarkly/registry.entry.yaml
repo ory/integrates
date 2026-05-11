@@ -1,17 +1,32 @@
 # This file is the source of truth for this integration's registry metadata.
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+#
+# RECLASSIFIED: this integration is NOT an Ory Action webhook. It's a small
+# SDK wrapper library (OryLaunchDarkly) that you import alongside LaunchDarkly's
+# Node server SDK and call from your own application's request path.
 
 name: launchdarkly
 displayName: LaunchDarkly
 vendor: LaunchDarkly
 category: feature-flags
-type: webhook
+type: sdk-client
 maintainedBy: Community contributors
 description: >-
-  LaunchDarkly is a feature management platform that enables teams to control feature rollouts, run experiments, and
-  manage feature flags at scale. This integration passes Ory Network session traits and identity attributes as
-  LaunchDarkly user context, enabling identity-aware feature flag evaluation based on user properties, organization
-  membership, subscription tier, and othe...
+  LaunchDarkly is a feature-management platform for controlled rollouts, experiments, and runtime flag evaluation.
+  This integration is a TypeScript helper (OryLaunchDarkly) that maps Ory session and identity data into LaunchDarkly's
+  multi-kind context shape so feature-flag evaluation rules can target on Ory traits, metadata_public, and
+  authenticator_assurance_level without ad-hoc mapping in every call site.
+useCase: >-
+  A product wants feature flags that target on identity attributes (subscription plan, role, MFA status) sourced from
+  Ory. Rather than writing the Ory → LaunchDarkly context mapping in every request handler, the helper centralizes
+  the mapping into one class and exposes typed boolVariation / stringVariation / numberVariation / jsonVariation /
+  allFlagsState methods that accept an Ory session directly.
+coreFunctionality: |-
+  - OryLaunchDarkly class wraps an LDClient, takes Ory session shape (id, identity, traits, metadata_public, authenticator_assurance_level).
+  - Builds a LaunchDarkly multi-kind context: { user: {key=identity.id, email, firstName, lastName, plan, ...metadata}, session: {key=session.id, aal} }.
+  - boolVariation / stringVariation / numberVariation / jsonVariation pass through to LDClient.variation with the constructed context.
+  - allFlagsState lets you bootstrap client-side flag state for the current Ory session in one call.
+  - Ships as an importable library (peer-depends on @launchdarkly/node-server-sdk ^9) — not a deployed HTTP service.
 oryMechanism:
-  - actions-webhook
+  - sdk-client
 status: active

@@ -3,15 +3,24 @@
 
 name: telegram
 displayName: Telegram Login
-vendor: Telegram Login
+vendor: Telegram
 category: social-sign-in
 type: webhook
 maintainedBy: Community contributors
 description: >-
   Telegram does not implement OAuth 2.0 / OIDC; it provides a Login Widget that posts an HMAC-SHA256-signed payload to
-  a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot token,
-  returns the verified profile, and gives applications a clean place to plug in Ory Admin API calls to upsert the
-  matching identity and issue a session.
+  a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot token
+  and returns the verified profile so applications can call the Ory Admin API to upsert the matching identity and
+  issue a session.
+useCase: >-
+  A consumer app wants Telegram as a sign-in option but Telegram has no OIDC, so Ory's native social-sign-in providers
+  don't apply. The bridge validates the Login Widget HMAC inline, returns suggested identity traits, and the
+  application uses Ory's Admin API to upsert the identity and start a session.
+coreFunctionality: |-
+  - POST /telegram/validate verifies X-Webhook-Secret, computes HMAC-SHA256 over the sorted data_check_string with key SHA256(bot_token), and rejects expired auth_date.
+  - Returns the verified profile plus suggested_identity_traits (telegram_id, name, username) for the application's Admin API upsert.
+  - Configurable TELEGRAM_AUTH_MAX_AGE_SECONDS for replay window (default 24h per Telegram's recommendation; tighten for stricter session creation).
+  - Stateless and read-only — does not touch Ory directly; the application owns the upsert and session-bootstrap.
 oryMechanism:
   - actions-webhook
 status: active

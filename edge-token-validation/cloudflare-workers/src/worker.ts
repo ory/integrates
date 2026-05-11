@@ -88,11 +88,8 @@ async function validateSession(
   try {
     const whoamiUrl = `${env.ORY_SDK_URL}/sessions/whoami`;
 
-    // Use Cloudflare Cache API for session responses (short TTL)
-    const cacheKey = new Request(whoamiUrl, {
-      headers: { Cookie: cookie },
-    });
-
+    // Cloudflare caches the whoami response per cf.cacheTtl below, keyed on the
+    // request URL + cookie — no need to construct a manual cache key.
     const sessionRes = await fetch(whoamiUrl, {
       headers: {
         Cookie: cookie,
@@ -126,9 +123,13 @@ async function validateJwt(
   env: Env,
 ): Promise<Response> {
   try {
-    // Parse JWT header to get kid
-    const [headerB64] = token.split(".");
-    const header = JSON.parse(atob(headerB64.replace(/-/g, "+").replace(/_/g, "/")));
+    // Parse JWT (header.payload.signature) — bail if shape isn't right.
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      return handleUnauthorized(new URL(request.url).pathname, env);
+    }
+    const [headerPart, payloadPart, signaturePart] = parts as [string, string, string];
+    const header = JSON.parse(atob(headerPart.replace(/-/g, "+").replace(/_/g, "/")));
 
     // Fetch or use cached JWKS
     const publicKey = await getPublicKey(header.kid, env);
@@ -137,7 +138,6 @@ async function validateJwt(
     }
 
     // Verify the JWT signature
-    const [headerPart, payloadPart, signaturePart] = token.split(".");
     const data = new TextEncoder().encode(`${headerPart}.${payloadPart}`);
     const signature = base64UrlDecode(signaturePart);
 
@@ -213,7 +213,7 @@ async function getPublicKey(kid: string, env: Env): Promise<CryptoKey | null> {
 function forwardWithIdentityHeaders(
   request: Request,
   session: OrySession,
-): Response {
+): Promise<Response> {
   const headers = new Headers(request.headers);
 
   headers.set("X-User-Id", session.identity.id);

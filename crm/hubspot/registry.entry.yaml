@@ -8,8 +8,18 @@ category: crm
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Sync Ory identities to HubSpot contacts automatically using Ory Actions webhooks. When a user registers or updates
-  their profile, a webhook fires and creates or updates the corresponding HubSpot contact record.
+  HubSpot is a CRM, marketing, and sales platform. This integration syncs Ory identities to HubSpot CRM contacts via an
+  Ory Action webhook — on registration or profile update, the handler creates the contact or PATCHes the existing one
+  on 409 Existing ID so the sync is idempotent.
+useCase: >-
+  A sales/marketing team running HubSpot wants every Ory-managed sign-up to land in HubSpot CRM in near-real-time, with
+  the Ory identity id stored on a custom property so any system can reverse-lookup. The integration upserts the contact
+  via HubSpot's 409 Existing ID pattern so retries never duplicate.
+coreFunctionality: |-
+  - Sync Ory Action webhook (response.parse: true) on after:registration and (optionally) after:settings.
+  - POST https://api.hubapi.com/crm/v3/objects/contacts with email, firstname, lastname, ory_identity_id.
+  - On 409 Existing ID: parses the existing contact ID out of HubSpot's error message and PATCHes onto it for idempotent upsert.
+  - 502 on HubSpot errors so the failure surfaces in Ory instead of being silently dropped.
 oryMechanism:
   - actions-webhook
 status: active

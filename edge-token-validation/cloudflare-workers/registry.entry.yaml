@@ -1,13 +1,31 @@
 # This file is the source of truth for this integration's registry metadata.
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+#
+# RECLASSIFIED: this integration is NOT an Ory Action webhook. It's a
+# Cloudflare Worker that validates Ory sessions / JWTs at the edge before
+# requests reach origin. Code lives in src/worker.ts; deployed via Wrangler.
 
 name: cloudflare-workers
-displayName: Cloudflare Workers — Ory Session & JWT Validation at the Edge
-vendor: Cloudflare Workers — Ory Session & JWT Validation at the Edge
+displayName: Cloudflare Workers
+vendor: Cloudflare
 category: edge-token-validation
-type: webhook
+type: session-validation
 maintainedBy: Community contributors
-description: Validate Ory Network session tokens and JWTs at Cloudflare's edge, before requests reach your origin server.
+description: >-
+  A Cloudflare Worker that validates Ory Network session cookies (via /sessions/whoami) or JWT Bearer tokens (locally
+  against Ory's JWKS) at the Cloudflare edge before requests reach origin. Successful requests are forwarded with
+  identity headers (X-User-Id, X-User-Email, X-Auth-AAL, ...) attached; unauthenticated requests are rejected at the
+  edge with zero load on the backend.
+useCase: >-
+  A high-traffic product wants identity enforcement to happen at the CDN tier rather than at every backend service.
+  The Worker validates each request before it reaches origin, reducing latency and offloading auth from the backend,
+  and adds identity headers so downstream services can attribute the request without re-validating.
+coreFunctionality: |-
+  - Cloudflare Worker deployed via wrangler — runs in V8 isolates at the Cloudflare edge.
+  - Two validation modes: session cookie (forwards to Ory /sessions/whoami with 30 s edge cache) and JWT Bearer token (validates RSASSA-PKCS1-v1_5 signatures against Ory's JWKS, JWKS cached at the edge for 1 h).
+  - Forwards authenticated requests to origin with X-User-Id, X-Session-Id, X-User-Email, X-User-Name, X-Auth-AAL, X-User-Metadata headers.
+  - Configurable PUBLIC_PATHS to skip auth on health, public, and static paths.
+  - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to login with return_to.
 oryMechanism:
-  - actions-webhook
+  - session-validation
 status: active

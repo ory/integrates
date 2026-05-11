@@ -22,7 +22,11 @@
  * SECURITY: Store LAUNCHDARKLY_SDK_KEY in a secret manager.
  */
 
-import type { LDClient, LDContext, LDMultiKindContext } from "@launchdarkly/node-server-sdk";
+import type {
+  LDClient,
+  LDContextCommon,
+  LDMultiKindContext,
+} from "@launchdarkly/node-server-sdk";
 
 /** Ory session object (from /sessions/whoami) */
 export interface OrySession {
@@ -87,11 +91,11 @@ export class OryLaunchDarkly {
         ...Object.fromEntries(
           Object.entries(metadata).filter(([k]) => k !== "billing" && k !== "risk_assessment"),
         ),
-      } as LDContext,
+      } as LDContextCommon,
       session: {
         key: session.id,
         aal: session.authenticator_assurance_level,
-      } as LDContext,
+      } as LDContextCommon,
     };
   }
 

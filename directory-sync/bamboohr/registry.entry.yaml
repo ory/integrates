@@ -8,9 +8,19 @@ category: directory-sync
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  BambooHR is a popular HRIS for SMB and mid-market companies. This integration enriches Ory identities with employee
-  data from BambooHR via an Ory Actions webhook on login or registration, optionally gating access based on employment
-  status. BambooHR is the source of truth for employment data; Ory remains the source of truth for identity.
+  BambooHR is an HRIS popular with SMB and mid-market companies. This integration enriches Ory identities with employee
+  data from BambooHR via an Ory Action webhook on login or registration, returning employment status, job title,
+  department, and hire date so a post-flow Action can gate access or write the fields into identity metadata.
+useCase: >-
+  A company runs internal SaaS for employees and wants login to gate on employment status — off-boarded employees lose
+  access automatically without a separate deprovision step. BambooHR is the HRIS source of truth; the integration looks
+  up the user's BambooHR record at login and returns the employment flag so Ory can fail the flow on employed: false.
+coreFunctionality: |-
+  - Sync Ory Action webhook (response.parse: true) on after:login and optionally after:registration.
+  - Looks up the employee via /employees/directory filtered by workEmail (BambooHR has no direct lookup-by-email API).
+  - Fetches detail fields (status, jobTitle, department, hireDate, terminationDate) and returns { employed, employee_id, job_title, department, hire_date }.
+  - Returns { employed: false } on no match so Ory can branch on member-vs-non-member traffic instead of erroring.
+  - BambooHR Basic auth: API key as username, literal "x" as password — documented in code so it doesn't look like a typo.
 oryMechanism:
   - actions-webhook
 status: active

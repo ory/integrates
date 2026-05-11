@@ -1,7 +1,7 @@
 {
-  "name": "ory-bamboohr-webhook",
+  "name": "ory-zoho-crm-webhook",
   "version": "1.0.0",
-  "description": "Reference webhook handler that enriches Ory identities with employee data from BambooHR.",
+  "description": "Reference webhook handler that syncs Ory identities to Zoho CRM Contacts.",
   "main": "server.ts",
   "scripts": {
     "start": "tsx server.ts",

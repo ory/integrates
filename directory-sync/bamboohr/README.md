@@ -1,75 +1,61 @@
-# BambooHR — Ory Network Integration
+# BambooHR
 
 > **Maintained by:** Community contributors
 
-## Overview
+[BambooHR](https://bamboohr.com) is an HRIS popular with SMB and mid-market companies. This integration enriches Ory identities with employee data from BambooHR via an Ory Action webhook on login or registration, returning `{ employed, employee_id, job_title, department, hire_date }` so a post-flow Action can gate access on employment status or write the fields into identity metadata.
 
-BambooHR is a popular HRIS for SMB and mid-market companies. This integration enriches Ory identities with employee data from BambooHR via an Ory Actions webhook on login or registration, optionally gating access based on employment status. BambooHR is the source of truth for employment data; Ory remains the source of truth for identity.
+**Type:** webhook (Ory Action calls a handler during a flow)
+**Docs page:** [ory.com/docs/integrations/directory-sync/bamboohr](https://ory.com/docs/integrations/directory-sync/bamboohr)
+
+## Use case
+
+A company runs internal SaaS for employees and wants login to gate on employment status — off-boarded employees automatically lose access without a separate deprovision step. BambooHR is the HRIS source of truth; the integration looks up the user's BambooHR employee record at login and returns the employment flag so Ory can fail the flow on `employed: false`.
 
 ## How it works
 
-```
-User logs in / registers
-        ↓
-Ory Action webhook → POST /bamboohr/enrich-user
-        ↓
-Handler authenticates request (X-Webhook-Secret)
-        ↓
-Handler calls BambooHR /employees/directory and filters by workEmail
-        ↓
-Handler calls BambooHR /employees/<id>?fields=status,jobTitle,...
-        ↓
-Handler returns { employed, employee_id, job_title, department, hire_date }
-        ↓
-Ory Action: write fields to identity.metadata.public, or fail the
-flow when employed=false (off-boarded employees blocked from access)
-```
+1. A user logs in (or registers) through an Ory flow.
+2. Ory fires the sync Action webhook to this handler. The handler verifies the shared secret.
+3. The handler calls `GET /employees/directory` and filters by `workEmail` (BambooHR lacks a direct lookup-by-email API).
+4. On match, the handler calls `GET /employees/<id>?fields=status,jobTitle,department,hireDate,terminationDate` and returns `{ employed: status === "Active", employee_id, job_title, department, hire_date }`.
+5. On no match, the handler returns `{ employed: false }` so Ory can decide (some companies want to allow non-employee logins; others gate access entirely).
 
 ## Prerequisites
 
-- Ory Network project
-- BambooHR account
-- BambooHR API key — generate at `https://<company>.bamboohr.com/settings/permissions/api.php`
-- A deployment target
+- An Ory Network project.
+- A BambooHR account and an API key (generate at `https://<company>.bamboohr.com/settings/permissions/api.php`).
+- A deployment target for the webhook handler.
 
-## Deploy
+## Deploy the webhook handler
 
 ```bash
 cd webhook/
 cp .env.example .env
-# Fill BAMBOOHR_COMPANY, BAMBOOHR_API_KEY, ORY_WEBHOOK_SECRET
+# Fill ORY_WEBHOOK_SECRET, BAMBOOHR_COMPANY, BAMBOOHR_API_KEY.
 npm install
-node server.js
+npm start
 ```
 
-Endpoints:
+The server listens on the port specified in `.env` (default 3000) and exposes:
 
-- `GET /health` — readiness check
-- `POST /bamboohr/enrich-user` — Ory Action target
+- `GET /health` — readiness check.
+- `POST /bamboohr/enrich-user` — Ory Action target.
 
 ## Configure Ory
 
-1. Register the webhook on `after login` (and optionally `after registration`) with [`ory-actions.yaml`](ory-actions.yaml).
-2. Body template: [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet) — only `email` is required; the rest is enriched server-side.
-3. Set `response.parse: true` and `response.ignore: false` if you want Ory to consume the enrichment payload.
+1. Configure the Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml) — register on `after:login` and optionally `after:registration`.
+2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet); only `email` is required.
+3. Keep `response.parse: true` and `response.ignore: false` so Ory consumes the enrichment payload.
+4. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
-## Patterns
-
-- **Off-boarded gate.** If `employed === false` and you require an active employee for access, fail the Ory flow with a 4xx in the action response handling.
-- **Role-based attribute mapping.** Map `job_title` or `department` into `metadata.public` and use those in downstream policy (Ory Permissions, Oathkeeper).
-- **Hybrid identity.** For SaaS apps where some users are employees and some are customers, use the `employed` flag to branch the post-login experience rather than to gate access entirely.
-
-## Performance note
-
-BambooHR doesn't expose a "lookup by email" endpoint, so the handler scans the directory. For organizations with thousands of employees, swap the directory call for a saved **custom report** with a filter on workEmail — that requires creating a saved report in the BambooHR UI and calling `/reports/<report-id>`. The pattern is documented in BambooHR's API reference.
+Off-boarded-employee gating, role-based attribute mapping, and saved-report lookups for large directories: see the [docs page](https://ory.com/docs/integrations/directory-sync/bamboohr).
 
 ## Troubleshooting
 
-- **`401` from BambooHR** — confirm Basic auth uses the API key as username and literal `x` as password.
-- **No employee match** — BambooHR `workEmail` is case-sensitive on some accounts; the handler lower-cases both sides before comparing.
-- **Latency** — large directories make the directory-scan slow. Profile against your real org size before rolling out.
+- **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` in `.env` doesn't match `X-Webhook-Secret` in the Ory hook config.
+- **`401` from BambooHR** — Basic auth must use the API key as username and the literal string `x` as password.
+- **No employee match for a known user** — `workEmail` in BambooHR doesn't match the Ory identity's email (case mismatch, alias domains, etc.). The handler already lower-cases both sides; check whether the BambooHR record uses `workEmail` or a custom field.
+- **Slow responses on large orgs** — the handler scans the full directory because BambooHR has no lookup-by-email. For thousands of employees, swap the directory call for a saved BambooHR **custom report** filtered on workEmail and call `/reports/<report-id>` instead.
 
-## Resources
+## License
 
-- [BambooHR API documentation](https://documentation.bamboohr.com/reference)
-- [Ory Actions and webhooks](https://www.ory.com/docs/actions/web-hook)
+Apache-2.0. SPDX header at the top of each source file.
