@@ -1,94 +1,63 @@
-# Socure — Ory Network Integration
+# Socure
 
 > **Maintained by:** Community contributors
 
-## Overview
+[Socure](https://socure.com) is an ML-based identity verification platform with strong fraud detection and KYC coverage. This integration calls Socure ID+ from an Ory Action webhook during registration and (optionally) consumes Socure's async result callback to write the final decision back to the identity.
 
-Socure is an ML-based identity verification platform with strong fraud detection and KYC coverage. This integration calls Socure ID+ from an Ory Actions webhook during registration; results are returned to Ory so the flow can be gated. The handler also exposes an async **callback endpoint** that Socure can post final results to for long-running verifications, with HMAC-SHA256 signature verification.
+**Type:** webhook (Ory Action calls a handler during a flow)
+**Docs page:** [ory.com/docs/integrations/identity-verification/socure](https://ory.com/docs/integrations/identity-verification/socure)
+
+## Use case
+
+A regulated B2C product needs ML-driven identity verification at signup with strong fraud signals (device fingerprint, email reputation, network risk). Socure's ID+ runs the configured modules (KYC, fraud, phonerisk) inline and either returns an immediate verdict or — for slow flows — sends one asynchronously when its risk pipelines finish. The integration handles both paths from a single deployment.
 
 ## How it works
 
-```
-Synchronous path (Ory Action)
-─────────────────────────────
-User completes registration
-        ↓
-Ory Action webhook → POST /socure/verify-identity
-        ↓
-Handler calls Socure ID+ (modules: kyc, fraud, ...)
-        ↓
-Socure returns reference_id + immediate decision
-        ↓
-Handler echoes back to Ory; Ory applies policy
-
-Asynchronous path (Socure callback)
-───────────────────────────────────
-Socure → POST /socure/results-callback (HMAC-signed)
-        ↓
-Handler verifies signature
-        ↓
-Handler updates the matching Ory identity via Admin API
-(metadata.public.socure_decision = ...)
-```
-
-## Endpoints
-
-- `GET /health` — readiness check
-- `POST /socure/verify-identity` — Ory Action target
-- `POST /socure/results-callback` — Socure's async result webhook (HMAC-signed; configure the signing secret in the Socure admin)
+1. **Synchronous path** — A user completes registration; Ory fires the sync post-registration Action to `POST /socure/verify-identity`. The handler verifies the shared secret, calls Socure ID+ (`POST /api/3.0/EmailAuthScore`) with the configured `SOCURE_MODULES`, and echoes back `reference_id`, `decision` (`kyc.fieldValidations`), and `fraud_score`. Ory's response-parse Jsonnet applies policy.
+2. **Asynchronous path** — When Socure is configured to send async results (long-running checks), Socure POSTs to `/socure/results-callback` with an HMAC-SHA256 signature over the raw body in `X-Socure-Signature`. The handler verifies the signature, and when `ORY_SDK_URL` + `ORY_ADMIN_API_KEY` are set, PATCHes the final `decision` to `metadata_public.socure_decision` on the matching identity.
 
 ## Prerequisites
 
-- Ory Network project
-- Socure account with an SDK key (`SOCURE_API_KEY`) and the modules you want to run (commonly `kyc`, `fraud`, `phonerisk`)
-- A public URL for the `results-callback` endpoint if you use the async path
-- A deployment target
+- An Ory Network project. Optionally an admin API key with identity-write scope (for the async write-back).
+- A Socure account with an SDK key (`SOCURE_API_KEY`) and the modules you want to run (commonly `kyc`, `fraud`, `phonerisk`).
+- A publicly reachable URL for `/socure/results-callback` if you use the async path; configure it plus a signing secret in Socure Admin → Webhooks.
+- A deployment target for the webhook handler (any Node.js runtime: Cloud Run, Heroku, Vercel, Lambda behind API Gateway, your own VM).
 
-## Deploy
+## Deploy the webhook handler
 
 ```bash
 cd webhook/
 cp .env.example .env
-# Fill SOCURE_API_KEY, SOCURE_MODULES, ORY_WEBHOOK_SECRET, SOCURE_CALLBACK_SECRET
+# Fill ORY_WEBHOOK_SECRET, SOCURE_API_KEY, SOCURE_MODULES, and (for async)
+# SOCURE_CALLBACK_SECRET + ORY_SDK_URL + ORY_ADMIN_API_KEY.
 npm install
-node server.js
+npm start
 ```
+
+The server listens on the port specified in `.env` (default 3000) and exposes:
+
+- `GET /health` — readiness check.
+- `POST /socure/verify-identity` — sync Ory Action target.
+- `POST /socure/results-callback` — Socure async result webhook (gated by `X-Socure-Signature` HMAC). Returns `503` when `SOCURE_CALLBACK_SECRET` is unset.
 
 ## Configure Ory
 
-1. Register the sync hook with [`ory-actions.yaml`](ory-actions.yaml).
-2. Body template: [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). Socure benefits from a `device_session_id` collected client-side via the Socure SDK; pass it through `identity.traits.socure_device_session_id` if available.
-3. For the async callback path, deploy the handler to a public URL and configure that URL + a signing secret in the Socure admin's webhook settings. Set `SOCURE_CALLBACK_SECRET` in `.env` to the same value.
+1. In the Ory Console, configure the sync Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml).
+2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). Socure benefits from a `device_session_id` collected client-side via the Socure SDK; pass it through `identity.traits.socure_device_session_id` or `transient_payload.device_session_id`.
+3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
+4. For the async callback path, configure the callback URL and signing secret in Socure Admin → Webhooks, and put the same secret in `SOCURE_CALLBACK_SECRET`. Optionally set `ORY_SDK_URL` and `ORY_ADMIN_API_KEY` to enable the metadata write-back.
 
-## Implementing the async write-back
-
-The `/socure/results-callback` handler currently logs the result. To complete the integration, write the verdict back to the identity:
-
-```javascript
-await fetch(`${ORY_PROJECT_URL}/admin/identities/${identity_id}`, {
-  method: "PATCH",
-  headers: {
-    authorization: `Bearer ${ORY_ADMIN_API_KEY}`,
-    "content-type": "application/json",
-  },
-  body: JSON.stringify([
-    { op: "replace", path: "/metadata_public/socure_decision", value: req.body.decision },
-  ]),
-  signal: AbortSignal.timeout(5000),
-});
-```
-
-(Add `ORY_PROJECT_URL` and `ORY_ADMIN_API_KEY` to `.env` and require them at startup.)
+Identity-schema extensions for KYC fields, Socure module configuration, and per-module decision interpretation: see the [docs page](https://ory.com/docs/integrations/identity-verification/socure).
 
 ## Troubleshooting
 
-- **`invalid signature` on `/socure/results-callback`** — verify that `SOCURE_CALLBACK_SECRET` matches the value configured in Socure, and that you didn't change the body parsing (HMAC is over the raw body).
-- **Modules not running** — module names are case-sensitive in the request body; confirm `SOCURE_MODULES` matches Socure's documentation exactly.
-- **`device_session_id` missing** — only available if you instrument the Socure SDK on the client. Without it, fraud signals are weaker but the call still works.
+- **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` in `.env` doesn't match `X-Webhook-Secret` in the Ory hook config.
+- **`401 invalid signature` on `/socure/results-callback`** — `SOCURE_CALLBACK_SECRET` doesn't match the value configured in Socure, or the body parser stripped bytes. The HMAC is over the raw body.
+- **`Socure 401`** in handler logs — `SOCURE_API_KEY` is wrong (note: the header name `SocureApiKey` is camelCase per Socure's spec — not a typo).
+- **Modules not running** — module names are case-sensitive in the request body; verify `SOCURE_MODULES` matches Socure's documentation exactly.
+- **`device_session_id` missing** — only available if you instrument the Socure JS SDK on the client. Without it, fraud signals are weaker but the call still works.
+- **`callback_disabled`** response on the async endpoint — `SOCURE_CALLBACK_SECRET` is unset; set it (or skip the async path entirely).
 
-## Resources
+## License
 
-- [Socure ID+ documentation](https://developer.socure.com/reference/idplus-overview)
-- [Socure SDK reference](https://developer.socure.com/reference/sdk-overview)
-- [Ory Actions and webhooks](https://www.ory.com/docs/actions/web-hook)
-- [Ory Identity Admin API — patch identity](https://www.ory.com/docs/reference/api#tag/identity/operation/patchIdentity)
+Apache-2.0. SPDX header at the top of each source file.

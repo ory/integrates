@@ -3,14 +3,24 @@
 
 name: duo-security
 displayName: Duo Security
-vendor: Duo Security
+vendor: Cisco
 category: mfa
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Duo Security (a Cisco company) is a market-leading enterprise MFA platform with strong push and passcode flows. This
-  integration sends a Duo push challenge from an Ory Actions webhook on login, polls Duo for the user's response, and
-  returns the verdict so Ory can step up authentication or fail the flow.
+  Duo Security (a Cisco company) is an enterprise MFA platform with strong push and passcode flows. This integration
+  sends a Duo push challenge from an Ory Action webhook on login, polls Duo for the user's response, and returns the
+  verdict so Ory can step up authentication or fail the flow.
+useCase: >-
+  An enterprise has already standardized its workforce on Duo Mobile for MFA and wants to reuse that enrollment from
+  Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Duo's push challenge runs inline
+  with Ory login; the integration relays the verdict so Ory can issue the session or fail the flow.
+coreFunctionality: |-
+  - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
+  - Signs Duo Auth API requests with HMAC-SHA1 over a canonicalized request line per Duo's spec.
+  - POSTs /auth/v2/auth (factor=push, async=1) and long-polls /auth/v2/auth_status?txid=... until the user responds or DUO_POLL_DEADLINE_SECONDS elapses.
+  - Returns { result: allow | deny | waiting, mfa_passed } so the post-flow Action can gate the session.
+  - 502 on Duo errors so a Duo outage never silently grants MFA.
 oryMechanism:
   - actions-webhook
 status: active

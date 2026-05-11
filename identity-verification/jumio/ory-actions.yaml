@@ -1,0 +1,50 @@
+# Jumio identity-verification hooks.
+#
+# Two Ory-side hooks:
+#   - post-registration → /jumio/initiate    starts a Jumio workflow, writes
+#                                            the Jumio account ID into metadata.
+#   - post-login       → /jumio/validate     blocks the login when the stored
+#                                            verification status is rejected.
+#
+# Jumio also posts back to /jumio/callback when the workflow finishes; that
+# endpoint is gated by an HMAC-SHA256 signature in X-Jumio-Signature, not by
+# this Ory webhook secret.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/jumio/initiate
+              method: POST
+              body: file://./jsonnet/initiate.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/jumio/validate
+              method: POST
+              body: file://./jsonnet/validate.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

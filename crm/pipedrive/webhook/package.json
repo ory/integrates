@@ -1,7 +1,7 @@
 {
-  "name": "ory-duo-security-webhook",
+  "name": "ory-pipedrive-webhook",
   "version": "1.0.0",
-  "description": "Reference webhook handler that triggers Duo Security push MFA challenges from an Ory Action.",
+  "description": "Reference webhook handler that syncs Ory identities to Pipedrive CRM and logs login activities.",
   "main": "server.ts",
   "scripts": {
     "start": "tsx server.ts",

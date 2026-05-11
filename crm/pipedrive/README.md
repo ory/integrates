@@ -1,101 +1,61 @@
-# Pipedrive Integration
+# Pipedrive
 
-This document outlines how to integrate Ory with Pipedrive CRM.
+> **Maintained by:** Community contributors
 
-## 1. Basic Use Case: User Sync from Ory to Pipedrive
+[Pipedrive](https://pipedrive.com) is a sales-focused CRM with a contact-and-activity timeline as its central abstraction. This integration syncs Ory identities to Pipedrive persons on registration and profile updates, and logs a login activity to the person's timeline on every login so sales has a real-time view of customer engagement.
 
-This integration enables automatic syncing of users from Ory to Pipedrive CRM. When a user registers or updates their profile in your Ory-powered application, a webhook is triggered to create or update a contact in Pipedrive.
+**Type:** webhook (Ory Action calls a handler during a flow)
+**Docs page:** [ory.com/docs/integrations/crm/pipedrive](https://ory.com/docs/integrations/crm/pipedrive)
 
-### How It Works
+## Use case
 
-1. **User registers or updates profile** in Ory.
-2. **Ory triggers a webhook** to your handler endpoint.
-3. **Webhook handler** receives user data and calls Pipedrive API.
-4. **Pipedrive creates or updates** the contact/lead.
+A sales-led B2B product wants every registered user mirrored into Pipedrive as a contact, with the Ory identity ID stored on a custom field so sales can reverse-lookup. Login activity (time, IP, device, method) lands on the contact's timeline so account-based outbound and customer-success teams see live engagement signal alongside CRM history.
 
-### Demo
+## How it works
 
-See [`basic_user_sync_demo.mov`](./assets/basic_user_sync_demo.mov) for a walkthrough of the basic user sync flow.
+1. **Sync (async post-registration / post-settings)** — Ory calls `POST /pipedrive/sync-user` with `identity.id`, traits, and `created_at`. The handler returns `200` immediately, then searches Pipedrive for an existing person by email and either creates a new person or updates the existing one, writing `ory_identity_id` to a custom field.
+2. **Track login (async post-login)** — Ory calls `POST /pipedrive/track-login-activity` with identity, session metadata, and request headers. The handler returns `200` immediately, finds the Pipedrive person by email, and creates a `task`-type activity with the login details (time, IP, device, method, session preview) marked done.
+3. Both hooks are fire-and-forget so Pipedrive availability never blocks user flows.
 
+## Prerequisites
 
-### Steps:
+- An Ory Network project.
+- A Pipedrive account and a personal API token (Pipedrive → Settings → Personal preferences → API).
+- A `custom_fields.ory_identity_id` field on the Person object in Pipedrive (create it in Pipedrive → Settings → Data fields → Person).
+- A deployment target for the webhook handler.
 
-1. **Set Up Pipedrive**:
-   - Create a Pipedrive account if you don't have one.
-   - Obtain your Pipedrive API token from the settings.
+## Deploy the webhook handler
 
-2. **Create Webhook Handler**:
-   - Use the provided `pipedrive.js` Express server code.
-   - Set your Pipedrive API token in the environment variable `PIPEDRIVE_API_TOKEN`.
-   - Deploy the server to a platform accessible by Ory (e.g., Heroku, Vercel) or use ngrok.
-
-3. **Configure Ory Webhook**:
-   - In your Ory project, navigate to the Webhooks section.
-   - Add a new webhook with the URL of your deployed handler (e.g., `https://yourdomain.com/pipedrive/sync-user`).
-   - Set the webhook to trigger on user registration and profile updates.
-
-4. **Test the Integration**:
-   - Register a new user or update an existing user's profile in your Ory application.
-   - Verify that the user appears in your Pipedrive contacts.
-
-
-### Example Ory webhook action body:
-```js
-function(ctx) { 
-    ctx: ctx.identity
-}
+```bash
+cd webhook/
+cp .env.example .env
+# Fill ORY_WEBHOOK_SECRET and PIPEDRIVE_API_TOKEN.
+npm install
+npm start
 ```
 
-### Requirements
+The server listens on the port specified in `.env` (default 3000) and exposes:
 
-- Ory configured to send webhooks after registration/update
-- Pipedrive API token set as environment variable
-- Webhook handler endpoint accessible to Ory
+- `GET /health` — readiness check.
+- `POST /pipedrive/sync-user` — Ory async post-registration / post-settings target.
+- `POST /pipedrive/track-login-activity` — Ory async post-login target.
 
+## Configure Ory
 
-## 2. Basic Use Case: Track Login Activity in Pipedrive
+1. Configure the three Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml) (post-registration, post-settings, post-login).
+2. Body templates: [`jsonnet/sync-user.jsonnet`](jsonnet/sync-user.jsonnet) and [`jsonnet/track-login.jsonnet`](jsonnet/track-login.jsonnet).
+3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
-This integration tracks user login activity from Ory and logs it as activities in Pipedrive CRM. Each time a user logs in, a webhook is triggered to create a login activity associated with the corresponding contact in Pipedrive.
+Demos: see [`assets/basic_user_sync_demo.mov`](assets/basic_user_sync_demo.mov) and [`assets/login_activity_demo.mov`](assets/login_activity_demo.mov).
 
-### How It Works
-1. **User logs in** to your Ory-powered application.
-2. **Ory triggers a webhook** to your handler endpoint.
-3. **Webhook handler** receives login data and calls Pipedrive API.
-4. **Pipedrive creates a login activity** associated with the user.
-5. **Activity appears** in the user's timeline in Pipedrive.
+## Troubleshooting
 
-### Demo
-See [`login_activity_demo.mov`](./assets/login_activity_demo.mov) for a walkthrough of the login activity tracking flow.
+- **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` doesn't match `X-Webhook-Secret` in the Ory Action config.
+- **`Pipedrive search 401`** — `PIPEDRIVE_API_TOKEN` invalid or revoked.
+- **Custom field `ory_identity_id` ignored on the new Person** — the field isn't defined on the Pipedrive Person object; create it in Pipedrive admin first.
+- **Duplicate Pipedrive persons** — the upsert searches by email; if the email is different from what's in Pipedrive (e.g. plus-addressing), you get a duplicate. Consider switching the lookup to the `ory_identity_id` custom field once it's populated.
+- **Login activities appear without a person link** — the login email doesn't match any Pipedrive person; either sync at registration time or pre-populate Pipedrive with your customer list.
 
-### Steps:
-1. **Set Up Pipedrive**:
-   - Ensure you have a Pipedrive account and obtain your API token.
-   - Make sure your Pipedrive account has the necessary permissions to create activities.
+## License
 
-2. **Create Webhook Handler**:
-    - Use the provided `pipedrive.js` Express server code.
-    - Set your Pipedrive API token in the environment variable `PIPEDRIVE_API_TOKEN`.
-    - Deploy the server to a platform accessible by Ory (e.g., Heroku, Vercel) or use ngrok.
-
-3. **Configure Ory Webhook**:
-    - In your Ory project, navigate to the Webhooks section.
-    - Add a new webhook with the URL of your deployed handler (e.g., `https://yourdomain.com/pipedrive/track-login-activity`).
-    - Set the webhook to trigger on user login events.
-
-4. **Test the Integration**:
-    - Log in as a user in your Ory application.
-    - Verify that a login activity is created in Pipedrive associated with the user.
-  
-
-### Example Ory webhook action body:
-    ```js
-    function(ctx) { 
-    id: ctx.identity.id,
-    traits: ctx.identity.traits,
-    login_time: ctx.session.authenticated_at,
-    ip_address: ctx.request_headers["True-Client-Ip"],
-    user_agent: ctx.request_headers["User-Agent"],
-    login_method: ctx.session.authentication_methods,
-    session_id: ctx.session.id
-}
-    ```
+Apache-2.0. SPDX header at the top of each source file.

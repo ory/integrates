@@ -1,0 +1,60 @@
+# Prove phone-anchored identity hooks.
+#
+# Three hooks: pre-registration prefill, post-registration enrollment,
+# post-login validation. All authenticated by the shared ORY_WEBHOOK_SECRET.
+
+selfservice:
+  flows:
+    registration:
+      before:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/prove/lookup
+              method: POST
+              body: file://./jsonnet/lookup.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/prove/enroll
+              method: POST
+              body: file://./jsonnet/enroll.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/prove/validate
+              method: POST
+              body: file://./jsonnet/validate.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

@@ -1,0 +1,44 @@
+# Persona identity-verification hooks.
+#
+# Two Ory-side hooks (initiate + validate). Persona also POSTs back to
+# /persona/callback when an inquiry completes; that endpoint is gated by
+# Persona's HMAC-SHA256 signature, not by this Ory webhook secret.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/persona/initiate
+              method: POST
+              body: file://./jsonnet/initiate.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/persona/validate
+              method: POST
+              body: file://./jsonnet/validate.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

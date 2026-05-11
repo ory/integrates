@@ -1,0 +1,44 @@
+# Onfido identity-verification hooks.
+#
+# Two Ory-side hooks (initiate + validate). Onfido also POSTs back to
+# /onfido/callback when the workflow completes; that endpoint is gated by
+# Onfido's HMAC-SHA256 signature, not by this Ory webhook secret.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/onfido/initiate
+              method: POST
+              body: file://./jsonnet/initiate.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/onfido/validate
+              method: POST
+              body: file://./jsonnet/validate.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

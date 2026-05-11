@@ -9,9 +9,19 @@ type: webhook
 maintainedBy: Community contributors
 description: >-
   Equifax provides credit-anchored identity verification through its Digital Identity Trust APIs. This integration calls
-  Equifax from an Ory Actions webhook to verify identity attributes against credit-bureau data and writes the resulting
-  trust score back into the Ory identity. Common in onboarding flows for financial services and other compliance-heavy
-  use cases.
+  Equifax from an Ory Action webhook during registration to verify identity attributes against credit-bureau data and
+  returns a decision plus trust score so Ory's post-flow Action can gate the flow.
+useCase: >-
+  A regulated B2C product (fintech, lending, insurance) needs credit-anchored identity proofing on every signup to
+  satisfy KYC requirements. Equifax returns a deterministic decision and confidence score; the integration runs the
+  lookup inline with Ory registration so high-confidence identities pass through and low-confidence ones can be blocked
+  or routed to step-up verification.
+coreFunctionality: |-
+  - Sync post-registration Ory Action webhook (response.parse: true, can_interrupt: true).
+  - Exchanges Equifax OAuth2 client credentials for an access token, cached and refreshed ~5 min before expiry.
+  - Calls Equifax's identity-verification endpoint with first_name, last_name, date_of_birth, optional ssn_last_four, and address.
+  - Returns decision/outcome, trust_score, and reference_id to Ory so the post-flow Action can apply policy.
+  - 502 on Equifax errors / outages so the verdict is never silently a pass.
 oryMechanism:
   - actions-webhook
 status: active

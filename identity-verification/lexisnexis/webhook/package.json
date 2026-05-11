@@ -1,7 +1,7 @@
 {
-  "name": "ory-duo-security-webhook",
+  "name": "ory-lexisnexis-webhook",
   "version": "1.0.0",
-  "description": "Reference webhook handler that triggers Duo Security push MFA challenges from an Ory Action.",
+  "description": "Reference webhook handler that verifies Ory identities via the LexisNexis InstantID API and gates login.",
   "main": "server.ts",
   "scripts": {
     "start": "tsx server.ts",
@@ -9,6 +9,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@ory/client": "^1.22.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "tsx": "^4.19.2"

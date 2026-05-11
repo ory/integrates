@@ -1,0 +1,59 @@
+# Pipedrive sync + login-activity hooks.
+#
+# Both hooks are fire-and-forget (response.ignore: true, can_interrupt:
+# false). The handler returns 200 to Ory immediately and runs Pipedrive
+# calls in the background.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/pipedrive/sync-user
+              method: POST
+              body: file://./jsonnet/sync-user.jsonnet
+              can_interrupt: false
+              response:
+                ignore: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    settings:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/pipedrive/sync-user
+              method: POST
+              body: file://./jsonnet/sync-user.jsonnet
+              can_interrupt: false
+              response:
+                ignore: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/pipedrive/track-login-activity
+              method: POST
+              body: file://./jsonnet/track-login.jsonnet
+              can_interrupt: false
+              response:
+                ignore: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
