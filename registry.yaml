@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-11T21:13:13Z
+  generated: 2026-05-11T21:29:35Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -1724,18 +1724,36 @@ integrations:
     oryMechanism:
       - standards
   - name: apple
-    displayName: Sign in with Apple - Ory Network
+    displayName: Apple
     category: social-sign-in
     path: social-sign-in/apple
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Sign in with Apple allows users to authenticate using their Apple ID. Apple provides a privacy-focused
-      authentication experience with features like private email relay (Hide My Email), which generates unique, random
-      email addresses that forward to the user's real email. Integrating Apple with Ory Network is **mandatory for iOS
-      apps that offer any third-party social login** p...
+      Sign in with Apple as a social sign-in provider in Ory Network. Privacy-focused OAuth2 with Hide My Email relay
+      addresses; uses JWT-signed client assertions (Apple Team ID + Private Key) rather than a plain client secret.
+      Required for iOS apps that offer any third-party social login per Apple's App Store guidelines.
     status: active
-    vendor: Sign in with Apple - Ory Network
+    vendor: Apple
+    useCase: >-
+      A consumer product (especially one with an iOS app) needs to offer Sign in with Apple to comply with App Store
+      Review Guideline 4.8. The integration handles both the webbrowser flow and the native-iOS SDK flow where Apple
+      returns an id_token that's exchanged at Ory.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: apple`); provider ID MUST be "apple" so Ory exempts the form-POST
+      callback from CSRF middleware.
+
+      - JWT-signed client assertion: requires Apple Team ID, Services ID (used as Client ID), Key ID, and the .p8 Private
+      Key contents.
+
+      - Automatic account linking supported for Apple consumer accounts that share a verified email with an existing
+      identity.
+
+      - Native iOS flow: app obtains id_token via Apple's SDK and submits it as `id_token` on
+      updateRegistration/LoginFlow; Ory validates against Apple's signing keys.
+
+      - Hide My Email: Apple returns a relay address (privaterelay.appleid.com) instead of the user's real address;
+      persist this verbatim in traits.email.
     oryMechanism:
       - standards
   - name: auth0
@@ -1782,18 +1800,31 @@ integrations:
     oryMechanism:
       - standards
   - name: discord
-    displayName: Discord Social Sign-In - Ory Network
+    displayName: Discord
     category: social-sign-in
     path: social-sign-in/discord
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Discord is a popular communication platform with over 150 million monthly active users, widely used in gaming,
-      community, and creative spaces. Integrating Discord with Ory Network enables applications to authenticate users with
-      their Discord accounts, access guild (server) membership information, and build community-driven authentication
-      flows.
+      Discord as a social sign-in provider in Ory Network. Users sign in with their Discord account; Ory maps Discord's
+      OAuth2 response (username, email, avatar, optional guild membership) to the identity schema. Common in gaming,
+      community, and creator-facing products.
     status: active
-    vendor: Discord Social Sign-In - Ory Network
+    vendor: Discord
+    useCase: >-
+      A gaming or community product wants sign-in via the OAuth provider its users already use to chat with each other —
+      often paired with guild-membership scopes to gate features on which Discord servers the user belongs to.
+    coreFunctionality: >-
+      - First-party Kratos OAuth2 provider (`provider: discord`).
+
+      - Standard scopes: identify (username + ID), email, and optionally guilds (read the user's Discord servers).
+
+      - Default Jsonnet maps email and identifier; can extend to avatar, username, or guild filter.
+
+      - Discord OAuth applications are configured under the Discord Developer Portal; no Discord-side approval needed
+      beyond enabling OAuth2.
+
+      - Refresh tokens supported by default — the access token has limited TTL.
     oryMechanism:
       - standards
   - name: epic-games
@@ -1810,32 +1841,60 @@ integrations:
     oryMechanism:
       - standards
   - name: facebook
-    displayName: Facebook Login - Ory Network
+    displayName: Facebook
     category: social-sign-in
     path: social-sign-in/facebook
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Facebook Login is one of the most widely recognized social sign-in options, with access to billions of Facebook and
-      Meta accounts. Integrating Facebook Login with Ory Network provides a familiar authentication experience for
-      consumer applications across e-commerce, media, social, and entertainment verticals.
+      Facebook (Meta) as a social sign-in provider in Ory Network. Facebook doesn't issue an OIDC id_token, so Ory fetches
+      user profile data from Facebook's Graph API and exposes the result as claims for Jsonnet data mapping.
     status: active
-    vendor: Facebook Login - Ory Network
+    vendor: Meta
+    useCase: >-
+      A consumer product (e-commerce, media, social, entertainment) wants a familiar sign-in option for the Meta
+      ecosystem. Useful when reach into the consumer market matters more than enterprise identity features.
+    coreFunctionality: >-
+      - First-party Kratos OAuth2 provider (`provider: facebook`) backed by Facebook Login.
+
+      - Required `email` scope; Ory calls graph.facebook.com/me to populate the claims envelope because Facebook returns
+      an access_token only (no id_token).
+
+      - Default Jsonnet maps email when present to traits.email. Email may be empty if the user denied the permission.
+
+      - Configurable in the Facebook Developers console: app type Consumer, Facebook Login product, valid redirect URI
+      from the Ory Console.
+
+      - No native account-linking; relies on standard Kratos linking by verified email.
     oryMechanism:
       - standards
   - name: github
-    displayName: Sign in with GitHub - Ory Network
+    displayName: GitHub
     category: social-sign-in
     path: social-sign-in/github
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      GitHub is the world's leading software development platform with over 100 million developers. Integrating GitHub
-      with Ory Network is ideal for developer tools, DevOps platforms, and technical applications. GitHub's OAuth flow
-      provides access to user profile data, email addresses, and organization/team membership, enabling org-based access
-      control.
+      GitHub as a social sign-in provider in Ory Network. GitHub doesn't implement OIDC, so Ory uses its OAuth2 flow and
+      calls GitHub's User API to populate the claims envelope for Jsonnet data mapping.
     status: active
-    vendor: Sign in with GitHub - Ory Network
+    vendor: GitHub
+    useCase: >-
+      Developer-facing products (DevOps tools, CI/CD dashboards, technical SaaS) want sign-in via the OAuth provider that
+      ~100M developers already use. Optionally gate access on organization or team membership via the `read:org` scope.
+    coreFunctionality: >-
+      - First-party Kratos OAuth2 provider (`provider: github`); see kratos/selfservice/strategy/oidc/provider_github.go
+      for the supported scope list.
+
+      - Console wizard configures GitHub OAuth Apps; the Ory CLI variant supports GitHub Apps.
+
+      - Required `user:email` scope; Ory's GitHub provider fetches the User API and surfaces `email`, `email_verified`,
+      `email_primary`, `email_primary_verified`, `name`, `avatar_url` as claims.
+
+      - Default Jsonnet returns the verified email only (prevents account-enumeration on unverified addresses).
+
+      - GitHub doesn't issue refresh tokens by default; flag-pinned settings live on the GitHub OAuth app side, not in
+      Ory.
     oryMechanism:
       - standards
   - name: github-app
@@ -1854,33 +1913,57 @@ integrations:
     oryMechanism:
       - standards
   - name: gitlab
-    displayName: GitLab Social Sign-In - Ory Network
+    displayName: GitLab
     category: social-sign-in
     path: social-sign-in/gitlab
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      GitLab is a comprehensive DevOps platform used by millions of developers and organizations. GitLab supports OpenID
-      Connect natively, making it a straightforward OIDC provider for Ory Network. This integration is ideal for DevOps
-      tools, CI/CD dashboards, and developer-facing applications. Both GitLab.com and self-managed GitLab instances can be
-      used.
+      GitLab as a social sign-in provider in Ory Network. GitLab is OIDC-compliant natively — both gitlab.com and
+      self-managed instances expose /.well-known/openid-configuration. Ideal for DevOps tools, CI/CD dashboards, and
+      developer-facing apps.
     status: active
-    vendor: GitLab Social Sign-In - Ory Network
+    vendor: GitLab
+    useCase: >-
+      A developer-facing product wants sign-in via the OIDC provider that ~30M developers + most internal enterprise dev
+      teams already use. Self-managed GitLab instances can be wired in by overriding the issuer URL.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: gitlab`); discovery via {issuer}/.well-known/openid-configuration so
+      both gitlab.com and self-managed work. - Required scopes: openid, email, profile (and read_user for additional API
+      access if needed). - Default Jsonnet maps email + name claims to the identity schema; richer fields available via
+      the GitLab User API. - Self-managed issuer URL is configurable in the CLI variant; the Console wizard defaults to
+      gitlab.com. - Refresh tokens supported when the GitLab application is configured with `read_api`-level access.
     oryMechanism:
       - standards
   - name: google
-    displayName: Sign in with Google - Ory Network
+    displayName: Google
     category: social-sign-in
     path: social-sign-in/google
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Google is the most ubiquitous social sign-in provider, with billions of Google accounts worldwide. Google supports
-      both traditional OIDC and the newer FedCM (Federated Credential Management) API for privacy-preserving
-      authentication. Integrating Google with Ory Network provides a frictionless sign-in experience that most users are
-      already familiar with.
+      Google as a social sign-in provider in Ory Network. The most widely-recognized OIDC provider; users sign in with
+      their existing consumer Gmail or Google Workspace account and Ory maps the returned claims to the identity schema.
     status: active
-    vendor: Sign in with Google - Ory Network
+    vendor: Google
+    useCase: >-
+      A consumer- or workforce-facing product wants frictionless sign-in via the OIDC provider that the largest share of
+      users already have an account with. Workspace tenants can additionally gate on the `hd` (hosted domain) claim for
+      enterprise-only flows.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: google`) — discovery via
+      https://accounts.google.com/.well-known/openid-configuration.
+
+      - Standard scopes: openid, email, profile. The `hd` claim is available for Google Workspace tenants.
+
+      - Default Jsonnet mapping forwards email (gated on email_verified) to traits.email; can extend to given_name /
+      family_name and the workspace domain.
+
+      - Supports automatic account linking for verified consumer Gmail addresses (`account_linking_mode: automatic`);
+      Workspace accounts are excluded by design to prevent expired-domain takeover.
+
+      - Native-SDK flow: id_token from Google's SDK can be exchanged at Ory via updateRegistration/LoginFlow with
+      additional_id_token_audiences.
     oryMechanism:
       - standards
   - name: kakao
@@ -1926,32 +2009,65 @@ integrations:
     oryMechanism:
       - standards
   - name: linkedin
-    displayName: Sign In with LinkedIn - Ory Network
+    displayName: LinkedIn
     category: social-sign-in
     path: social-sign-in/linkedin
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      LinkedIn is the world's largest professional network with over 900 million members. LinkedIn provides OIDC-compliant
-      authentication through its "Sign In with LinkedIn using OpenID Connect" product. This integration is ideal for B2B
-      applications, recruitment platforms, professional networking tools, and any application that benefits from verified
-      professional identity.
+      LinkedIn as a social sign-in provider in Ory Network. LinkedIn moved to OIDC-compliant authentication via its "Sign
+      In with LinkedIn using OpenID Connect" product, returning standard email, name, and picture claims so the Jsonnet
+      mapping is straightforward.
     status: active
-    vendor: Sign In with LinkedIn - Ory Network
+    vendor: LinkedIn
+    useCase: >-
+      A B2B SaaS, recruitment, or professional-networking product wants sign-in via the OAuth provider its users use to
+      represent themselves professionally — useful when verified work identity is more relevant than personal social
+      identity.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: linkedin`); discovery at
+      https://www.linkedin.com/oauth/.well-known/openid-configuration.
+
+      - Required scopes: openid, email, profile (the new OIDC product, not the deprecated r_liteprofile/r_emailaddress v2
+      flow).
+
+      - Default Jsonnet maps email, given_name, family_name, picture; identifier sub is the LinkedIn member ID.
+
+      - Older LinkedIn apps using the v2 endpoints need to be migrated to the OIDC product in the LinkedIn Developer
+      Portal.
+
+      - Refresh tokens are supported; access tokens are short-lived (~60 days).
     oryMechanism:
       - standards
   - name: microsoft
-    displayName: Sign in with Microsoft - Ory Network
+    displayName: Microsoft
     category: social-sign-in
     path: social-sign-in/microsoft
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Microsoft identity platform supports authentication for both consumer Microsoft accounts (Outlook.com, Xbox,
-      Hotmail) and organizational accounts (Azure AD / Microsoft Entra ID). This makes it suitable for both B2C and B2B
-      applications. Integrating Microsoft with Ory Network provides access to the broad Microsoft ecosystem.
+      Microsoft as a social sign-in provider in Ory Network. The Microsoft identity platform covers consumer Microsoft
+      accounts (Outlook, Xbox, Hotmail) and organizational accounts (Microsoft Entra ID / Azure AD), so the integration
+      works for both B2C and B2B flows.
     status: active
-    vendor: Sign in with Microsoft - Ory Network
+    vendor: Microsoft
+    useCase: >-
+      A product targeting either consumers in the Microsoft ecosystem or enterprises whose users have Entra ID accounts
+      wants sign-in with a single provider that covers both. Multitenant configurations span every Entra tenant plus
+      personal accounts; single-tenant configurations restrict to one organization.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: microsoft`) using the v2.0 endpoints.
+
+      - Configurable account-type filter (multitenant + personal / multitenant only / single-tenant / etc.) on the Azure
+      App registration side.
+
+      - Required scopes: openid, email, profile. Add Graph scopes (e.g. User.Read) for richer identity data.
+
+      - Default Jsonnet maps the `email` claim; `preferred_username` is recommended as a stable user-readable identifier
+      when working with org tenants.
+
+      - Tenant ID is mandatory in the Ory Console form to scope the token validation to the right Entra tenant or to the
+      common multitenant endpoint.
     oryMechanism:
       - standards
   - name: naver
@@ -2013,33 +2129,60 @@ integrations:
     oryMechanism:
       - standards
   - name: slack
-    displayName: Sign in with Slack - Ory Network
+    displayName: Slack
     category: social-sign-in
     path: social-sign-in/slack
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Slack is the leading workplace communication platform used by millions of teams worldwide. Sign in with Slack
-      enables workspace-based authentication, allowing applications to verify a user's Slack workspace membership. This
-      integration is ideal for internal tools, productivity apps, and B2B SaaS applications where Slack workspace
-      membership serves as an identity signal.
+      Slack as a social sign-in provider in Ory Network. The "Sign in with Slack" OIDC flow returns the user's identity
+      plus their Slack workspace (team) membership, useful for B2B products where workspace membership signals access.
     status: active
-    vendor: Sign in with Slack - Ory Network
+    vendor: Slack
+    useCase: >-
+      A B2B SaaS, internal tool, or productivity app wants single-sign-on via the workspace its users already share. Sign
+      in with Slack returns the team_id claim so the app can scope access by Slack workspace.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: slack`); discovery at
+      https://slack.com/.well-known/openid-configuration.
+
+      - Slack-specific scopes (openid, email, profile) under "User Token Scopes" on the Slack app config.
+
+      - Default Jsonnet maps email + name; Slack adds team-specific claims (https://slack.com/team_id,
+      https://slack.com/team_name) that map well into identity metadata for workspace-based policy.
+
+      - App must be Installed to each workspace before users can sign in.
+
+      - Tokens are workspace-scoped — a user in two Slack workspaces will have two different (sub, team_id) tuples even
+      with the same email.
     oryMechanism:
       - standards
   - name: spotify
-    displayName: Log in with Spotify - Ory Network
+    displayName: Spotify
     category: social-sign-in
     path: social-sign-in/spotify
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Spotify is the world's most popular music streaming platform with over 600 million users. Integrating Spotify Login
-      with Ory Network enables entertainment apps, music-related platforms, and social applications to authenticate users
-      via their Spotify accounts. Spotify's OAuth2 flow can also provide access to music preferences and listening data
-      for personalization.
+      Spotify as a social sign-in provider in Ory Network. Users sign in with their Spotify account; Ory maps Spotify's
+      OAuth2 response (id, email, display name, country, product tier) to the identity schema. Common in music,
+      entertainment, and creator-tool products.
     status: active
-    vendor: Log in with Spotify - Ory Network
+    vendor: Spotify
+    useCase: >-
+      An entertainment or music-adjacent product wants sign-in via the OAuth provider its users already use to listen.
+      Spotify's optional music-data scopes also enable personalization (recently-played, top tracks) when authorized.
+    coreFunctionality: >-
+      - First-party Kratos OAuth2 provider (`provider: spotify`); Spotify is not OIDC, so Ory calls the Spotify API to
+      populate the claims envelope.
+
+      - Common scopes: user-read-email, user-read-private (basic identity); add music-data scopes for personalization.
+
+      - Default Jsonnet maps email + display_name; can extend to country, product (free/premium), or Spotify URI.
+
+      - Spotify apps start in Development mode with a 25-user whitelist; production requires Spotify approval.
+
+      - Refresh tokens supported by default.
     oryMechanism:
       - standards
   - name: steam
