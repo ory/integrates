@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: gitlab
-displayName: GitLab Social Sign-In - Ory Network
-vendor: GitLab Social Sign-In - Ory Network
+displayName: GitLab
+vendor: GitLab
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  GitLab is a comprehensive DevOps platform used by millions of developers and organizations. GitLab supports OpenID
-  Connect natively, making it a straightforward OIDC provider for Ory Network. This integration is ideal for DevOps
-  tools, CI/CD dashboards, and developer-facing applications. Both GitLab.com and self-managed GitLab instances can be
-  used.
+  GitLab as a social sign-in provider in Ory Network. GitLab is OIDC-compliant natively — both gitlab.com and
+  self-managed instances expose /.well-known/openid-configuration. Ideal for DevOps tools, CI/CD dashboards, and
+  developer-facing apps.
+useCase: >-
+  A developer-facing product wants sign-in via the OIDC provider that ~30M developers + most internal enterprise dev
+  teams already use. Self-managed GitLab instances can be wired in by overriding the issuer URL.
+coreFunctionality: >-
+  - First-party Kratos OIDC provider (`provider: gitlab`); discovery via {issuer}/.well-known/openid-configuration so both gitlab.com and self-managed work.
+  - Required scopes: openid, email, profile (and read_user for additional API access if needed).
+  - Default Jsonnet maps email + name claims to the identity schema; richer fields available via the GitLab User API.
+  - Self-managed issuer URL is configurable in the CLI variant; the Console wizard defaults to gitlab.com.
+  - Refresh tokens supported when the GitLab application is configured with `read_api`-level access.
 oryMechanism:
   - standards
 status: active

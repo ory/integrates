@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: spotify
-displayName: Log in with Spotify - Ory Network
-vendor: Log in with Spotify - Ory Network
+displayName: Spotify
+vendor: Spotify
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Spotify is the world's most popular music streaming platform with over 600 million users. Integrating Spotify Login
-  with Ory Network enables entertainment apps, music-related platforms, and social applications to authenticate users
-  via their Spotify accounts. Spotify's OAuth2 flow can also provide access to music preferences and listening data for
-  personalization.
+  Spotify as a social sign-in provider in Ory Network. Users sign in with their Spotify account; Ory maps Spotify's
+  OAuth2 response (id, email, display name, country, product tier) to the identity schema. Common in music,
+  entertainment, and creator-tool products.
+useCase: >-
+  An entertainment or music-adjacent product wants sign-in via the OAuth provider its users already use to listen.
+  Spotify's optional music-data scopes also enable personalization (recently-played, top tracks) when authorized.
+coreFunctionality: |-
+  - First-party Kratos OAuth2 provider (`provider: spotify`); Spotify is not OIDC, so Ory calls the Spotify API to populate the claims envelope.
+  - Common scopes: user-read-email, user-read-private (basic identity); add music-data scopes for personalization.
+  - Default Jsonnet maps email + display_name; can extend to country, product (free/premium), or Spotify URI.
+  - Spotify apps start in Development mode with a 25-user whitelist; production requires Spotify approval.
+  - Refresh tokens supported by default.
 oryMechanism:
   - standards
 status: active

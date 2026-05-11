@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: google
-displayName: Sign in with Google - Ory Network
-vendor: Sign in with Google - Ory Network
+displayName: Google
+vendor: Google
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Google is the most ubiquitous social sign-in provider, with billions of Google accounts worldwide. Google supports
-  both traditional OIDC and the newer FedCM (Federated Credential Management) API for privacy-preserving authentication.
-  Integrating Google with Ory Network provides a frictionless sign-in experience that most users are already familiar
-  with.
+  Google as a social sign-in provider in Ory Network. The most widely-recognized OIDC provider; users sign in with their
+  existing consumer Gmail or Google Workspace account and Ory maps the returned claims to the identity schema.
+useCase: >-
+  A consumer- or workforce-facing product wants frictionless sign-in via the OIDC provider that the largest share of
+  users already have an account with. Workspace tenants can additionally gate on the `hd` (hosted domain) claim for
+  enterprise-only flows.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: google`) — discovery via https://accounts.google.com/.well-known/openid-configuration.
+  - Standard scopes: openid, email, profile. The `hd` claim is available for Google Workspace tenants.
+  - Default Jsonnet mapping forwards email (gated on email_verified) to traits.email; can extend to given_name / family_name and the workspace domain.
+  - Supports automatic account linking for verified consumer Gmail addresses (`account_linking_mode: automatic`); Workspace accounts are excluded by design to prevent expired-domain takeover.
+  - Native-SDK flow: id_token from Google's SDK can be exchanged at Ory via updateRegistration/LoginFlow with additional_id_token_audiences.
 oryMechanism:
   - standards
 status: active

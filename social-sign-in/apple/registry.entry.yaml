@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: apple
-displayName: Sign in with Apple - Ory Network
-vendor: Sign in with Apple - Ory Network
+displayName: Apple
+vendor: Apple
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Sign in with Apple allows users to authenticate using their Apple ID. Apple provides a privacy-focused authentication
-  experience with features like private email relay (Hide My Email), which generates unique, random email addresses that
-  forward to the user's real email. Integrating Apple with Ory Network is **mandatory for iOS apps that offer any
-  third-party social login** p...
+  Sign in with Apple as a social sign-in provider in Ory Network. Privacy-focused OAuth2 with Hide My Email relay
+  addresses; uses JWT-signed client assertions (Apple Team ID + Private Key) rather than a plain client secret.
+  Required for iOS apps that offer any third-party social login per Apple's App Store guidelines.
+useCase: >-
+  A consumer product (especially one with an iOS app) needs to offer Sign in with Apple to comply with App Store
+  Review Guideline 4.8. The integration handles both the webbrowser flow and the native-iOS SDK flow where Apple
+  returns an id_token that's exchanged at Ory.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: apple`); provider ID MUST be "apple" so Ory exempts the form-POST callback from CSRF middleware.
+  - JWT-signed client assertion: requires Apple Team ID, Services ID (used as Client ID), Key ID, and the .p8 Private Key contents.
+  - Automatic account linking supported for Apple consumer accounts that share a verified email with an existing identity.
+  - Native iOS flow: app obtains id_token via Apple's SDK and submits it as `id_token` on updateRegistration/LoginFlow; Ory validates against Apple's signing keys.
+  - Hide My Email: Apple returns a relay address (privaterelay.appleid.com) instead of the user's real address; persist this verbatim in traits.email.
 oryMechanism:
   - standards
 status: active

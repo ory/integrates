@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: linkedin
-displayName: Sign In with LinkedIn - Ory Network
-vendor: Sign In with LinkedIn - Ory Network
+displayName: LinkedIn
+vendor: LinkedIn
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  LinkedIn is the world's largest professional network with over 900 million members. LinkedIn provides OIDC-compliant
-  authentication through its "Sign In with LinkedIn using OpenID Connect" product. This integration is ideal for B2B
-  applications, recruitment platforms, professional networking tools, and any application that benefits from verified
-  professional identity.
+  LinkedIn as a social sign-in provider in Ory Network. LinkedIn moved to OIDC-compliant authentication via its
+  "Sign In with LinkedIn using OpenID Connect" product, returning standard email, name, and picture claims so the
+  Jsonnet mapping is straightforward.
+useCase: >-
+  A B2B SaaS, recruitment, or professional-networking product wants sign-in via the OAuth provider its users use to
+  represent themselves professionally — useful when verified work identity is more relevant than personal social
+  identity.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: linkedin`); discovery at https://www.linkedin.com/oauth/.well-known/openid-configuration.
+  - Required scopes: openid, email, profile (the new OIDC product, not the deprecated r_liteprofile/r_emailaddress v2 flow).
+  - Default Jsonnet maps email, given_name, family_name, picture; identifier sub is the LinkedIn member ID.
+  - Older LinkedIn apps using the v2 endpoints need to be migrated to the OIDC product in the LinkedIn Developer Portal.
+  - Refresh tokens are supported; access tokens are short-lived (~60 days).
 oryMechanism:
   - standards
 status: active

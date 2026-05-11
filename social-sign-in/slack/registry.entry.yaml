@@ -2,16 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: slack
-displayName: Sign in with Slack - Ory Network
-vendor: Sign in with Slack - Ory Network
+displayName: Slack
+vendor: Slack
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Slack is the leading workplace communication platform used by millions of teams worldwide. Sign in with Slack enables
-  workspace-based authentication, allowing applications to verify a user's Slack workspace membership. This integration
-  is ideal for internal tools, productivity apps, and B2B SaaS applications where Slack workspace membership serves as
-  an identity signal.
+  Slack as a social sign-in provider in Ory Network. The "Sign in with Slack" OIDC flow returns the user's identity
+  plus their Slack workspace (team) membership, useful for B2B products where workspace membership signals access.
+useCase: >-
+  A B2B SaaS, internal tool, or productivity app wants single-sign-on via the workspace its users already share. Sign
+  in with Slack returns the team_id claim so the app can scope access by Slack workspace.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: slack`); discovery at https://slack.com/.well-known/openid-configuration.
+  - Slack-specific scopes (openid, email, profile) under "User Token Scopes" on the Slack app config.
+  - Default Jsonnet maps email + name; Slack adds team-specific claims (https://slack.com/team_id, https://slack.com/team_name) that map well into identity metadata for workspace-based policy.
+  - App must be Installed to each workspace before users can sign in.
+  - Tokens are workspace-scoped — a user in two Slack workspaces will have two different (sub, team_id) tuples even with the same email.
 oryMechanism:
   - standards
 status: active

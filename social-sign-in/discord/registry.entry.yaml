@@ -2,15 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: discord
-displayName: Discord Social Sign-In - Ory Network
-vendor: Discord Social Sign-In - Ory Network
+displayName: Discord
+vendor: Discord
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Discord is a popular communication platform with over 150 million monthly active users, widely used in gaming,
-  community, and creative spaces. Integrating Discord with Ory Network enables applications to authenticate users with
-  their Discord accounts, access guild (server) membership information, and build community-driven authentication flows.
+  Discord as a social sign-in provider in Ory Network. Users sign in with their Discord account; Ory maps Discord's
+  OAuth2 response (username, email, avatar, optional guild membership) to the identity schema. Common in gaming,
+  community, and creator-facing products.
+useCase: >-
+  A gaming or community product wants sign-in via the OAuth provider its users already use to chat with each other —
+  often paired with guild-membership scopes to gate features on which Discord servers the user belongs to.
+coreFunctionality: |-
+  - First-party Kratos OAuth2 provider (`provider: discord`).
+  - Standard scopes: identify (username + ID), email, and optionally guilds (read the user's Discord servers).
+  - Default Jsonnet maps email and identifier; can extend to avatar, username, or guild filter.
+  - Discord OAuth applications are configured under the Discord Developer Portal; no Discord-side approval needed beyond enabling OAuth2.
+  - Refresh tokens supported by default — the access token has limited TTL.
 oryMechanism:
   - standards
 status: active

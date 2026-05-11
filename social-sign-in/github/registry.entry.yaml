@@ -2,15 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: github
-displayName: Sign in with GitHub - Ory Network
-vendor: Sign in with GitHub - Ory Network
+displayName: GitHub
+vendor: GitHub
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  GitHub is the world's leading software development platform with over 100 million developers. Integrating GitHub with
-  Ory Network is ideal for developer tools, DevOps platforms, and technical applications. GitHub's OAuth flow provides
-  access to user profile data, email addresses, and organization/team membership, enabling org-based access control.
+  GitHub as a social sign-in provider in Ory Network. GitHub doesn't implement OIDC, so Ory uses its OAuth2 flow and
+  calls GitHub's User API to populate the claims envelope for Jsonnet data mapping.
+useCase: >-
+  Developer-facing products (DevOps tools, CI/CD dashboards, technical SaaS) want sign-in via the OAuth provider that
+  ~100M developers already use. Optionally gate access on organization or team membership via the `read:org` scope.
+coreFunctionality: |-
+  - First-party Kratos OAuth2 provider (`provider: github`); see kratos/selfservice/strategy/oidc/provider_github.go for the supported scope list.
+  - Console wizard configures GitHub OAuth Apps; the Ory CLI variant supports GitHub Apps.
+  - Required `user:email` scope; Ory's GitHub provider fetches the User API and surfaces `email`, `email_verified`, `email_primary`, `email_primary_verified`, `name`, `avatar_url` as claims.
+  - Default Jsonnet returns the verified email only (prevents account-enumeration on unverified addresses).
+  - GitHub doesn't issue refresh tokens by default; flag-pinned settings live on the GitHub OAuth app side, not in Ory.
 oryMechanism:
   - standards
 status: active

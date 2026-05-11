@@ -2,15 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: facebook
-displayName: Facebook Login - Ory Network
-vendor: Facebook Login - Ory Network
+displayName: Facebook
+vendor: Meta
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Facebook Login is one of the most widely recognized social sign-in options, with access to billions of Facebook and
-  Meta accounts. Integrating Facebook Login with Ory Network provides a familiar authentication experience for consumer
-  applications across e-commerce, media, social, and entertainment verticals.
+  Facebook (Meta) as a social sign-in provider in Ory Network. Facebook doesn't issue an OIDC id_token, so Ory fetches
+  user profile data from Facebook's Graph API and exposes the result as claims for Jsonnet data mapping.
+useCase: >-
+  A consumer product (e-commerce, media, social, entertainment) wants a familiar sign-in option for the Meta ecosystem.
+  Useful when reach into the consumer market matters more than enterprise identity features.
+coreFunctionality: |-
+  - First-party Kratos OAuth2 provider (`provider: facebook`) backed by Facebook Login.
+  - Required `email` scope; Ory calls graph.facebook.com/me to populate the claims envelope because Facebook returns an access_token only (no id_token).
+  - Default Jsonnet maps email when present to traits.email. Email may be empty if the user denied the permission.
+  - Configurable in the Facebook Developers console: app type Consumer, Facebook Login product, valid redirect URI from the Ory Console.
+  - No native account-linking; relies on standard Kratos linking by verified email.
 oryMechanism:
   - standards
 status: active

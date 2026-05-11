@@ -2,15 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: microsoft
-displayName: Sign in with Microsoft - Ory Network
-vendor: Sign in with Microsoft - Ory Network
+displayName: Microsoft
+vendor: Microsoft
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Microsoft identity platform supports authentication for both consumer Microsoft accounts (Outlook.com, Xbox, Hotmail)
-  and organizational accounts (Azure AD / Microsoft Entra ID). This makes it suitable for both B2C and B2B applications.
-  Integrating Microsoft with Ory Network provides access to the broad Microsoft ecosystem.
+  Microsoft as a social sign-in provider in Ory Network. The Microsoft identity platform covers consumer Microsoft
+  accounts (Outlook, Xbox, Hotmail) and organizational accounts (Microsoft Entra ID / Azure AD), so the integration
+  works for both B2C and B2B flows.
+useCase: >-
+  A product targeting either consumers in the Microsoft ecosystem or enterprises whose users have Entra ID accounts
+  wants sign-in with a single provider that covers both. Multitenant configurations span every Entra tenant plus
+  personal accounts; single-tenant configurations restrict to one organization.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: microsoft`) using the v2.0 endpoints.
+  - Configurable account-type filter (multitenant + personal / multitenant only / single-tenant / etc.) on the Azure App registration side.
+  - Required scopes: openid, email, profile. Add Graph scopes (e.g. User.Read) for richer identity data.
+  - Default Jsonnet maps the `email` claim; `preferred_username` is recommended as a stable user-readable identifier when working with org tenants.
+  - Tenant ID is mandatory in the Ory Console form to scope the token validation to the right Entra tenant or to the common multitenant endpoint.
 oryMechanism:
   - standards
 status: active
