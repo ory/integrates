@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: clearbit
-displayName: Clearbit (HubSpot)
-vendor: Clearbit (HubSpot)
+displayName: Clearbit
+vendor: Clearbit
 category: user-enrichment
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Clearbit (now part of HubSpot) is a data enrichment platform that provides company and person data from email
-  addresses and domains. This integration enriches Ory Network identities with firmographic and demographic data after
-  registration, enabling personalized onboarding, lead scoring, and account-based experiences without requiring users to
-  fill in lengthy forms.
+  DEPRECATED. Clearbit's standalone enrichment API is closed to new customers after the HubSpot acquisition; its
+  capabilities now live inside HubSpot Breeze Intelligence (a CRM UI feature with no external API). This integration
+  retains the original async post-registration webhook that calls Clearbit's Combined API and writes person and company
+  data to identity metadata_admin, kept for legacy contracts only.
+useCase: >-
+  A B2B SaaS with a legacy Clearbit contract wants firmographic and demographic context (company name, industry,
+  headcount, role, seniority) on every signup for lead routing, feature gating, and personalized onboarding, without
+  expanding the registration form. New customers should use user-enrichment/fullcontact or user-enrichment/zoominfo.
+coreFunctionality: |-
+  - Receives the async post-registration Ory Action webhook, returns 200 immediately so registration is never blocked by enrichment.
+  - Calls Clearbit's /v2/combined/find endpoint with the user's email to retrieve person and company data.
+  - Projects the response to a compact metadata shape (person.name/role/title/seniority, company.name/domain/industry/employees/raised/etc.).
+  - Fetches the identity via the Ory Admin API, merges the projection into metadata_admin.clearbit, and PUTs the identity back.
+  - Silently no-ops when Clearbit returns 404/422 (free email providers, missing data).
 oryMechanism:
   - actions-webhook
-status: active
+status: deprecated

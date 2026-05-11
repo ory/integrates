@@ -1,0 +1,48 @@
+# Castle.io risk assessment hooks.
+#
+# Both hooks run synchronously (response.parse: true, can_interrupt: true) so
+# Castle can block high-risk events. The handler returns 400 with a flow
+# message to deny, or 200 with metadata_public.requires_mfa_stepup=true to
+# trigger MFA step-up in the client.
+#
+# The client-side Castle.js SDK should pass the device fingerprint via
+# transient_payload.castle_request_token.
+
+selfservice:
+  flows:
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/castle/login
+              method: POST
+              body: file://./jsonnet/login.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/castle/registration
+              method: POST
+              body: file://./jsonnet/registration.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

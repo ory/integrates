@@ -8,10 +8,20 @@ category: consent-privacy
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  OneTrust is a privacy, security, and governance platform that enables organizations to manage consent, fulfill data
-  subject requests (DSRs), and maintain compliance with privacy regulations including GDPR, CCPA, LGPD, and PIPA. This
-  integration connects OneTrust to Ory Network to synchronize consent records at registration and handle
-  identity-related data subject requests th...
+  OneTrust is a privacy, security, and governance platform for managing consent, fulfilling Data Subject Requests, and
+  maintaining compliance with GDPR, CCPA, LGPD, and PIPA. This integration writes a consent receipt to OneTrust on every
+  registration and exposes a DSR callback endpoint that lets OneTrust's Privacy Rights Automation workflow delete,
+  export, or rectify identities in Ory.
+useCase: >-
+  A regulated B2C product needs a defensible audit trail of consent (marketing, analytics, personalization) for every
+  signup, plus a single button in the OneTrust UI that fulfills a deletion or export request across all downstream
+  systems including the identity store.
+coreFunctionality: |-
+  - Captures consent choices from transient_payload.consent on the sync post-registration webhook, returns them in metadata_public.consent immediately so Ory records the user's choices even if OneTrust is unreachable.
+  - Exchanges OAuth2 client credentials for a OneTrust access token (cached in memory until 30 s before expiry) and POSTs a consent receipt to the Consent Manager API mapping each category to a configured Purpose ID.
+  - Exposes a separate /onetrust/dsr endpoint gated by ONETRUST_DSR_SECRET that fulfills DELETE/ERASURE, EXPORT/ACCESS, and RECTIFICATION DSRs against Ory's Admin API.
+  - Distinct shared secrets for the two surfaces so a leak of one credential can't be used to call the other.
+  - Skips unmapped consent categories silently so partial Purpose ID configuration doesn't break registration.
 oryMechanism:
   - actions-webhook
 status: active

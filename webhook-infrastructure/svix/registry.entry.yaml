@@ -2,12 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: svix
-displayName: Svix — Reliable Webhook Delivery
-vendor: Svix — Reliable Webhook Delivery
+displayName: Svix
+vendor: Svix
 category: webhook-infrastructure
 type: webhook
 maintainedBy: Community contributors
-description: Route Ory Network events through Svix for reliable fan-out, automatic retries, and delivery monitoring.
+description: >-
+  Svix is a managed webhook-delivery platform that handles fan-out, retries with exponential backoff, payload signing,
+  delivery monitoring, and replay. This integration routes Ory identity-flow events through Svix so multiple downstream
+  consumers can subscribe to Ory events with operational guarantees Ory itself doesn't provide directly.
+useCase: >-
+  A platform product wants to expose identity-lifecycle events to its own customers as webhooks but doesn't want to
+  build webhook plumbing (retries, exponential backoff, replay, per-endpoint signing, dashboards, alerts). Ory Actions
+  fire on the events; this router relays them to Svix, which fans out to consumer endpoints with at-least-once delivery.
+coreFunctionality: |-
+  - Five async Ory Action endpoints (/svix/registration, /svix/login, /svix/settings, /svix/recovery, /svix/verification); each returns 200 immediately so user flows are never blocked.
+  - Publishes to Svix's REST API (POST /api/v1/app/{appId}/msg/) with built-in fetch — no svix SDK dependency, consistent with the rest of the integration family.
+  - Each message uses a deterministic eventId of ory-<eventType>-<flowId> so duplicates are deduped at the Svix layer.
+  - Standardized event type names (ory.identity.registered, .logged_in, .updated, .recovery_initiated, .verified) so consumer endpoints filter cleanly.
+  - Fire-and-forget: Svix outages and 5xx responses are logged but never propagate to Ory.
 oryMechanism:
   - actions-webhook
 status: active

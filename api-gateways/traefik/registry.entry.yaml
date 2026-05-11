@@ -1,16 +1,35 @@
 # This file is the source of truth for this integration's registry metadata.
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+#
+# RECLASSIFIED: this integration is NOT an Ory Action webhook. It is a
+# Traefik ForwardAuth target that validates Ory sessions at the edge. The
+# code lives in forwardauth/ (not webhook/); there is no ory-actions.yaml
+# or jsonnet/ because Ory never calls this service.
 
 name: traefik
-displayName: Traefik Proxy + Ory Network
-vendor: Traefik Proxy + Ory Network
+displayName: Traefik
+vendor: Traefik
 category: api-gateways
-type: webhook
+type: session-validation
 maintainedBy: Community contributors
 description: >-
-  Traefik is a modern, cloud-native reverse proxy and load balancer that integrates natively with container
-  orchestrators (Docker, Kubernetes, etc.). This integration uses Traefik's **ForwardAuth middleware** to delegate
-  authentication decisions to Ory Network's session and token validation endpoints.
+  Traefik is a cloud-native reverse proxy and load balancer with native integrations for Docker and Kubernetes. This
+  integration ships a small Ory session validator that plugs into Traefik's ForwardAuth middleware: Traefik calls the
+  validator on every inbound request; the validator exchanges the user's session cookie or token for an
+  /sessions/whoami lookup and returns identity headers (X-User-Id, X-User-Email, X-Auth-AAL, ...) that Traefik attaches
+  to the upstream request.
+useCase: >-
+  A platform team runs Traefik as the cluster's ingress and wants Ory to be the single authority on "who is calling
+  this API?" without making each upstream service re-implement session validation. The validator centralizes session
+  checks at the edge so unauthorized requests never reach the backend, and valid requests reach it with identity
+  headers already populated.
+coreFunctionality: |-
+  - Stateless HTTP service designed for Traefik's forwardAuth middleware (default port 4181).
+  - On every request: forwards Cookie / Authorization / X-Session-Token to Ory's /sessions/whoami.
+  - Sets X-User-Id, X-User-Email, X-User-Name, X-Session-Id, X-Auth-AAL, and X-User-Metadata response headers so Traefik can copy them onto the upstream request.
+  - Public paths via ALLOWED_PATHS (exact match or prefix-with-slash, so /health doesn't accidentally match /healthadmin).
+  - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to the login page with return_to=<original-path> preserved.
+  - 503 on Ory outages so Traefik surfaces a clear gateway error instead of treating an outage as "unauthorized".
 oryMechanism:
-  - actions-webhook
+  - session-validation
 status: active

@@ -1,414 +1,73 @@
-# Traefik Proxy + Ory Network Integration
+# Traefik
 
-## Overview
+> **Maintained by:** Community contributors
 
-[Traefik](https://traefik.io/) is a modern, cloud-native reverse proxy and load balancer that integrates natively with container orchestrators (Docker, Kubernetes, etc.). This integration uses Traefik's **ForwardAuth middleware** to delegate authentication decisions to Ory Network's session and token validation endpoints.
+[Traefik](https://traefik.io) is a cloud-native reverse proxy and load balancer with native integrations for Docker, Kubernetes, and other orchestrators. This integration uses Traefik's **ForwardAuth middleware** plus a small Ory session validator to authenticate every inbound request before it reaches your backend. The validator exchanges the user's session cookie or token for an `/sessions/whoami` lookup against Ory and converts the result into headers (`X-User-Id`, `X-User-Email`, `X-Auth-AAL`, etc.) that Traefik attaches to the upstream request.
 
-## Integration Architecture
+**Type:** session-validation (Traefik ForwardAuth target — *not* an Ory Action webhook)
+**Docs page:** [ory.com/docs/integrations/api-gateways/traefik](https://ory.com/docs/integrations/api-gateways/traefik)
 
-Traefik's ForwardAuth middleware intercepts every inbound request and forwards it to an authentication service before routing to the upstream. Ory Network's `/sessions/whoami` endpoint acts as that authentication service.
+## Use case
 
-```
-Client ──► Traefik ──► Upstream Service
-              │
-              └── ForwardAuth ──► Ory Network
-                                  GET /sessions/whoami
-                                  (Cookie or X-Session-Token forwarded)
+A platform team runs Traefik as the cluster's ingress and wants Ory to be the single authority on "who is calling this API?" without making each upstream service re-implement session validation. Traefik calls this ForwardAuth service on every request; valid sessions pass through with identity headers, invalid sessions are rejected (or redirected to login) at the edge.
 
-                                  200 OK → Traefik routes to upstream
-                                           (identity headers added)
-                                  401     → Traefik returns 401 to client
-```
+## How it works
 
-**Two primary patterns:**
+1. A client sends a request to Traefik with an Ory session cookie (`ory_session_<project>`) or a session token (`X-Session-Token`) or a bearer token (`Authorization: Bearer ...`).
+2. Traefik's ForwardAuth middleware forwards the request headers to this service.
+3. Public paths (configured via `ALLOWED_PATHS`) pass through with a `200` immediately.
+4. Otherwise, the service calls Ory's `GET /sessions/whoami` forwarding the user's `Cookie`, `Authorization`, and/or `X-Session-Token` headers.
+5. If Ory returns an active session: the service replies `200` with identity response headers; Traefik copies the configured `authResponseHeaders` into the upstream request and routes through.
+6. If Ory returns 401/403 or `active: false`: the service replies `401` — or `302` to `LOGIN_REDIRECT_URL` preserving the original path in `?return_to=...` — and Traefik returns that to the client.
+7. If Ory is unreachable: the service replies `503` so Traefik surfaces a clear gateway error rather than treating an outage as "unauthorized".
 
-| Pattern | Mechanism | Best For |
-|---|---|---|
-| Session-based ForwardAuth | Forwards `ory_session_*` cookie to `/sessions/whoami` | Browser apps, SSR |
-| JWT-based ForwardAuth | Forwards `Authorization: Bearer` header to Ory or a local validation sidecar | APIs, SPAs, mobile |
+## Prerequisites
 
-For JWT validation without a network round-trip, you can run the [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) sidecar or a lightweight JWT-validation service as the ForwardAuth target.
+- Traefik v2.x or v3.x with `forwardAuth` middleware support.
+- An Ory Network project (or self-hosted Kratos).
+- A deployment target for the validator service (any Node.js runtime: a sidecar, a deployment, Cloud Run, etc.). The service is stateless and horizontally scalable.
 
-## Configuration
-
-### Prerequisites
-
-- Traefik v2.x or v3.x
-- An Ory Network project with Ory Sessions or OAuth2/OIDC enabled
-- Your Ory project slug (e.g., `my-project`)
-
-### ForwardAuth Middleware — Session Validation
-
-The core integration uses Traefik's `forwardAuth` middleware to check every request against Ory's `/sessions/whoami` endpoint.
-
-#### Key Configuration Parameters
-
-| Parameter | Value | Purpose |
-|---|---|---|
-| `address` | `https://{project-slug}.projects.oryapis.com/sessions/whoami` | Ory session check endpoint |
-| `authResponseHeaders` | `X-Kratos-Authenticated-Identity-Id`, etc. | Headers to copy from Ory's response to the upstream request |
-| `trustForwardHeader` | `true` | Forward `X-Forwarded-*` headers |
-
-### Traefik Dynamic Configuration (YAML)
-
-```yaml
-# dynamic-config.yml
-
-http:
-  middlewares:
-    ory-session-check:
-      forwardAuth:
-        address: "https://{project-slug}.projects.oryapis.com/sessions/whoami"
-        trustForwardHeader: true
-        authResponseHeaders:
-          - "X-Kratos-Authenticated-Identity-Id"
-          - "X-Session-Token"
-          - "Set-Cookie"
-        # Forward the session cookie to Ory
-        authRequestHeaders:
-          - "Cookie"
-          - "Authorization"
-          - "X-Session-Token"
-
-    # Optional: redirect unauthenticated users to login
-    ory-auth-redirect:
-      errors:
-        status:
-          - "401"
-        service: ory-login-redirect
-        query: "/{status}"
-
-  routers:
-    my-api:
-      rule: "PathPrefix(`/api`)"
-      service: my-api-service
-      middlewares:
-        - ory-session-check
-      entryPoints:
-        - websecure
-      tls: {}
-
-    # Public routes (no auth)
-    health:
-      rule: "Path(`/health`)"
-      service: my-api-service
-      entryPoints:
-        - websecure
-      tls: {}
-
-  services:
-    my-api-service:
-      loadBalancer:
-        servers:
-          - url: "http://upstream-service:8080"
-```
-
-### Traefik Static Configuration
-
-```yaml
-# traefik.yml
-
-entryPoints:
-  web:
-    address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-  websecure:
-    address: ":443"
-
-providers:
-  file:
-    filename: /etc/traefik/dynamic-config.yml
-    watch: true
-
-api:
-  dashboard: true
-
-log:
-  level: INFO
-
-accessLog: {}
-```
-
-## Token Validation Details
-
-### Session Check Endpoint
-
-```
-URL:    https://{project-slug}.projects.oryapis.com/sessions/whoami
-Method: GET
-```
-
-**Authentication methods (one of):**
-
-| Method | Header / Cookie |
-|---|---|
-| Session cookie | `Cookie: ory_session_{project-slug}=<session-token>` |
-| Session token header | `X-Session-Token: <session-token>` |
-| Bearer token | `Authorization: Bearer <ory-session-token>` |
-
-**Successful response (200):**
-
-```json
-{
-  "id": "session-uuid",
-  "active": true,
-  "identity": {
-    "id": "identity-uuid",
-    "traits": {
-      "email": "user@example.com",
-      "name": { "first": "Jane", "last": "Doe" }
-    }
-  },
-  "authenticator_assurance_level": "aal1",
-  "authenticated_at": "2026-01-15T10:30:00Z"
-}
-```
-
-**Failed response (401):**
-
-```json
-{
-  "error": {
-    "code": 401,
-    "status": "Unauthorized",
-    "message": "No active session was found in this request."
-  }
-}
-```
-
-### JWKS Endpoint (for JWT-based validation)
-
-```
-URL: https://{project-slug}.projects.oryapis.com/.well-known/jwks.json
-```
-
-### Introspection Endpoint (for opaque tokens)
-
-```
-URL:    https://{project-slug}.projects.oryapis.com/admin/oauth2/introspect
-Method: POST
-Body:   token=<access_token>
-Auth:   Ory API Key
-```
-
-## Header Forwarding
-
-When Ory's `/sessions/whoami` returns `200 OK`, Traefik's ForwardAuth copies specified response headers into the upstream request.
-
-### Headers Returned by Ory
-
-| Ory Response Header | Value | Description |
-|---|---|---|
-| Body field `identity.id` | UUID | Ory identity ID |
-| Body field `identity.traits.email` | string | User email |
-| Body field `authenticator_assurance_level` | `aal1` / `aal2` | MFA level |
-
-Since Ory returns identity data in the JSON body rather than headers, you have two options:
-
-#### Option A: Use an Intermediate Auth Service
-
-Deploy a lightweight auth service between Traefik and Ory that calls `/sessions/whoami`, parses the response, and returns identity data as headers.
-
-```python
-# auth-service.py (Flask example)
-from flask import Flask, request, Response
-import requests
-
-app = Flask(__name__)
-ORY_URL = "https://{project-slug}.projects.oryapis.com"
-
-@app.route("/auth")
-def auth():
-    headers = {}
-    for h in ["Cookie", "Authorization", "X-Session-Token"]:
-        if h in request.headers:
-            headers[h] = request.headers[h]
-
-    resp = requests.get(f"{ORY_URL}/sessions/whoami", headers=headers)
-
-    if resp.status_code != 200:
-        return Response(status=401)
-
-    session = resp.json()
-    identity = session.get("identity", {})
-    traits = identity.get("traits", {})
-
-    return Response(status=200, headers={
-        "X-User-Id": identity.get("id", ""),
-        "X-User-Email": traits.get("email", ""),
-        "X-Auth-Level": session.get("authenticator_assurance_level", ""),
-        "X-Session-Id": session.get("id", ""),
-    })
-```
-
-Then point Traefik's ForwardAuth at this service:
-
-```yaml
-middlewares:
-  ory-session-check:
-    forwardAuth:
-      address: "http://auth-service:5000/auth"
-      authResponseHeaders:
-        - "X-User-Id"
-        - "X-User-Email"
-        - "X-Auth-Level"
-        - "X-Session-Id"
-      authRequestHeaders:
-        - "Cookie"
-        - "Authorization"
-        - "X-Session-Token"
-```
-
-#### Option B: Use Ory Oathkeeper as the ForwardAuth Target
-
-Ory Oathkeeper natively parses session data and injects identity headers:
-
-```yaml
-middlewares:
-  ory-oathkeeper:
-    forwardAuth:
-      address: "http://oathkeeper:4456/decisions"
-      authResponseHeaders:
-        - "X-User-Id"
-        - "X-User-Email"
-      authRequestHeaders:
-        - "Cookie"
-        - "Authorization"
-```
-
-## Example Configuration — Docker Compose
-
-```yaml
-# docker-compose.yml
-version: "3.8"
-
-services:
-  traefik:
-    image: traefik:v3.0
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"  # Dashboard
-    volumes:
-      - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./dynamic-config.yml:/etc/traefik/dynamic-config.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    labels:
-      - "traefik.enable=true"
-
-  auth-service:
-    build: ./auth-service
-    environment:
-      ORY_PROJECT_URL: "https://{project-slug}.projects.oryapis.com"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.auth-service.loadbalancer.server.port=5000"
-
-  my-api:
-    image: my-api:latest
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.my-api.rule=PathPrefix(`/api`)"
-      - "traefik.http.routers.my-api.middlewares=ory-session-check"
-      - "traefik.http.routers.my-api.entrypoints=websecure"
-      - "traefik.http.routers.my-api.tls=true"
-      - "traefik.http.services.my-api.loadbalancer.server.port=8080"
-```
-
-### Kubernetes IngressRoute (Traefik CRD)
-
-```yaml
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: ory-session-check
-spec:
-  forwardAuth:
-    address: "https://{project-slug}.projects.oryapis.com/sessions/whoami"
-    authResponseHeaders:
-      - "X-Kratos-Authenticated-Identity-Id"
-    authRequestHeaders:
-      - "Cookie"
-      - "Authorization"
-      - "X-Session-Token"
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: my-api
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: PathPrefix(`/api`)
-      kind: Rule
-      middlewares:
-        - name: ory-session-check
-      services:
-        - name: my-api-service
-          port: 8080
-  tls: {}
-```
-
-## Testing
-
-### 1. Obtain an Ory Session
+## Deploy the ForwardAuth service
 
 ```bash
-# Log in via Ory and capture the session cookie
-SESSION_TOKEN=$(curl -s -X POST \
-  https://{project-slug}.projects.oryapis.com/self-service/login?flow=... \
-  -H "Content-Type: application/json" \
-  -d '{"method":"password","identifier":"user@example.com","password":"..."}' \
-  | jq -r '.session_token')
-
-echo $SESSION_TOKEN
+cd forwardauth/
+cp .env.example .env
+# Fill in ORY_SDK_URL, optionally ALLOWED_PATHS and LOGIN_REDIRECT_URL.
+npm install
+npm start
 ```
 
-### 2. Call Your API Through Traefik
+The service listens on the port specified in `.env` (default 4181) and answers Traefik's ForwardAuth requests on **every path**:
 
-```bash
-# Session token header (should succeed — 200)
-curl -i https://your-domain.com/api/resource \
-  -H "X-Session-Token: $SESSION_TOKEN"
+- `*` → Validates the session and emits identity headers, or returns 401/302.
 
-# No token (should fail — 401)
-curl -i https://your-domain.com/api/resource
+## Wire up Traefik
 
-# Invalid token (should fail — 401)
-curl -i https://your-domain.com/api/resource \
-  -H "X-Session-Token: invalid-token"
-```
+Reference Traefik configurations are in [`traefik/`](traefik):
 
-### 3. Verify Upstream Headers
+- [`traefik/dynamic-config.yaml`](traefik/dynamic-config.yaml) — File-provider dynamic config defining the `ory-auth` middleware and example routers.
+- [`traefik/docker-compose.yaml`](traefik/docker-compose.yaml) — Local stack: Traefik + this service + a placeholder backend.
+- [`traefik/kubernetes-ingress.yaml`](traefik/kubernetes-ingress.yaml) — Traefik IngressRoute CRDs (`Middleware` + protected/public `IngressRoute`).
 
-```bash
-curl -i https://your-domain.com/api/debug/headers \
-  -H "X-Session-Token: $SESSION_TOKEN"
+The middleware is set up to copy these headers from the auth response into the upstream request:
 
-# Expected upstream headers (when using an auth service):
-# X-User-Id: <ory-identity-uuid>
-# X-User-Email: user@example.com
-# X-Auth-Level: aal1
-```
+- `X-User-Id` — Ory identity ID.
+- `X-User-Email` — `identity.traits.email`.
+- `X-User-Name` — concatenated `identity.traits.name.first` + `last`.
+- `X-Session-Id` — Ory session ID.
+- `X-Auth-AAL` — Authenticator Assurance Level (`aal1` / `aal2`).
+- `X-User-Metadata` — JSON-stringified `identity.metadata_public` (when present and non-empty).
 
-### 4. Test Public Routes
+Detailed setup with Kubernetes, sidecar deployments, and the JWKS-based alternative (for pure JWT validation without round-tripping Ory): see the [docs page](https://ory.com/docs/integrations/api-gateways/traefik).
 
-```bash
-# Health endpoint should work without authentication
-curl -i https://your-domain.com/health
-```
+## Troubleshooting
 
-## Resources
+- **Every request returns `401`** — the user's session cookie isn't reaching the service. Check Traefik's `forwardAuth` middleware includes `authRequestHeaders: [Cookie, Authorization, X-Session-Token]` (or omit the field so all headers are forwarded), and confirm the cookie domain covers the Traefik hostname.
+- **Service returns `503`** — `ORY_SDK_URL` is wrong or unreachable from the service's pod/container. Try `curl $ORY_SDK_URL/sessions/whoami` from inside the container.
+- **Public paths still require auth** — `ALLOWED_PATHS` checks exact match or prefix match with a trailing `/`. `/health` matches `/health` and `/health/...` but not `/healthadmin`.
+- **`302` redirects to login but `return_to` is wrong** — the service reads the original path from `X-Forwarded-Uri`. Ensure Traefik forwards it (default ForwardAuth behavior).
+- **Identity headers don't reach the upstream** — Traefik's `authResponseHeaders` doesn't list the header you expect. Add the header name to that list in the middleware definition.
 
-- [Traefik ForwardAuth Middleware](https://doc.traefik.io/traefik/middlewares/http/forwardauth/)
-- [Traefik Dynamic Configuration](https://doc.traefik.io/traefik/providers/file/)
-- [Traefik Kubernetes IngressRoute](https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/)
-- [Ory Network Session Management](https://www.ory.sh/docs/kratos/session-management)
-- [Ory `/sessions/whoami` API Reference](https://www.ory.sh/docs/reference/api#tag/frontend/operation/toSession)
-- [Ory Oathkeeper](https://www.ory.sh/docs/oathkeeper) (alternative ForwardAuth target)
-- [Ory + Traefik Community Guide](https://www.ory.sh/docs/getting-started/integrate-auth/go#api-gateway)
+## License
+
+Apache-2.0. SPDX header at the top of each source file.

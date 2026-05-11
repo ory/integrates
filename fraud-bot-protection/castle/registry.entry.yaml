@@ -3,14 +3,24 @@
 
 name: castle
 displayName: Castle.io
-vendor: Castle.io
+vendor: Castle
 category: fraud-bot-protection
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Castle is an adaptive risk scoring platform that provides real-time threat detection for authentication flows. It
-  analyzes device context, IP addresses, user behavior, and network signals to produce a risk score and recommended
-  action for each authentication event.
+  Castle.io is an adaptive risk-scoring platform for authentication flows. It evaluates device fingerprints, IP
+  reputation, and behavioral signals to produce a real-time risk score and a recommended action (allow, challenge, or
+  deny) for each login or registration event.
+useCase: >-
+  A B2C product wants to keep credential-stuffing and account-takeover attempts out of its login flow without blocking
+  legitimate users behind a CAPTCHA. Castle scores each login in real time; the integration applies an allow / challenge
+  / deny decision before the session is issued, with challenge events flagged for MFA step-up in the client.
+coreFunctionality: |-
+  - Receives Ory post-login and post-registration Action webhooks.
+  - Forwards the identity, request context, and Castle device token to Castle's Risk API.
+  - Translates Castle's response into Ory flow control: 400 to block, 200 + requires_mfa_stepup=true to step up, 200 with risk score in metadata to allow.
+  - Records the risk assessment in identity metadata for downstream auditing and policy decisions.
+  - Fails open on Castle outages so authentication never breaks because of Castle availability.
 oryMechanism:
   - actions-webhook
 status: active

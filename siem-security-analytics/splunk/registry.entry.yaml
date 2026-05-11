@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: splunk
-displayName: Splunk + Ory Network
-vendor: Splunk + Ory Network
+displayName: Splunk
+vendor: Splunk
 category: siem-security-analytics
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Splunk is a leading platform for security information and event management (SIEM), log analysis, and operational
-  intelligence. This integration ingests Ory Network identity and authentication events into Splunk via the HTTP Event
-  Collector (HEC), mapping them to Splunk's Common Information Model (CIM) Authentication data model for standardized
-  security monitoring.
+  Splunk is a SIEM and operational-intelligence platform. This integration forwards Ory identity-flow events
+  (registration, login, recovery, settings) to Splunk's HTTP Event Collector, shaped to the Common Information Model
+  Authentication data model so search, dashboards, and alerts work without per-event extraction.
+useCase: >-
+  A security team needs Ory authentication events in their existing Splunk SIEM so credential-stuffing, brute-force,
+  impossible-travel, MFA-disabled, and account-takeover detections can run against identity activity alongside the rest
+  of their telemetry, without making Splunk a critical-path dependency of user flows.
+coreFunctionality: |-
+  - Four async Ory Action endpoints (/splunk/registration, /splunk/login, /splunk/recovery, /splunk/settings); each returns 200 immediately so user flows are never blocked.
+  - Builds a CIM Authentication event with action, app, src, src_user, user, authentication_method, signature, and signature_id fields.
+  - POSTs to Splunk HEC at /services/collector/event with Authorization: Splunk <token>, configurable index/source/sourcetype/host.
+  - Fire-and-forget: HEC errors and timeouts are logged but dropped so Splunk outages never affect Ory.
+  - Authentication method inference from flow.type (oidc / totp / webauthn / lookup_secret / fallback password).
 oryMechanism:
   - actions-webhook
 status: active

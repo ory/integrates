@@ -1,0 +1,43 @@
+# Traefik dynamic configuration.
+#
+# Wires up Traefik's forwardAuth middleware to the Ory session validator
+# in forwardauth/server.js. Traefik copies the response headers we set
+# (X-User-*, X-Session-Id, X-Auth-AAL, X-User-Metadata) into the upstream
+# request via authResponseHeaders.
+
+http:
+  middlewares:
+    ory-auth:
+      forwardAuth:
+        address: http://ory-forwardauth:4181
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-User-Id
+          - X-User-Email
+          - X-User-Name
+          - X-Session-Id
+          - X-Auth-AAL
+          - X-User-Metadata
+
+  routers:
+    api:
+      rule: PathPrefix(`/api`)
+      service: api-service
+      middlewares:
+        - ory-auth
+      entryPoints:
+        - websecure
+      tls: {}
+
+    public:
+      rule: PathPrefix(`/public`) || Path(`/health`)
+      service: api-service
+      entryPoints:
+        - websecure
+      tls: {}
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: http://your-backend:8080

@@ -8,9 +8,19 @@ category: support-helpdesk
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Zendesk is a customer service platform providing ticketing, live chat, and knowledge base capabilities. This
-  integration connects Zendesk to Ory Network to display identity context in the agent sidebar, synchronize users for
-  ticket correlation, and enable identity-aware support workflows.
+  Zendesk is a customer-service platform for ticketing, live chat, and knowledge bases. This integration mirrors Ory
+  identities into Zendesk users via async lifecycle webhooks and exposes a sidebar lookup endpoint that a Zendesk app
+  can call to render identity context (state, MFA, sessions, plan, risk) inline on every ticket.
+useCase: >-
+  A B2B SaaS support team wants the Zendesk agent view to surface "who is this customer" without leaving the ticket —
+  subscription plan, MFA status, active sessions, last login — and wants tickets correlated cleanly back to the Ory
+  identity record for downstream reporting.
+coreFunctionality: |-
+  - Receives async post-registration and post-settings Ory Action webhooks, returns 200 immediately so user flows are never blocked.
+  - Calls Zendesk POST /api/v2/users/create_or_update to upsert the corresponding Zendesk user, copying identity.id into external_id and selected metadata into Zendesk user_fields.
+  - Exposes GET /zendesk/sidebar/identity?email=... for a Zendesk sidebar app, gated by a separate ZENDESK_SIDEBAR_SECRET so the Ory webhook secret can't be reused to enumerate identities.
+  - Sidebar response includes state, MFA enrollment, active session count, last login, and metadata_public for inline agent-side rendering.
+  - Distinguishes ory_lookup_failed (502) from no-match (404) so the sidebar can render "no Ory identity found" without false alarms.
 oryMechanism:
   - actions-webhook
 status: active

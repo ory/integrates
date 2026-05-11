@@ -8,8 +8,21 @@ category: cdp-analytics
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Send `identify` and `track` calls to Segment when users register or log in via Ory. Uses Ory Actions webhooks to call
-  Segment's HTTP Tracking API.
+  Segment is a customer data platform that ingests user events and fans them out to downstream marketing, analytics, and
+  warehouse destinations. This integration sends Ory identity-lifecycle events to Segment's HTTP Tracking API: identify
+  calls keep Segment's traits in sync with Ory's identity traits, and track calls record "User Registered" and "User
+  Logged In" events for downstream activation.
+useCase: >-
+  A product team wants user-lifecycle events in Segment so the rest of their CDP graph (Marketo, Iterable, Mixpanel, the
+  data warehouse) gets the same view of who registered, who logged in, and whose profile changed, without making Segment
+  a critical-path dependency of authentication.
+coreFunctionality: |-
+  - Three async Ory Action endpoints (/segment/registration, /segment/login, /segment/settings); each returns 200 immediately so user flows are never blocked.
+  - Registration → identify (with traits) + track "User Registered" in parallel.
+  - Login → track "User Logged In".
+  - Settings → identify to refresh traits.
+  - HTTP Basic auth to Segment (write key as username, empty password); IP and User-Agent passed through Segment's context for server-side / client-side correlation.
+  - Fire-and-forget: Segment outages and 5xx responses are logged but never propagate to Ory.
 oryMechanism:
   - actions-webhook
 status: active

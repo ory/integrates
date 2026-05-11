@@ -1,0 +1,40 @@
+# Reference Docker Compose for Traefik + Ory ForwardAuth.
+#
+# Bring up Traefik, the Ory session validator, and a placeholder backend.
+# Set ORY_SDK_URL in your environment before `docker compose up`.
+
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --api.insecure=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.file.filename=/etc/traefik/dynamic-config.yaml
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Traefik dashboard (do not expose publicly)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic-config.yaml:/etc/traefik/dynamic-config.yaml:ro
+
+  ory-forwardauth:
+    build: ../forwardauth
+    environment:
+      ORY_SDK_URL: ${ORY_SDK_URL:?set ORY_SDK_URL to your Ory Network project URL}
+      ALLOWED_PATHS: /health,/public
+      # LOGIN_REDIRECT_URL: https://app.example.com/login
+    expose:
+      - "4181"
+
+  backend:
+    image: your-backend:latest
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.backend.rule=PathPrefix(`/api`)"
+      - traefik.http.routers.backend.middlewares=ory-auth@file
+    expose:
+      - "8080"

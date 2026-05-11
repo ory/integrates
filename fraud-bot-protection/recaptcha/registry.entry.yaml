@@ -2,12 +2,27 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: recaptcha
-displayName: Google reCAPTCHA v2/v3
-vendor: Google reCAPTCHA v2/v3
+displayName: Google reCAPTCHA
+vendor: Google
 category: fraud-bot-protection
 type: webhook
 maintainedBy: Community contributors
-description: 'Google reCAPTCHA is a CAPTCHA service that protects websites from spam and abuse. It offers two primary versions:'
+description: >-
+  Google reCAPTCHA protects authentication flows from automated abuse. v2 issues a visible or invisible challenge and
+  returns a pass/fail token; v3 runs entirely in the background and returns a score from 0.0 (bot) to 1.0 (human). This
+  integration adds reCAPTCHA support to Ory Network (which natively integrates Cloudflare Turnstile only) via a sync
+  pre-flow Action webhook that validates the client-side token against Google's siteverify API and interrupts the flow
+  on a fail.
+useCase: >-
+  A consumer-facing product wants to stop bot signups and credential-stuffing attempts without enrolling in Cloudflare
+  Turnstile. The team already runs Google reCAPTCHA elsewhere and wants the same protection on Ory-hosted registration
+  and login flows.
+coreFunctionality: |-
+  - Sync pre-registration and pre-login hook (response.parse: true, can_interrupt: true).
+  - Extracts the reCAPTCHA token from transient_payload.recaptcha_token and verifies it against https://www.google.com/recaptcha/api/siteverify.
+  - For v2 returns pass on success: true; for v3 also enforces RECAPTCHA_SCORE_THRESHOLD and optional RECAPTCHA_EXPECTED_ACTION.
+  - Returns 400 + a flow-level error message ("CAPTCHA verification failed") to interrupt the flow, or 200 + empty body to let it proceed.
+  - Fails closed on a siteverify outage so a Google-API hiccup doesn't silently disable bot protection.
 oryMechanism:
   - actions-webhook
 status: active

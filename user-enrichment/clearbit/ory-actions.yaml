@@ -1,0 +1,28 @@
+# Clearbit async post-registration enrichment.
+#
+# DEPRECATED: Clearbit's standalone API is no longer sold to new customers
+# after the HubSpot acquisition. Use this only if you have a legacy contract.
+#
+# The hook is fire-and-forget (response.ignore: true, can_interrupt: false).
+# Registration completes immediately; enrichment is written to metadata_admin
+# in the background via the Ory Admin API.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/clearbit/registration
+              method: POST
+              body: file://./jsonnet/registration.jsonnet
+              can_interrupt: false
+              response:
+                ignore: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

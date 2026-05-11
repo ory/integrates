@@ -1,0 +1,48 @@
+# Google reCAPTCHA pre-flow hooks.
+#
+# Sync pre-registration and pre-login (response.parse: true, can_interrupt:
+# true). The handler returns 400 with a flow message when the token is
+# missing, invalid, or below the v3 score threshold; 200 to let the flow
+# proceed.
+#
+# The client must pass the reCAPTCHA token via transient_payload:
+#   { "transient_payload": { "recaptcha_token": "03AGdBq26..." } }
+
+selfservice:
+  flows:
+    registration:
+      before:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/recaptcha/verify
+              method: POST
+              body: file://./jsonnet/verify.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    login:
+      before:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/recaptcha/verify
+              method: POST
+              body: file://./jsonnet/verify.jsonnet
+              can_interrupt: true
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

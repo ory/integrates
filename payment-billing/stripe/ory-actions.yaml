@@ -1,0 +1,46 @@
+# Stripe Customer creation + subscription enrichment hooks.
+#
+# Both hooks are sync (response.parse: true, can_interrupt: false). The
+# handler returns identity metadata updates; Ory applies them to the identity
+# transparently. The hooks fail open: if Stripe is unreachable, the handler
+# returns 200 with no metadata changes so authentication never breaks because
+# of Stripe availability.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/stripe/registration
+              method: POST
+              body: file://./jsonnet/registration.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/stripe/login
+              method: POST
+              body: file://./jsonnet/login.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

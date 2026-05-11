@@ -1,446 +1,60 @@
-# Google reCAPTCHA v2/v3 Integration with Ory Network
+# Google reCAPTCHA
 
-## Overview
+> **Maintained by:** Community contributors
 
-Google reCAPTCHA is a CAPTCHA service that protects websites from spam and abuse. It offers two primary versions:
+[Google reCAPTCHA](https://developers.google.com/recaptcha) is a bot-protection service. **v2** issues a visible (or invisible) challenge and returns a pass/fail token; **v3** runs entirely in the background and returns a score from `0.0` (bot) to `1.0` (human). Ory Network natively integrates Cloudflare Turnstile but not reCAPTCHA, so this integration adds reCAPTCHA via a sync pre-flow Action webhook that validates the client-side token against Google's `siteverify` API and either lets the flow proceed or interrupts it with a user-facing message.
 
-- **reCAPTCHA v2** — Presents users with a visible checkbox ("I'm not a robot") or an invisible challenge that triggers when suspicious activity is detected.
-- **reCAPTCHA v3** — Runs entirely in the background and returns a risk score (0.0 to 1.0) without requiring any user interaction.
+**Type:** webhook (Ory Action calls a handler during a flow)
+**Docs page:** [ory.com/docs/integrations/fraud-bot-protection/recaptcha](https://ory.com/docs/integrations/fraud-bot-protection/recaptcha)
 
-Both versions work by generating a client-side token that must be validated server-side against Google's `siteverify` API. This integration uses Ory Actions webhooks to perform that server-side validation before a registration or login flow completes.
+## Use case
 
-## Integration Architecture
+A consumer-facing product wants to stop bot signups and credential-stuffing attempts without enrolling in Cloudflare Turnstile. The team already has Google reCAPTCHA on its marketing site and wants the same protection on Ory-hosted registration and login flows. This integration runs as a pre-flow webhook that interrupts the flow before any identity is created or session is issued if the reCAPTCHA token is missing, invalid, or scores below the configured threshold.
 
-```
-User Browser                    Ory Network                     Google reCAPTCHA
-     |                               |                               |
-     |  1. Load page with             |                               |
-     |     reCAPTCHA widget           |                               |
-     |<-------------------------------|                               |
-     |                               |                               |
-     |  2. User completes challenge   |                               |
-     |     (v2) or score generated    |                               |
-     |     (v3). Token returned.      |                               |
-     |                               |                               |
-     |  3. Submit form with           |                               |
-     |     reCAPTCHA token in         |                               |
-     |     transient_payload          |                               |
-     |------------------------------->|                               |
-     |                               |                               |
-     |                               |  4. Pre-hook fires Ory Action  |
-     |                               |     (webhook). Jsonnet builds  |
-     |                               |     siteverify request.        |
-     |                               |------------------------------->|
-     |                               |                               |
-     |                               |  5. Google responds with       |
-     |                               |     success/failure + score    |
-     |                               |<-------------------------------|
-     |                               |                               |
-     |                               |  6. If valid, flow continues.  |
-     |                               |     If invalid, flow is        |
-     |                               |     rejected with error.       |
-     |                               |                               |
-     |  7. Success or error           |                               |
-     |<-------------------------------|                               |
-```
+## How it works
 
-## Ory Products
-
-- **Ory Kratos (Identity)** — via Ory Actions (webhooks) as a pre-registration or pre-login hook.
+1. The client loads `recaptcha/api.js`, generates a token (`grecaptcha.execute` for v3, or via the widget callback for v2), and submits it on the flow request via `transient_payload.recaptcha_token`.
+2. Ory fires the sync pre-flow Action webhook to this handler. The handler verifies the shared secret.
+3. The handler POSTs `{secret, response, remoteip}` to Google's `https://www.google.com/recaptcha/api/siteverify` (form-urlencoded).
+4. For v2: pass if `success: true`. For v3: pass if `success: true` AND `score >= RECAPTCHA_SCORE_THRESHOLD` AND (when set) `action == RECAPTCHA_EXPECTED_ACTION`.
+5. Pass returns `200` with an empty body (flow continues). Fail returns `400` with `{messages:[{message:"…", type:"error"}]}` which Ory renders as a flow-level error message. Verify outages fail **closed** — a Google-API outage rejects the flow rather than silently letting bots through.
 
 ## Prerequisites
 
-1. **Google reCAPTCHA account** — Sign up at [https://www.google.com/recaptcha/admin](https://www.google.com/recaptcha/admin).
-2. **Site key** — The public key embedded in your frontend HTML.
-3. **Secret key** — The private key used for server-side verification. This will be stored in Ory Actions webhook configuration.
-4. **Ory Network project** — An active Ory Network project with a custom UI (self-hosted or Ory Account Experience with custom domain).
+- A Google reCAPTCHA admin account ([www.google.com/recaptcha/admin](https://www.google.com/recaptcha/admin)) with a site key and secret key for v2 or v3.
+- An Ory Network project with a custom registration/login UI that can attach `transient_payload`.
+- A deployment target for the webhook handler (any Node.js runtime: Cloud Run, Heroku, Vercel, Lambda behind API Gateway, your own VM).
 
-## Configuration
-
-### Ory Actions Webhook Setup
-
-Configure a **pre-registration** (and optionally **pre-login**) webhook in your Ory Network project that calls Google's siteverify API.
-
-Using the Ory CLI:
+## Deploy the webhook handler
 
 ```bash
-ory patch identity-config <project-id> \
-  --replace '/selfservice/flows/registration/before/hooks=[
-    {
-      "hook": "web_hook",
-      "config": {
-        "url": "https://www.google.com/recaptcha/api/siteverify",
-        "method": "POST",
-        "body": "base64://YOUR_BASE64_ENCODED_JSONNET",
-        "response": {
-          "ignore": false,
-          "parse": true
-        },
-        "auth": {
-          "type": "api_key",
-          "config": {
-            "name": "Content-Type",
-            "value": "application/x-www-form-urlencoded",
-            "in": "header"
-          }
-        }
-      }
-    }
-  ]'
+cd webhook/
+cp .env.example .env
+# Fill in ORY_WEBHOOK_SECRET, RECAPTCHA_SECRET_KEY, and (for v3) tune the threshold.
+npm install
+npm start
 ```
 
-### Jsonnet Template
+The server listens on the port specified in `.env` (default 3000) and exposes:
 
-The Jsonnet template extracts the reCAPTCHA token from `transient_payload` and constructs the verification request body.
+- `GET /health` — readiness check.
+- `POST /recaptcha/verify` — Ory pre-flow Action target.
 
-```jsonnet
-function(ctx)
-{
-  // Extract the reCAPTCHA token from the flow's transient_payload
-  local recaptcha_token = ctx.flow.transient_payload.recaptcha_token,
+## Configure Ory
 
-  // Build the POST body for Google's siteverify endpoint
-  body: "secret=YOUR_RECAPTCHA_SECRET_KEY&response=" + recaptcha_token,
-}
-```
+1. In the Ory Console, configure the Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml) (pre-registration and pre-login).
+2. The body template is [`jsonnet/verify.jsonnet`](jsonnet/verify.jsonnet).
+3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
+4. In your custom UI, load `recaptcha/api.js`, generate a token, and include it in `transient_payload.recaptcha_token` on the flow submission. A working browser snippet is in the [docs page](https://ory.com/docs/integrations/fraud-bot-protection/recaptcha).
 
-> **Note:** Replace `YOUR_RECAPTCHA_SECRET_KEY` with your actual reCAPTCHA secret key. In production, consider using Ory's environment variable support or secrets management to avoid hardcoding the key.
+## Troubleshooting
 
-## Technical Details
+- **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` in `.env` doesn't match `X-Webhook-Secret` in the Ory hook config.
+- **Every flow shows "Please complete the CAPTCHA verification"** — the client isn't attaching `transient_payload.recaptcha_token`. Confirm the token reaches the handler by adding a temporary `console.log(req.body.flow?.transient_payload)` line.
+- **Every v3 flow shows "CAPTCHA verification failed"** with score-related logs — `RECAPTCHA_SCORE_THRESHOLD` is too aggressive for your traffic. Start at `0.3` while tuning.
+- **`invalid-input-secret` in handler logs** — `RECAPTCHA_SECRET_KEY` is wrong, or you're using a v2 secret with v3 (and vice versa).
+- **`timeout-or-duplicate` errors** — tokens are single-use and short-lived (~2 minutes). A retry that reuses the token will always fail.
 
-### Full Webhook Configuration (YAML)
+## License
 
-```yaml
-selfservice:
-  flows:
-    registration:
-      before:
-        hooks:
-          - hook: web_hook
-            config:
-              url: "https://www.google.com/recaptcha/api/siteverify"
-              method: POST
-              body: "base64://<base64-encoded-jsonnet>"
-              can_interrupt: true
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: Content-Type
-                  value: application/x-www-form-urlencoded
-                  in: header
-    login:
-      before:
-        hooks:
-          - hook: web_hook
-            config:
-              url: "https://www.google.com/recaptcha/api/siteverify"
-              method: POST
-              body: "base64://<base64-encoded-jsonnet>"
-              can_interrupt: true
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: Content-Type
-                  value: application/x-www-form-urlencoded
-                  in: header
-```
-
-### Jsonnet Template (Full)
-
-```jsonnet
-function(ctx)
-{
-  // Extract the reCAPTCHA response token passed from the client
-  local recaptcha_token = ctx.flow.transient_payload.recaptcha_token,
-
-  // Construct the request body for Google's siteverify API
-  // Format: application/x-www-form-urlencoded
-  body: "secret=YOUR_RECAPTCHA_SECRET_KEY&response=" + recaptcha_token
-        + "&remoteip=" + ctx.request_headers["X-Forwarded-For"][0],
-
-  // Cancel the flow if verification fails
-  // The webhook response parser checks for { "success": true }
-  // If success is false, the flow is interrupted.
-}
-```
-
-### Google siteverify Request
-
-```
-POST https://www.google.com/recaptcha/api/siteverify
-Content-Type: application/x-www-form-urlencoded
-
-secret=YOUR_SECRET_KEY&response=RECAPTCHA_TOKEN&remoteip=USER_IP
-```
-
-### Google siteverify Response
-
-**Successful verification (v2):**
-
-```json
-{
-  "success": true,
-  "challenge_ts": "2024-01-15T12:00:00Z",
-  "hostname": "your-app.example.com"
-}
-```
-
-**Successful verification (v3):**
-
-```json
-{
-  "success": true,
-  "score": 0.9,
-  "action": "login",
-  "challenge_ts": "2024-01-15T12:00:00Z",
-  "hostname": "your-app.example.com"
-}
-```
-
-**Failed verification:**
-
-```json
-{
-  "success": false,
-  "error-codes": ["timeout-or-duplicate"]
-}
-```
-
-### Error Codes
-
-| Code | Description |
-|------|-------------|
-| `missing-input-secret` | The secret parameter is missing |
-| `invalid-input-secret` | The secret parameter is invalid |
-| `missing-input-response` | The response parameter is missing |
-| `invalid-input-response` | The response parameter is invalid or malformed |
-| `bad-request` | The request is invalid or malformed |
-| `timeout-or-duplicate` | The response is no longer valid (expired or already used) |
-
-## Flow Integration
-
-### Recommended Flows to Protect
-
-| Flow | Priority | Hook Type | Notes |
-|------|----------|-----------|-------|
-| Registration | High | `before` (pre-registration) | Primary defense against bot signups |
-| Login | Medium | `before` (pre-login) | Prevents credential stuffing attacks |
-| Recovery | Medium | `before` (pre-recovery) | Prevents account enumeration via recovery |
-| Verification | Low | `before` (pre-verification) | Optional additional protection |
-
-### Passing the Token via transient_payload
-
-When submitting a self-service flow, include the reCAPTCHA token in the `transient_payload` field of the request body:
-
-```json
-{
-  "method": "password",
-  "traits": {
-    "email": "user@example.com"
-  },
-  "password": "secure-password",
-  "transient_payload": {
-    "recaptcha_token": "03AGdBq26..."
-  }
-}
-```
-
-## Client-Side Integration
-
-### reCAPTCHA v2 (Checkbox)
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-</head>
-<body>
-  <form id="registration-form">
-    <!-- Your Ory registration form fields -->
-    <input type="email" name="traits.email" placeholder="Email" />
-    <input type="password" name="password" placeholder="Password" />
-
-    <!-- reCAPTCHA v2 widget -->
-    <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY" data-callback="onRecaptchaSuccess"></div>
-
-    <button type="submit">Register</button>
-  </form>
-
-  <script>
-    let recaptchaToken = '';
-
-    function onRecaptchaSuccess(token) {
-      recaptchaToken = token;
-    }
-
-    document.getElementById('registration-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      if (!recaptchaToken) {
-        alert('Please complete the reCAPTCHA challenge.');
-        return;
-      }
-
-      // Get the current Ory registration flow
-      const flowId = new URLSearchParams(window.location.search).get('flow');
-
-      const response = await fetch(`https://<your-ory-project>.projects.oryapis.com/self-service/registration?flow=${flowId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: 'password',
-          traits: {
-            email: document.querySelector('[name="traits.email"]').value,
-          },
-          password: document.querySelector('[name="password"]').value,
-          transient_payload: {
-            recaptcha_token: recaptchaToken,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      // Handle response...
-    });
-  </script>
-</body>
-</html>
-```
-
-### reCAPTCHA v3 (Invisible / Score-Based)
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="https://www.google.com/recaptcha/api.js?render=YOUR_SITE_KEY"></script>
-</head>
-<body>
-  <form id="registration-form">
-    <input type="email" name="traits.email" placeholder="Email" />
-    <input type="password" name="password" placeholder="Password" />
-    <button type="submit">Register</button>
-  </form>
-
-  <script>
-    document.getElementById('registration-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      // Execute reCAPTCHA v3 and get a token
-      const recaptchaToken = await grecaptcha.execute('YOUR_SITE_KEY', { action: 'register' });
-
-      const flowId = new URLSearchParams(window.location.search).get('flow');
-
-      const response = await fetch(`https://<your-ory-project>.projects.oryapis.com/self-service/registration?flow=${flowId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          method: 'password',
-          traits: {
-            email: document.querySelector('[name="traits.email"]').value,
-          },
-          password: document.querySelector('[name="password"]').value,
-          transient_payload: {
-            recaptcha_token: recaptchaToken,
-          },
-        }),
-      });
-
-      const data = await response.json();
-      // Handle response...
-    });
-  </script>
-</body>
-</html>
-```
-
-### React Example
-
-```jsx
-import { useEffect, useCallback } from 'react';
-
-const RECAPTCHA_SITE_KEY = 'YOUR_SITE_KEY';
-
-function RegistrationForm() {
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
-    document.head.appendChild(script);
-    return () => document.head.removeChild(script);
-  }, []);
-
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-
-    const token = await window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'register' });
-
-    // Submit to Ory with transient_payload
-    const response = await fetch('/self-service/registration?flow=FLOW_ID', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method: 'password',
-        traits: { email: 'user@example.com' },
-        password: 'secure-password',
-        transient_payload: {
-          recaptcha_token: token,
-        },
-      }),
-    });
-  }, []);
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* form fields */}
-      <button type="submit">Register</button>
-    </form>
-  );
-}
-```
-
-## Testing
-
-### Test Keys (reCAPTCHA v2)
-
-Google provides test keys that always pass validation:
-
-| Key Type | Value |
-|----------|-------|
-| Site key | `6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI` |
-| Secret key | `6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe` |
-
-> **Warning:** These test keys are for development only. They will accept all verification requests. Never use them in production.
-
-### reCAPTCHA v3 Testing
-
-reCAPTCHA v3 does not have dedicated test keys. Use your real keys in a development environment and check the score returned:
-
-- **Score 1.0** — Very likely a legitimate user
-- **Score 0.0** — Very likely a bot
-- Recommended threshold: **0.5** (adjust based on your use case)
-
-### Verification Steps
-
-1. Register for reCAPTCHA keys at [https://www.google.com/recaptcha/admin](https://www.google.com/recaptcha/admin).
-2. Add the site key to your frontend HTML.
-3. Configure the Ory Actions webhook with the Jsonnet template (base64-encoded).
-4. Test with the Google test keys to confirm the webhook fires correctly.
-5. Submit a registration flow and verify the reCAPTCHA token is validated before the identity is created.
-6. Test with an invalid/expired token and confirm the flow is rejected.
-
-## Resources
-
-- [Google reCAPTCHA Documentation](https://developers.google.com/recaptcha/docs/display)
-- [reCAPTCHA v3 Documentation](https://developers.google.com/recaptcha/docs/v3)
-- [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin)
-- [Ory Actions (Webhooks) Documentation](https://www.ory.sh/docs/actions/overview)
-- [Ory Kratos Self-Service Flows](https://www.ory.sh/docs/kratos/self-service)
-- [Ory transient_payload Documentation](https://www.ory.sh/docs/kratos/self-service#transient-payload)
-- [reCAPTCHA siteverify API Reference](https://developers.google.com/recaptcha/docs/verify)
+Apache-2.0. SPDX header at the top of each source file.

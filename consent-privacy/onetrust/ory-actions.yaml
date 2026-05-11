@@ -1,0 +1,31 @@
+# OneTrust consent capture hook.
+#
+# Sync hook (response.parse: true, can_interrupt: false). The handler returns
+# updated identity.metadata_public.consent so Ory records the user's choices
+# immediately on the new identity. The OneTrust receipt call happens in the
+# background after the response is flushed; if OneTrust is unreachable, the
+# consent record in Ory is still preserved.
+#
+# The client must pass consent choices via transient_payload:
+#   { "transient_payload": { "consent": { "marketing": true, "analytics": false } } }
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-deployed-handler.example.com/onetrust/registration
+              method: POST
+              body: file://./jsonnet/registration.jsonnet
+              can_interrupt: false
+              response:
+                ignore: false
+                parse: true
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: <your-shared-secret>
+                  in: header

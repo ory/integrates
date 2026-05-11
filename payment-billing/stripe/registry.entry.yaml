@@ -8,8 +8,20 @@ category: payment-billing
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Bidirectional integration between Ory Network and Stripe for customer lifecycle management and subscription-aware
-  authentication.
+  Stripe is a payment-processing and subscription-billing platform. This integration creates a Stripe Customer for every
+  Ory identity on registration and refreshes the identity's metadata_public.billing with the current subscription status
+  on every login, so the application can gate features by plan without an extra round trip to Stripe.
+useCase: >-
+  A SaaS product wants its session to know "is this user on Free, Pro, or Enterprise?" without each protected route
+  reading from Stripe directly. The integration links the Stripe Customer to the Ory identity at registration and
+  refreshes the cached billing state at every login so feature gates, billing pages, and admin tools can read
+  session.identity.metadata_public.billing instead of calling Stripe.
+coreFunctionality: |-
+  - Sync post-registration hook: stripe.customers.create with an idempotency key derived from identity.id, then returns metadata_admin.stripe_customer_id and a "free / none" baseline in metadata_public.billing.
+  - Sync post-login hook: stripe.subscriptions.list for the linked customer, projects the latest subscription into metadata_public.billing (status, plan, current_period_end), returns it for Ory to apply.
+  - Idempotency key ory-customer-<identity.id> prevents duplicate Customer creation on webhook retry.
+  - Both hooks fail open: a Stripe outage returns 200 with no metadata changes so authentication never breaks.
+  - Stripe API version pinned via STRIPE_API_VERSION env; bumps are explicit decisions, not silent updates.
 oryMechanism:
   - actions-webhook
 status: active
