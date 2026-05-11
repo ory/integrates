@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/traefik",
+  "name": "@ory-integrates/traefik",
   "version": "1.0.0",
   "description": "Ory session validation middleware for Traefik ForwardAuth — translates Ory session data into upstream headers",
   "main": "dist/handler.js",

@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/segment",
+  "name": "@ory-integrates/segment",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for Segment CDP integration",
   "main": "dist/handler.js",

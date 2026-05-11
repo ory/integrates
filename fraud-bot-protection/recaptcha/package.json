@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/recaptcha",
+  "name": "@ory-integrates/recaptcha",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for Google reCAPTCHA v2/v3 validation",
   "main": "dist/handler.js",

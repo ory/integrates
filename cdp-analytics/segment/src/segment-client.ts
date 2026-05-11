@@ -45,7 +45,7 @@ export class SegmentClient {
       timestamp: timestamp || new Date().toISOString(),
       messageId: this.generateMessageId(),
       context: {
-        library: { name: "@ory-integrations/segment", version: "1.0.0" },
+        library: { name: "@ory-integrates/segment", version: "1.0.0" },
         ip: context?.ip,
         userAgent: context?.userAgent,
       },
@@ -69,7 +69,7 @@ export class SegmentClient {
       timestamp: timestamp || new Date().toISOString(),
       messageId: this.generateMessageId(),
       context: {
-        library: { name: "@ory-integrations/segment", version: "1.0.0" },
+        library: { name: "@ory-integrates/segment", version: "1.0.0" },
         ip: context?.ip,
         userAgent: context?.userAgent,
       },

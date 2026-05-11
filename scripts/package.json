@@ -1,8 +1,8 @@
 {
-  "name": "ory-integrations-scripts",
+  "name": "ory-integrates-scripts",
   "version": "0.1.0",
   "private": true,
-  "description": "Tooling for the ory/integrations registry.",
+  "description": "Tooling for the ory/integrates registry.",
   "scripts": {
     "build-registry": "node build-registry.js"
   },

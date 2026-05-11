@@ -5,7 +5,7 @@
  * LaunchDarkly evaluation contexts, enabling identity-aware feature flags.
  *
  * Usage:
- *   import { OryLaunchDarkly } from '@ory-integrations/launchdarkly';
+ *   import { OryLaunchDarkly } from '@ory-integrates/launchdarkly';
  *
  *   const oryLD = new OryLaunchDarkly(ldClient);
  *

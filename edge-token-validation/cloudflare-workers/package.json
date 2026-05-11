@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/cloudflare-workers",
+  "name": "@ory-integrates/cloudflare-workers",
   "version": "1.0.0",
   "description": "Cloudflare Worker for validating Ory sessions and JWTs at the edge",
   "main": "dist/worker.js",

@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/stripe",
+  "name": "@ory-integrates/stripe",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for Stripe integration — creates customers on registration, enriches sessions with subscription data on login",
   "main": "dist/handler.js",

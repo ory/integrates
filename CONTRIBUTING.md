@@ -1,4 +1,4 @@
-# Contributing to ory/integrations
+# Contributing to ory/integrates
 
 Thanks for considering a contribution. This repo is intentionally simple. The bar is: **the integration works, the README is enough to use it without reading the source, and the patterns match other integrations in the same category.**
 

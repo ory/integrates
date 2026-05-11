@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/splunk",
+  "name": "@ory-integrates/splunk",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for Splunk SIEM integration via HTTP Event Collector",
   "main": "dist/handler.js",

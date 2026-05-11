@@ -7,7 +7,7 @@
 apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
-  name: ory-integrations
+  name: ory-integrates
   generated: 2026-05-04T22:37:38Z
 integrations:
   - name: skyfire

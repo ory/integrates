@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/clearbit",
+  "name": "@ory-integrates/clearbit",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for Clearbit user enrichment — enriches B2B signups with company data",
   "main": "dist/handler.js",

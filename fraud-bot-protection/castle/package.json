@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/castle",
+  "name": "@ory-integrates/castle",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for Castle.io adaptive risk scoring — triggers MFA step-up based on risk",
   "main": "dist/handler.js",

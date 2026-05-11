@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/svix",
+  "name": "@ory-integrates/svix",
   "version": "1.0.0",
   "description": "Ory Actions event router — publishes identity events to Svix for reliable webhook delivery",
   "main": "dist/handler.js",

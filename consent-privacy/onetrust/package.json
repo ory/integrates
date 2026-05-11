@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/onetrust",
+  "name": "@ory-integrates/onetrust",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for OneTrust consent management — records consent on registration, handles DSR requests",
   "main": "dist/handler.js",

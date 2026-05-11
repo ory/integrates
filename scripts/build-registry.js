@@ -78,7 +78,7 @@ const header = `# Ory Integrations Registry
 apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
-  name: ory-integrations
+  name: ory-integrates
   generated: ${generated}
 integrations:
 `;

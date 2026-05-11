@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/zendesk",
+  "name": "@ory-integrates/zendesk",
   "version": "1.0.0",
   "description": "Ory Actions webhook handler for Zendesk — syncs identity data to Zendesk users for support context",
   "main": "dist/handler.js",

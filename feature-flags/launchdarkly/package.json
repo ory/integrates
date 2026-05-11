@@ -1,5 +1,5 @@
 {
-  "name": "@ory-integrations/launchdarkly",
+  "name": "@ory-integrates/launchdarkly",
   "version": "1.0.0",
   "description": "Ory + LaunchDarkly SDK wrapper — identity-aware feature flag evaluation using Ory session data",
   "main": "dist/index.js",
