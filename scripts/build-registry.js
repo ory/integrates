@@ -15,7 +15,7 @@ const yaml = require("js-yaml");
 
 const REPO_ROOT = path.resolve(__dirname, "..");
 
-const SKIP_DIRS = new Set([".github", "_examples", "scripts"]);
+const SKIP_DIRS = new Set([".github", "_examples", "docs", "scripts"]);
 
 function walkCategories(root) {
   return fs

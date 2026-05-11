@@ -16,7 +16,7 @@
 - [ ] README explains what the integration does, deploy steps, and Ory configuration
 - [ ] `Maintained by:` line set in README
 - [ ] Tested with a real Ory Network project (free dev projects are fine)
-- [ ] If webhook-style: runs locally with `npm install && node server.js`
+- [ ] If webhook-style: runs locally with `npm install && npm start`
 
 ## Related Ory docs
 
