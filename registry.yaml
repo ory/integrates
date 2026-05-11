@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-11T15:01:52Z
+  generated: 2026-05-11T20:46:18Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -1153,11 +1153,26 @@ integrations:
     type: webhook
     description: >-
       Equifax provides credit-anchored identity verification through its Digital Identity Trust APIs. This integration
-      calls Equifax from an Ory Actions webhook to verify identity attributes against credit-bureau data and writes the
-      resulting trust score back into the Ory identity. Common in onboarding flows for financial services and other
-      compliance-heavy use cases.
+      calls Equifax from an Ory Action webhook during registration to verify identity attributes against credit-bureau
+      data and returns a decision plus trust score so Ory's post-flow Action can gate the flow.
     status: active
     vendor: Equifax
+    useCase: >-
+      A regulated B2C product (fintech, lending, insurance) needs credit-anchored identity proofing on every signup to
+      satisfy KYC requirements. Equifax returns a deterministic decision and confidence score; the integration runs the
+      lookup inline with Ory registration so high-confidence identities pass through and low-confidence ones can be
+      blocked or routed to step-up verification.
+    coreFunctionality: >-
+      - Sync post-registration Ory Action webhook (response.parse: true, can_interrupt: true).
+
+      - Exchanges Equifax OAuth2 client credentials for an access token, cached and refreshed ~5 min before expiry.
+
+      - Calls Equifax's identity-verification endpoint with first_name, last_name, date_of_birth, optional ssn_last_four,
+      and address.
+
+      - Returns decision/outcome, trust_score, and reference_id to Ory so the post-flow Action can apply policy.
+
+      - 502 on Equifax errors / outages so the verdict is never silently a pass.
     oryMechanism:
       - actions-webhook
   - name: gbg-acuant
@@ -1275,11 +1290,26 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Duo Security (a Cisco company) is a market-leading enterprise MFA platform with strong push and passcode flows. This
-      integration sends a Duo push challenge from an Ory Actions webhook on login, polls Duo for the user's response, and
-      returns the verdict so Ory can step up authentication or fail the flow.
+      Duo Security (a Cisco company) is an enterprise MFA platform with strong push and passcode flows. This integration
+      sends a Duo push challenge from an Ory Action webhook on login, polls Duo for the user's response, and returns the
+      verdict so Ory can step up authentication or fail the flow.
     status: active
-    vendor: Duo Security
+    vendor: Cisco
+    useCase: >-
+      An enterprise has already standardized its workforce on Duo Mobile for MFA and wants to reuse that enrollment from
+      Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Duo's push challenge runs inline
+      with Ory login; the integration relays the verdict so Ory can issue the session or fail the flow.
+    coreFunctionality: >-
+      - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
+
+      - Signs Duo Auth API requests with HMAC-SHA1 over a canonicalized request line per Duo's spec.
+
+      - POSTs /auth/v2/auth (factor=push, async=1) and long-polls /auth/v2/auth_status?txid=... until the user responds or
+      DUO_POLL_DEADLINE_SECONDS elapses.
+
+      - Returns { result: allow | deny | waiting, mfa_passed } so the post-flow Action can gate the session.
+
+      - 502 on Duo errors so a Duo outage never silently grants MFA.
     oryMechanism:
       - actions-webhook
   - name: okta-verify
