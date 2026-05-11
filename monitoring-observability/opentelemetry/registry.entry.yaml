@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: opentelemetry
+displayName: OpenTelemetry
+vendor: OpenTelemetry
+category: monitoring-observability
+type: config
+maintainedBy: Community contributors
+description: >-
+  Configure Ory Network's native OpenTelemetry (OTLP) export for traces, metrics, and logs. Includes OpenTelemetry
+  Collector configuration, pipeline setup, and downstream backend integration.
+oryMechanism:
+  - standards
+status: active

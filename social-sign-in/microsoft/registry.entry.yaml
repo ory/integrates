@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: microsoft
+displayName: Sign in with Microsoft - Ory Network
+vendor: Sign in with Microsoft - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Microsoft identity platform supports authentication for both consumer Microsoft accounts (Outlook.com, Xbox, Hotmail)
+  and organizational accounts (Azure AD / Microsoft Entra ID). This makes it suitable for both B2C and B2B applications.
+  Integrating Microsoft with Ory Network provides access to the broad Microsoft ecosystem.
+oryMechanism:
+  - standards
+status: active

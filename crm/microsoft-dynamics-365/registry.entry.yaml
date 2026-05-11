@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: microsoft-dynamics-365
+displayName: Microsoft Dynamics 365
+vendor: Microsoft Dynamics 365
+category: crm
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Microsoft Dynamics 365 is a major enterprise CRM and ERP platform. This integration syncs Ory identities to Dynamics
+  365 contact records via the Dataverse Web API (OData v4) using an Ory Actions webhook. When a user registers or
+  updates their profile, the handler creates or upserts the corresponding Dynamics contact.
+oryMechanism:
+  - actions-webhook
+status: active

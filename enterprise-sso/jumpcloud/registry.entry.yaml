@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: jumpcloud
+displayName: JumpCloud SSO
+vendor: JumpCloud SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  JumpCloud is a cloud-based directory platform that provides unified identity, access, and device management. As an
+  alternative to traditional Active Directory, JumpCloud serves as a modern cloud directory for organizations looking to
+  manage identities across platforms (Windows, macOS, Linux) without on-premises infrastructure.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: mailchimp-transactional
+displayName: Mailchimp Transactional (Mandrill) — Email Provider
+vendor: Mailchimp Transactional (Mandrill) — Email Provider
+category: email-providers
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Mailchimp Transactional (formerly Mandrill) is the transactional email service built into the Mailchimp platform. It
+  is designed for automated, triggered emails such as verification codes, password resets, and notifications. Mailchimp
+  Transactional is a natural choice for organizations already using Mailchimp for marketing, as it shares the same
+  account, billing, and sender ...
+oryMechanism:
+  - courier-spi
+status: active

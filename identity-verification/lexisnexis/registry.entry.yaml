@@ -1,0 +1,14 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: lexisnexis
+displayName: Lexisnexis
+vendor: Lexisnexis
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  LexisNexis identity data verification (NAS/NAP/CVI scoring) integrated with Ory Network via Ory Actions webhooks.
+oryMechanism:
+  - standards
+status: active

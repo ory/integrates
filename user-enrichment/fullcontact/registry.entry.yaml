@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: fullcontact
+displayName: FullContact
+vendor: FullContact
+category: user-enrichment
+type: config
+maintainedBy: Community contributors
+description: >-
+  FullContact is a person and company data enrichment platform that resolves identity fragments (email, phone, social
+  handle) into unified person and company profiles. This integration enriches Ory Network identities after registration
+  with demographic, firmographic, and social data, enabling personalization and lead qualification without additional
+  form fields.
+oryMechanism:
+  - standards
+status: active

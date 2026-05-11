@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: brevo
+displayName: Brevo (formerly Sendinblue) — Email Provider
+vendor: Brevo (formerly Sendinblue) — Email Provider
+category: email-providers
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Brevo (formerly Sendinblue) is a European email and marketing platform with strong GDPR posture. Brevo exposes both an
+  SMTP relay and a REST v3 API for transactional email, and can be wired up as an Ory Network courier for verification,
+  recovery, and MFA email delivery. Brevo is a good fit for customers that want EU-hosted email infrastructure or need
+  Brevo-side analytics on identity-driven email.
+oryMechanism:
+  - courier-spi
+status: active

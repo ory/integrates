@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: prove
+displayName: Prove
+vendor: Prove
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Prove (formerly Payfone) is a phone-centric identity verification platform that uses telecom signals and phone
+  intelligence to verify identities, detect SIM swaps, and authenticate users via their mobile phone number. This
+  integration adds pre-registration or post-registration identity verification to Ory Network flows, enabling
+  phone-based identity proofing and fraud detect...
+oryMechanism:
+  - standards
+status: active

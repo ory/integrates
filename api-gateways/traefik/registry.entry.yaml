@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: traefik
+displayName: Traefik Proxy + Ory Network
+vendor: Traefik Proxy + Ory Network
+category: api-gateways
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Traefik is a modern, cloud-native reverse proxy and load balancer that integrates natively with container
+  orchestrators (Docker, Kubernetes, etc.). This integration uses Traefik's **ForwardAuth middleware** to delegate
+  authentication decisions to Ory Network's session and token validation endpoints.
+oryMechanism:
+  - actions-webhook
+status: active

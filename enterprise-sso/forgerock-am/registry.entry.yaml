@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: forgerock-am
+displayName: ForgeRock Access Management
+vendor: ForgeRock Access Management
+category: enterprise-sso
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  ForgeRock Access Management (now part of Ping Identity) is a widely deployed enterprise IAM platform that supports
+  OIDC, OAuth 2.0, and SAML 2.0. Customers running ForgeRock AM upstream can federate it into Ory Network as either an
+  OIDC or SAML identity provider, allowing existing enterprise sessions to flow through to Ory-protected applications.
+oryMechanism:
+  - standards
+status: active

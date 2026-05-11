@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: okta-verify
+displayName: Okta Verify
+vendor: Okta Verify
+category: mfa
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Okta Verify is Okta's first-party MFA app supporting push notifications and TOTP. This integration sends an Okta Verify
+  push from an Ory Actions webhook on login, polls Okta for the user's response, and returns the verdict so Ory can step
+  up authentication or fail the flow. This is the right choice when the customer's workforce is already enrolled in Okta
+  Verify and you want to reuse that factor enrollment from Ory.
+oryMechanism:
+  - actions-webhook
+status: active

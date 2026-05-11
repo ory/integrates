@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: clearbit
+displayName: Clearbit (HubSpot)
+vendor: Clearbit (HubSpot)
+category: user-enrichment
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Clearbit (now part of HubSpot) is a data enrichment platform that provides company and person data from email
+  addresses and domains. This integration enriches Ory Network identities with firmographic and demographic data after
+  registration, enabling personalized onboarding, lead scoring, and account-based experiences without requiring users to
+  fill in lengthy forms.
+oryMechanism:
+  - actions-webhook
+status: active

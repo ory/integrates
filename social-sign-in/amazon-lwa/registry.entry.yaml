@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: amazon-lwa
+displayName: Login with Amazon (LWA) - Ory Network
+vendor: Login with Amazon (LWA) - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Login with Amazon (LWA) allows users to authenticate using their Amazon account credentials. Integrating LWA with Ory
+  Network provides a seamless sign-in experience for consumer-facing applications, particularly those in the e-commerce
+  space. Amazon has hundreds of millions of active customer accounts, making it a valuable authentication option for
+  retail, marketplace, and c...
+oryMechanism:
+  - standards
+status: active

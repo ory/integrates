@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: hid-global
+displayName: HID Global Identity Services SSO
+vendor: HID Global Identity Services SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  HID Global is a leader in trusted identity solutions, providing both physical and digital identity management. HID
+  Global's identity services unify physical access (badge readers, smart cards, mobile credentials) with digital
+  identity (SSO, MFA, certificate-based authentication). This makes HID Global a unique IdP for organizations in
+  government, healthcare, financial servic...
+oryMechanism:
+  - standards
+status: active

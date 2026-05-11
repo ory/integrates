@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: keycloak
+displayName: Keycloak SSO
+vendor: Keycloak SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  Keycloak is an open-source identity and access management solution maintained by Red Hat. It provides SAML 2.0, OpenID
+  Connect, and OAuth 2.0 federation capabilities, making it a popular choice for enterprises that need a self-hosted or
+  hybrid identity provider. Keycloak is widely deployed in organizations that require full control over their identity
+  infrastructure, need to...
+oryMechanism:
+  - standards
+status: active

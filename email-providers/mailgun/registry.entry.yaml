@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: mailgun
+displayName: Mailgun — Email Provider
+vendor: Mailgun — Email Provider
+category: email-providers
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Mailgun is an email delivery service built for developers, offering both SMTP and REST API interfaces. It provides
+  robust email sending, tracking, and analytics capabilities. Mailgun is well-suited for transactional email with strong
+  deliverability tooling, including automatic suppression management, detailed event logs, and built-in email
+  validation.
+oryMechanism:
+  - courier-spi
+status: active

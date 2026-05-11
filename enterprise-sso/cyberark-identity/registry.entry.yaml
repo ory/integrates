@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: cyberark-identity
+displayName: CyberArk Identity
+vendor: CyberArk Identity
+category: enterprise-sso
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  CyberArk Identity (the SSO and identity portion of the CyberArk platform, distinct from CyberArk's PAM product) exposes
+  standard SAML 2.0 and OIDC endpoints for federation. It can be configured as an upstream identity provider in Ory
+  Network to bring CyberArk-managed enterprise identities into Ory-protected applications. PAM-specific REST integration
+  is a separate work item — open an issue if you need it.
+oryMechanism:
+  - standards
+status: active

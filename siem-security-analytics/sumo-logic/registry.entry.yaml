@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: sumo-logic
+displayName: Sumo Logic + Ory Network
+vendor: Sumo Logic + Ory Network
+category: siem-security-analytics
+type: config
+maintainedBy: Community contributors
+description: >-
+  Sumo Logic is a cloud-native machine data analytics platform that provides log management, security analytics (Cloud
+  SIEM), and observability. This integration ingests Ory Network identity and authentication events into Sumo Logic via
+  an HTTP Source (Hosted Collector), enabling security monitoring, threat detection, and compliance reporting.
+oryMechanism:
+  - standards
+status: active

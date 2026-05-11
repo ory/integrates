@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: tiktok
+displayName: TikTok — Social Sign-In
+vendor: TikTok — Social Sign-In
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  TikTok is one of the largest short-video platforms globally with strong reach in younger demographics. The TikTok Login
+  Kit exposes a standard OAuth 2.0 / OIDC-style flow that Ory Kratos can consume as a generic OIDC provider, giving
+  customers a frictionless sign-in for TikTok's user base.
+oryMechanism:
+  - standards
+status: active

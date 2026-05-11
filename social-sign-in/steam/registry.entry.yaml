@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: steam
+displayName: Steam Login - Ory Network
+vendor: Steam Login - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  > **Status: Community/Proposed** — This integration does not have official Ory documentation. Steam uses **OpenID
+  2.0** (legacy), NOT OAuth 2.0 or OIDC, which requires special handling.
+oryMechanism:
+  - standards
+status: active

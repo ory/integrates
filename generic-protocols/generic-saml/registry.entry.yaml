@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: generic-saml
+displayName: Generic SAML 2.0 SP
+vendor: Generic SAML 2.0 SP
+category: generic-protocols
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Ory Network supports SAML 2.0 Service Provider (SP) integration via Ory Polis, enabling enterprise SSO with any SAML
+  2.0 compliant Identity Provider (IdP). This guide covers configuring Ory as a SAML SP for any IdP, including ADFS,
+  Shibboleth, SimpleSAMLphp, PingFederate, OneLogin, or custom SAML implementations.
+oryMechanism:
+  - standards
+status: active

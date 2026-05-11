@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: messagebird
+displayName: MessageBird (Bird) — SMS Provider
+vendor: MessageBird (Bird) — SMS Provider
+category: sms-providers
+type: config
+maintainedBy: Community contributors
+description: >-
+  MessageBird (now rebranded as Bird) is a European-headquartered cloud communications platform providing SMS, voice,
+  and messaging APIs. It offers strong coverage across Europe, Asia-Pacific, and globally, with a focus on reliability
+  and regulatory compliance. MessageBird is a compelling choice for organizations with European user bases or those
+  looking for an alternative to ...
+oryMechanism:
+  - courier-spi
+status: active

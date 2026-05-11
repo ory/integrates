@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: apigee
+displayName: Google Apigee + Ory Network
+vendor: Google Apigee + Ory Network
+category: api-gateways
+type: config
+maintainedBy: Community contributors
+description: >-
+  Google Apigee is an enterprise API management platform that provides API proxying, security, analytics, and
+  monetization. This integration uses Apigee's **VerifyJWT** and **SharedFlow** policies to validate Ory-issued JWTs at
+  the gateway layer using Ory Network's JWKS endpoint.
+oryMechanism:
+  - standards
+status: active

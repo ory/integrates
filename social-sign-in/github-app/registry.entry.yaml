@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: github-app
+displayName: GitHub App Authentication - Ory Network
+vendor: GitHub App Authentication - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  GitHub App authentication goes beyond simple OAuth login by leveraging GitHub Apps, which can act on behalf of users
+  with fine-grained permissions and can also authenticate as the app itself for server-to-server operations. This
+  integration uses Ory Hydra for OAuth2 server capabilities alongside Ory Kratos for identity management, enabling
+  complex token issuance flows for Gi...
+oryMechanism:
+  - standards
+status: active

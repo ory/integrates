@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: cloudflare-turnstile
+displayName: Cloudflare Turnstile
+vendor: Cloudflare Turnstile
+category: fraud-bot-protection
+type: config
+maintainedBy: Community contributors
+description: >-
+  Cloudflare Turnstile is a non-interactive CAPTCHA alternative that validates users without presenting visual puzzles.
+  It uses a combination of browser signals, machine learning, and proof-of-work challenges to distinguish humans from
+  bots, all without requiring user interaction in most cases.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: new-relic
+displayName: New Relic
+vendor: New Relic
+category: monitoring-observability
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  New Relic is a full-stack observability platform that natively ingests OpenTelemetry data over OTLP/HTTP. Self-hosted
+  Ory products (Kratos, Hydra, Keto, Oathkeeper) and Ory Network self-managed deployments emit OpenTelemetry traces,
+  metrics, and logs that New Relic can consume directly, giving customers a single pane of glass for identity-flow
+  performance, error rates, and downstream impact.
+oryMechanism:
+  - standards
+status: active

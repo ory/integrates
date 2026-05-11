@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: kubernetes
+displayName: Kubernetes
+vendor: Kubernetes
+category: containerization
+type: config
+maintainedBy: Community contributors
+description: >-
+  This guide provides raw Kubernetes manifests for deploying Ory components (Kratos, Hydra, Keto, Oathkeeper) without
+  Helm. This approach is useful for teams that prefer direct manifest management, GitOps workflows (Flux, ArgoCD), or
+  need granular control over Kubernetes resources. For Helm-based deployment, see the official Ory Helm Charts.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,73 @@
+# Ory Actions configuration for Splunk SIEM integration.
+# All hooks are async (fire-and-forget) — identity events are forwarded to Splunk HEC.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-webhook-handler.example.com/webhooks/splunk/registration
+              method: POST
+              body: file:///config/jsonnet/registration.jsonnet
+              response:
+                ignore: true
+              can_interrupt: false
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: YOUR_WEBHOOK_SECRET
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-webhook-handler.example.com/webhooks/splunk/login
+              method: POST
+              body: file:///config/jsonnet/login.jsonnet
+              response:
+                ignore: true
+              can_interrupt: false
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: YOUR_WEBHOOK_SECRET
+                  in: header
+    recovery:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-webhook-handler.example.com/webhooks/splunk/recovery
+              method: POST
+              body: file:///config/jsonnet/login.jsonnet
+              response:
+                ignore: true
+              can_interrupt: false
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: YOUR_WEBHOOK_SECRET
+                  in: header
+    settings:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-webhook-handler.example.com/webhooks/splunk/settings
+              method: POST
+              body: file:///config/jsonnet/login.jsonnet
+              response:
+                ignore: true
+              can_interrupt: false
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: YOUR_WEBHOOK_SECRET
+                  in: header

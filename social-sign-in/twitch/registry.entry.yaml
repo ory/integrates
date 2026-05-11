@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: twitch
+displayName: Log in with Twitch - Ory Network
+vendor: Log in with Twitch - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Twitch is the world's leading live streaming platform with over 140 million monthly active users, primarily focused on
+  gaming, esports, and creative content. Integrating Twitch with Ory Network enables gaming platforms, streaming tools,
+  community applications, and esports platforms to authenticate users with their Twitch accounts.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: spotify
+displayName: Log in with Spotify - Ory Network
+vendor: Log in with Spotify - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Spotify is the world's most popular music streaming platform with over 600 million users. Integrating Spotify Login
+  with Ory Network enables entertainment apps, music-related platforms, and social applications to authenticate users
+  via their Spotify accounts. Spotify's OAuth2 flow can also provide access to music preferences and listening data for
+  personalization.
+oryMechanism:
+  - standards
+status: active

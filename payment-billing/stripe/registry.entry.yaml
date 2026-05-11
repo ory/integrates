@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: stripe
+displayName: Stripe
+vendor: Stripe
+category: payment-billing
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Bidirectional integration between Ory Network and Stripe for customer lifecycle management and subscription-aware
+  authentication.
+oryMechanism:
+  - actions-webhook
+status: active

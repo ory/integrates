@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: rippling
+displayName: Rippling SSO
+vendor: Rippling SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  Rippling is a unified workforce management platform that combines HR, IT, and Finance. Rippling's identity management
+  capabilities allow organizations to manage employee lifecycle, device management, and application access from a single
+  platform. As a SAML Identity Provider, Rippling enables SSO for employees into applications protected by Ory Network,
+  with the added benefit...
+oryMechanism:
+  - standards
+status: active

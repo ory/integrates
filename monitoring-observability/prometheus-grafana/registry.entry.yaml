@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: prometheus-grafana
+displayName: Prometheus + Grafana
+vendor: Prometheus + Grafana
+category: monitoring-observability
+type: config
+maintainedBy: Community contributors
+description: >-
+  Monitor Ory Network authentication metrics using Prometheus for collection and Grafana for visualization. Includes
+  scrape configuration, PromQL queries, alert rules, and a Grafana dashboard structure.
+oryMechanism:
+  - standards
+status: active

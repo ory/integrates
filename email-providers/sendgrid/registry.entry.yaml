@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: sendgrid
+displayName: SendGrid — Email Provider
+vendor: SendGrid — Email Provider
+category: email-providers
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  SendGrid (a Twilio company) is one of the most widely used email delivery platforms, supporting both transactional and
+  marketing email. It offers a robust SMTP relay, a REST API, and extensive analytics. SendGrid is a solid choice for
+  teams that need a well-documented, widely adopted email provider with generous free-tier sending limits.
+oryMechanism:
+  - courier-spi
+status: active

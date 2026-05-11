@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: auth0-saml
+displayName: Auth0 SAML SSO
+vendor: Auth0 SAML SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  Auth0 is a flexible identity platform that provides authentication and authorization services. When used as a SAML
+  Identity Provider (IdP), Auth0 enables enterprise organizations to federate their existing Auth0-managed identities
+  into applications protected by Ory Network. This integration configures Auth0 as a SAML 2.0 IdP with Ory Polis acting
+  as the SAML Service Provider...
+oryMechanism:
+  - standards
+status: active

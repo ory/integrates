@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: recurly
+displayName: Recurly
+vendor: Recurly
+category: payment-billing
+type: config
+maintainedBy: Community contributors
+description: >-
+  Bidirectional integration between Ory Network and Recurly for subscriber management and subscription-aware
+  authentication.
+oryMechanism:
+  - standards
+status: active

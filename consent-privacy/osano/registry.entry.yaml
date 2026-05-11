@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: osano
+displayName: Osano
+vendor: Osano
+category: consent-privacy
+type: config
+maintainedBy: Community contributors
+description: >-
+  Osano is a data privacy platform that provides consent management, data discovery, and vendor monitoring for privacy
+  compliance (GDPR, CCPA, LGPD). This integration connects Osano to Ory Network to synchronize user consent preferences
+  captured through Osano's consent management platform (CMP) with Ory identity metadata, and to fulfill data subject
+  requests through Ory's admi...
+oryMechanism:
+  - standards
+status: active

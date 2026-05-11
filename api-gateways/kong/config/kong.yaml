@@ -1,0 +1,92 @@
+# Kong Declarative Configuration for Ory Token Validation
+#
+# This configures Kong to validate Ory-issued JWTs on protected routes
+# using the built-in JWT plugin with Ory's JWKS endpoint.
+#
+# Two approaches are shown:
+#   1. JWT plugin (open-source) — validates JWT signatures via JWKS
+#   2. OpenID Connect plugin (Enterprise) — full OIDC flow with Ory Hydra
+#
+# Replace YOUR_ORY_PROJECT with your actual Ory Network project slug.
+
+_format_version: "3.0"
+
+# === Approach 1: JWT Plugin (Kong Open Source) ===
+#
+# This approach validates JWT access tokens issued by Ory Hydra.
+# The JWT plugin fetches the public keys from Ory's JWKS endpoint
+# and verifies the token signature, expiration, and claims.
+
+consumers:
+  - username: ory-jwt-consumer
+    jwt_secrets:
+      - algorithm: RS256
+        # Ory's JWKS URL — Kong fetches public keys from here
+        # For Ory Network: https://YOUR_ORY_PROJECT.projects.oryapis.com/.well-known/jwks.json
+        key: https://YOUR_ORY_PROJECT.projects.oryapis.com
+        secret: "unused-for-RS256"
+
+services:
+  - name: protected-api
+    url: http://your-backend:8080
+    routes:
+      - name: api-route
+        paths:
+          - /api
+        strip_path: false
+    plugins:
+      - name: jwt
+        config:
+          # Where to find the JWT in the request
+          header_names:
+            - Authorization
+          # Claims to validate
+          claims_to_verify:
+            - exp
+          # Forward decoded claims as headers to upstream
+          run_on_preflight: false
+
+  - name: public-api
+    url: http://your-backend:8080
+    routes:
+      - name: public-route
+        paths:
+          - /public
+          - /health
+        strip_path: false
+
+# === Post-authentication header injection ===
+# Use the post-function plugin to extract JWT claims and set upstream headers
+
+  - name: protected-api-with-headers
+    url: http://your-backend:8080
+    routes:
+      - name: api-headers-route
+        paths:
+          - /api/v2
+        strip_path: false
+    plugins:
+      - name: jwt
+        config:
+          header_names:
+            - Authorization
+          claims_to_verify:
+            - exp
+      - name: post-function
+        config:
+          access:
+            - |
+              -- Extract JWT claims and set upstream headers
+              local jwt_claims = kong.ctx.shared.authenticated_jwt_token
+              if jwt_claims then
+                local cjson = require("cjson")
+                local claims = cjson.decode(
+                  ngx.decode_base64(jwt_claims:match("%.(.+)%.")))
+                kong.service.request.set_header("X-User-Id", claims.sub or "")
+                kong.service.request.set_header("X-User-Email",
+                  claims.email or claims.ext and claims.ext.email or "")
+                if claims.ext and claims.ext.subscription_plan then
+                  kong.service.request.set_header("X-User-Plan",
+                    claims.ext.subscription_plan)
+                end
+              end

@@ -1,0 +1,50 @@
+# Ory Actions configuration for the Stripe integration.
+#
+# Two hooks:
+#   1. Post-registration (synchronous) — creates Stripe Customer, stores customer ID
+#   2. Post-login (synchronous) — enriches session with subscription status
+#
+# Both use response.parse: true so Ory reads the webhook response and applies
+# metadata updates to the identity.
+#
+# IMPORTANT: Replace YOUR_WEBHOOK_SECRET with a strong random secret.
+# Store it in a secret manager and reference it here.
+
+selfservice:
+  flows:
+    registration:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-webhook-handler.example.com/webhooks/stripe/registration
+              method: POST
+              body: file:///config/jsonnet/registration.jsonnet
+              response:
+                parse: true
+                ignore: false
+              can_interrupt: false
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: YOUR_WEBHOOK_SECRET
+                  in: header
+    login:
+      after:
+        hooks:
+          - hook: web_hook
+            config:
+              url: https://your-webhook-handler.example.com/webhooks/stripe/login
+              method: POST
+              body: file:///config/jsonnet/login.jsonnet
+              response:
+                parse: true
+                ignore: false
+              can_interrupt: false
+              auth:
+                type: api_key
+                config:
+                  name: X-Webhook-Secret
+                  value: YOUR_WEBHOOK_SECRET
+                  in: header

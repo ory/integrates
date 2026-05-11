@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: helm
+displayName: Helm Charts
+vendor: Helm Charts
+category: iac-devops
+type: config
+maintainedBy: Community contributors
+description: Official Helm charts for deploying Ory components on Kubernetes.
+oryMechanism:
+  - standards
+status: active

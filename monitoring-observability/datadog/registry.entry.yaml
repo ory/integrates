@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: datadog
+displayName: DataDog
+vendor: DataDog
+category: monitoring-observability
+type: config
+maintainedBy: Community contributors
+description: >-
+  Monitor Ory Network authentication metrics in DataDog using OpenTelemetry (OTLP) export and Prometheus-format metrics
+  scraping. Includes dashboard concepts and alert rules for critical authentication metrics.
+oryMechanism:
+  - standards
+status: active

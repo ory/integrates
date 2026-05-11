@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: splunk
+displayName: Splunk + Ory Network
+vendor: Splunk + Ory Network
+category: siem-security-analytics
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Splunk is a leading platform for security information and event management (SIEM), log analysis, and operational
+  intelligence. This integration ingests Ory Network identity and authentication events into Splunk via the HTTP Event
+  Collector (HEC), mapping them to Splunk's Common Information Model (CIM) Authentication data model for standardized
+  security monitoring.
+oryMechanism:
+  - actions-webhook
+status: active

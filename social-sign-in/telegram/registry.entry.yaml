@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: telegram
+displayName: Telegram Login
+vendor: Telegram Login
+category: social-sign-in
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Telegram does not implement OAuth 2.0 / OIDC; it provides a Login Widget that posts an HMAC-SHA256-signed payload to
+  a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot token,
+  returns the verified profile, and gives applications a clean place to plug in Ory Admin API calls to upsert the
+  matching identity and issue a session.
+oryMechanism:
+  - actions-webhook
+status: active

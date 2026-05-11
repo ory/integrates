@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: lark
+displayName: Lark/Feishu Social Sign-In - Ory Network
+vendor: Lark/Feishu Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Lark (international) / Feishu (China) is ByteDance's enterprise collaboration platform, widely used across Asia for
+  workplace communication, project management, and business workflows. Integrating Lark with Ory Network enables B2B
+  applications to authenticate enterprise users through their Lark accounts, making it essential for applications
+  targeting businesses in Asia.
+oryMechanism:
+  - standards
+status: active

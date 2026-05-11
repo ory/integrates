@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: jumpcloud-scim
+displayName: JumpCloud SCIM Directory Sync
+vendor: JumpCloud SCIM Directory Sync
+category: directory-sync
+type: config
+maintainedBy: Community contributors
+description: Automatic user provisioning and deprovisioning from JumpCloud to Ory Network using SCIM v2.0.
+oryMechanism:
+  - directory-sync
+status: active

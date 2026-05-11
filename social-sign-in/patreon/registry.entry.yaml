@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: patreon
+displayName: Patreon Social Sign-In - Ory Network
+vendor: Patreon Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Patreon is the leading membership and subscription platform for creators, with millions of patrons supporting content
+  creators. Integrating Patreon with Ory Network enables applications to authenticate users via their Patreon accounts
+  and verify membership/subscription tiers, making it ideal for gated content, community platforms, and creator tools.
+oryMechanism:
+  - standards
+status: active

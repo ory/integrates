@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: elastic-siem
+displayName: Elastic SIEM / Elasticsearch + Ory Network
+vendor: Elastic SIEM / Elasticsearch + Ory Network
+category: siem-security-analytics
+type: config
+maintainedBy: Community contributors
+description: >-
+  Elastic SIEM (part of the Elastic Stack) provides security analytics, threat detection, and incident response
+  capabilities built on Elasticsearch and Kibana. This integration ingests Ory Network identity and authentication
+  events into Elasticsearch, mapping them to the Elastic Common Schema (ECS) for standardized security monitoring and
+  correlation.
+oryMechanism:
+  - standards
+status: active

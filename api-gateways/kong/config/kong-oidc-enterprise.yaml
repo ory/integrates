@@ -1,0 +1,65 @@
+# Kong Enterprise — OpenID Connect Plugin Configuration for Ory Hydra
+#
+# This uses Kong's OIDC plugin (Enterprise only) for full OpenID Connect
+# integration with Ory Hydra. It handles token validation, introspection,
+# and automatic token refresh.
+#
+# Replace YOUR_ORY_PROJECT with your actual Ory Network project slug.
+
+_format_version: "3.0"
+
+services:
+  - name: protected-api
+    url: http://your-backend:8080
+    routes:
+      - name: api-route
+        paths:
+          - /api
+    plugins:
+      - name: openid-connect
+        config:
+          # Ory Hydra's OIDC discovery endpoint
+          issuer: https://YOUR_ORY_PROJECT.projects.oryapis.com/
+
+          # Client credentials for token introspection
+          # IMPORTANT: Store these in Kong's vault or env vars
+          client_id:
+            - "${KONG_ORY_CLIENT_ID}"
+          client_secret:
+            - "${KONG_ORY_CLIENT_SECRET}"
+
+          # Token validation methods (in priority order)
+          auth_methods:
+            - bearer       # Validate Bearer tokens
+            - session      # Validate session cookies
+
+          # Where to find the token
+          bearer_token_param_type:
+            - header       # Authorization: Bearer <token>
+
+          # What to do with the validated identity
+          consumer_claim:
+            - sub          # Map JWT subject to Kong consumer
+
+          # Headers to set for upstream services
+          upstream_headers_claims:
+            - sub:X-User-Id
+            - email:X-User-Email
+
+          # Scopes required for access
+          scopes_required:
+            - openid
+
+          # Token introspection endpoint (Ory Hydra)
+          introspection_endpoint: https://YOUR_ORY_PROJECT.projects.oryapis.com/admin/oauth2/introspect
+
+          # JWKS endpoint for local JWT validation
+          # (faster than introspection, but doesn't check revocation)
+          token_endpoint_auth_method: client_secret_basic
+
+          # Cache JWKS for 60 minutes
+          cache_ttl: 3600
+
+          # Redirect unauthenticated users to login
+          login_redirect_mode: query
+          unauthorized_redirect_uri: https://your-app.com/login

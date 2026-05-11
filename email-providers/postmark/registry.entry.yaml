@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: postmark
+displayName: Postmark — Email Provider
+vendor: Postmark — Email Provider
+category: email-providers
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Postmark is a transactional email service known for exceptional deliverability and speed. Unlike general-purpose email
+  platforms, Postmark focuses exclusively on transactional email, enforcing strict sending policies that result in
+  consistently high inbox placement rates. It is an excellent choice for identity-related emails where delivery speed
+  and reliability are paramount.
+oryMechanism:
+  - courier-spi
+status: active

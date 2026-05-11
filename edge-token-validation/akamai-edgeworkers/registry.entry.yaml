@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: akamai-edgeworkers
+displayName: Akamai EdgeWorkers — Ory Token Validation
+vendor: Akamai EdgeWorkers — Ory Token Validation
+category: edge-token-validation
+type: config
+maintainedBy: Community contributors
+description: JavaScript edge function on Akamai EdgeWorkers that validates Ory Network session tokens and JWTs at the edge.
+oryMechanism:
+  - standards
+status: active

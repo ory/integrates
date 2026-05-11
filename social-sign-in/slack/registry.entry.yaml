@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: slack
+displayName: Sign in with Slack - Ory Network
+vendor: Sign in with Slack - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Slack is the leading workplace communication platform used by millions of teams worldwide. Sign in with Slack enables
+  workspace-based authentication, allowing applications to verify a user's Slack workspace membership. This integration
+  is ideal for internal tools, productivity apps, and B2B SaaS applications where Slack workspace membership serves as
+  an identity signal.
+oryMechanism:
+  - standards
+status: active

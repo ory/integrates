@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: segment
+displayName: Segment
+vendor: Segment
+category: cdp-analytics
+type: webhook
+maintainedBy: Ory Engineering
+description: >-
+  Send `identify` and `track` calls to Segment when users register or log in via Ory. Uses Ory Actions webhooks to call
+  Segment's HTTP Tracking API.
+oryMechanism:
+  - actions-webhook
+status: active

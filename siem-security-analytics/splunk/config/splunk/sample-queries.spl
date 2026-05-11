@@ -1,0 +1,56 @@
+| # ===================================================
+| # Splunk SPL Queries for Ory Identity Event Analysis
+| # ===================================================
+| # Index: ory | Sourcetype: ory:auth
+| # CIM data model: Authentication
+
+| # --- Failed Login Attempts (last 24 hours, by user) ---
+index=ory sourcetype=ory:auth action=failure
+| stats count by user
+| sort - count
+
+| # --- Credential Stuffing Detection ---
+| # Many unique users failing from one IP = likely credential stuffing
+index=ory sourcetype=ory:auth action=failure
+| stats dc(user) as unique_users, count as attempts by src
+| where unique_users > 10 AND attempts > 50
+
+| # --- Brute Force Detection ---
+| # Many failures for one user = brute force attack
+index=ory sourcetype=ory:auth action=failure
+| stats count as attempts, dc(src) as unique_ips by user
+| where attempts > 10
+
+| # --- Registration Spike Anomaly Detection ---
+index=ory sourcetype=ory:auth signature="registration.success"
+| timechart span=1h count
+| anomalydetection count
+
+| # --- MFA Adoption Rate ---
+index=ory sourcetype=ory:auth action=success
+| stats count(eval(authentication_method="totp" OR authentication_method="webauthn")) as mfa_logins, count as total_logins
+| eval mfa_rate = round(mfa_logins/total_logins*100, 2)
+
+| # --- Impossible Travel Detection ---
+index=ory sourcetype=ory:auth action=success
+| iplocation src
+| sort user, _time
+| streamstats current=f last(lat) as prev_lat, last(lon) as prev_lon, last(_time) as prev_time by user
+| eval distance_km = round(3959 * acos(sin(lat*pi()/180)*sin(prev_lat*pi()/180) + cos(lat*pi()/180)*cos(prev_lat*pi()/180)*cos(abs(lon-prev_lon)*pi()/180)) * 1.609, 0)
+| eval time_diff_hours = round((_time - prev_time) / 3600, 2)
+| eval speed_kmh = if(time_diff_hours > 0, round(distance_km / time_diff_hours, 0), 0)
+| where speed_kmh > 1000
+
+| # --- Authentication Methods Breakdown ---
+index=ory sourcetype=ory:auth action=success
+| stats count by authentication_method
+| sort - count
+
+| # --- Successful Logins Over Time ---
+index=ory sourcetype=ory:auth action=success signature="login.success"
+| timechart span=1h count by authentication_method
+
+| # --- Account Recovery Events ---
+index=ory sourcetype=ory:auth signature="recovery.initiated"
+| stats count by user, src
+| sort - count

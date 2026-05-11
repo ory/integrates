@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: facebook
+displayName: Facebook Login - Ory Network
+vendor: Facebook Login - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Facebook Login is one of the most widely recognized social sign-in options, with access to billions of Facebook and
+  Meta accounts. Integrating Facebook Login with Ory Network provides a familiar authentication experience for consumer
+  applications across e-commerce, media, social, and entertainment verticals.
+oryMechanism:
+  - standards
+status: active

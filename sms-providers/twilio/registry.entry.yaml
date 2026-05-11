@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: twilio
+displayName: Twilio — SMS Provider
+vendor: Twilio — SMS Provider
+category: sms-providers
+type: config
+maintainedBy: Community contributors
+description: >-
+  Twilio Programmable SMS is the leading cloud communications platform for sending and receiving text messages globally.
+  It offers extensive carrier coverage, reliable delivery, and a well-documented REST API. Twilio is the primary SMS
+  provider used with Ory Network for sending SMS-based verification codes, MFA one-time passwords, and other
+  identity-related messages.
+oryMechanism:
+  - courier-spi
+status: active

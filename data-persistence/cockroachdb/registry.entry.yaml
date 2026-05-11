@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: cockroachdb
+displayName: CockroachDB
+vendor: CockroachDB
+category: data-persistence
+type: config
+maintainedBy: Community contributors
+description: >-
+  CockroachDB is a distributed SQL database that provides horizontal scalability, strong consistency, and multi-region
+  survivability while maintaining PostgreSQL wire protocol compatibility. Ory components (Kratos, Hydra, Keto) use
+  PostgreSQL as their primary database, making CockroachDB a viable backend for deployments requiring geographic
+  distribution, high availability, and...
+oryMechanism:
+  - standards
+status: active

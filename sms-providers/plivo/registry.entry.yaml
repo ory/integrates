@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: plivo
+displayName: Plivo — SMS Provider
+vendor: Plivo — SMS Provider
+category: sms-providers
+type: config
+maintainedBy: Community contributors
+description: >-
+  Plivo is a cloud communications platform offering SMS and voice APIs with a focus on reliability and
+  cost-effectiveness. Plivo provides competitive per-message pricing, direct carrier connections in over 190 countries,
+  and a straightforward REST API. It is a strong alternative for organizations seeking lower SMS costs without
+  sacrificing delivery quality.
+oryMechanism:
+  - courier-spi
+status: active

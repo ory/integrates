@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: cloudflare-workers
+displayName: Cloudflare Workers — Ory Session & JWT Validation at the Edge
+vendor: Cloudflare Workers — Ory Session & JWT Validation at the Edge
+category: edge-token-validation
+type: webhook
+maintainedBy: Community contributors
+description: Validate Ory Network session tokens and JWTs at Cloudflare's edge, before requests reach your origin server.
+oryMechanism:
+  - actions-webhook
+status: active

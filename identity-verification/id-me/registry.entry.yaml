@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: id-me
+displayName: ID.me
+vendor: ID.me
+category: identity-verification
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  ID.me is a US-government-trusted identity verification provider that delivers IAL2 / AAL2 assurance through standard
+  OIDC. Configuring ID.me as a federated provider in Ory Network gives customers a low-touch path to verified identity
+  for healthcare, government, retail, and other use cases that require proof of who the user actually is rather than just
+  who they claim to be.
+oryMechanism:
+  - standards
+status: active

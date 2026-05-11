@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: split-io
+displayName: Split.io
+vendor: Split.io
+category: feature-flags
+type: config
+maintainedBy: Community contributors
+description: >-
+  Split.io is a feature delivery platform that combines feature flags with data-driven insights to measure the impact of
+  features on key metrics. This integration passes Ory Network identity attributes to Split.io as user properties for
+  targeting rules, enabling identity-aware feature rollouts and experimentation based on user traits, subscription tier,
+  organization, and other...
+oryMechanism:
+  - standards
+status: active

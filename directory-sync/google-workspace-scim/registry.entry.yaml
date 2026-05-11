@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: google-workspace-scim
+displayName: Google Workspace Directory Sync
+vendor: Google Workspace Directory Sync
+category: directory-sync
+type: config
+maintainedBy: Ory Engineering
+description: Automatic user provisioning and deprovisioning from Google Workspace to Ory Network.
+oryMechanism:
+  - directory-sync
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: whatsapp
+displayName: WhatsApp Business — OTP Delivery
+vendor: WhatsApp Business — OTP Delivery
+category: sms-providers
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  WhatsApp Business Cloud API as a delivery channel for Ory Kratos OTPs and verification codes. This integration takes
+  the same Kratos courier-spi mechanism used for SMS providers like Twilio and routes the message through WhatsApp
+  Business instead, using a pre-approved authentication template. WhatsApp does not provide a standard OAuth login flow,
+  so this is the practical path for "WhatsApp login" — passwordless OTP via WhatsApp.
+oryMechanism:
+  - courier-spi
+status: active

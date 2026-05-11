@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: hcaptcha
+displayName: hCaptcha
+vendor: hCaptcha
+category: fraud-bot-protection
+type: config
+maintainedBy: Community contributors
+description: >-
+  hCaptcha is a privacy-focused CAPTCHA service that serves as an alternative to Google reCAPTCHA. It provides bot
+  detection while being compliant with privacy regulations such as GDPR. hCaptcha does not sell personal data and offers
+  publishers the ability to earn revenue from CAPTCHA challenges.
+oryMechanism:
+  - standards
+status: active

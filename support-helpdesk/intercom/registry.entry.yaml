@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: intercom
+displayName: Intercom
+vendor: Intercom
+category: support-helpdesk
+type: config
+maintainedBy: Community contributors
+description: >-
+  Intercom is a customer messaging platform providing live chat, product tours, and customer engagement tools. This
+  integration connects Intercom to Ory Network to enrich Intercom user profiles with identity data and keep them
+  synchronized via webhooks, enabling identity-aware customer communication.
+oryMechanism:
+  - standards
+status: active

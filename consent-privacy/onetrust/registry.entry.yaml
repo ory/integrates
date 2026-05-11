@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: onetrust
+displayName: OneTrust
+vendor: OneTrust
+category: consent-privacy
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  OneTrust is a privacy, security, and governance platform that enables organizations to manage consent, fulfill data
+  subject requests (DSRs), and maintain compliance with privacy regulations including GDPR, CCPA, LGPD, and PIPA. This
+  integration connects OneTrust to Ory Network to synchronize consent records at registration and handle
+  identity-related data subject requests th...
+oryMechanism:
+  - actions-webhook
+status: active

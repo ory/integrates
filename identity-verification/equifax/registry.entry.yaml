@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: equifax
+displayName: Equifax
+vendor: Equifax
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Equifax provides credit-anchored identity verification through its Digital Identity Trust APIs. This integration calls
+  Equifax from an Ory Actions webhook to verify identity attributes against credit-bureau data and writes the resulting
+  trust score back into the Ory identity. Common in onboarding flows for financial services and other compliance-heavy
+  use cases.
+oryMechanism:
+  - actions-webhook
+status: active

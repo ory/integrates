@@ -1,0 +1,16 @@
+{
+  "name": "ory-integrations-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tooling for the ory/integrations registry.",
+  "scripts": {
+    "build-registry": "node build-registry.js"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

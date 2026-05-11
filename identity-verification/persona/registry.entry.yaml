@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: persona
+displayName: Persona
+vendor: Persona
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Persona identity verification with configurable templates (document capture, biometric, liveness). Integrates with Ory
+  Network via Ory Actions webhooks.
+oryMechanism:
+  - standards
+status: active

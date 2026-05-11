@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: microsoft-entra-id
+displayName: Microsoft Entra ID (Azure AD) SAML SSO
+vendor: Microsoft Entra ID (Azure AD) SAML SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  Microsoft Entra ID (formerly Azure Active Directory) is the world's most widely adopted cloud-based identity and
+  access management service. It is the default IdP for organizations using Microsoft 365, Azure, and the broader
+  Microsoft ecosystem. As a SAML Identity Provider, Entra ID enables enterprises to extend their existing directory to
+  applications protected by Ory Networ...
+oryMechanism:
+  - standards
+status: active

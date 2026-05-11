@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: wechat
+displayName: WeChat Login - Ory Network
+vendor: WeChat Login - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  > **Status: Community/Proposed** — This integration does not have official Ory documentation. WeChat uses a
+  non-standard OAuth flow that requires special handling.
+oryMechanism:
+  - standards
+status: active

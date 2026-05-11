@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: discord
+displayName: Discord Social Sign-In - Ory Network
+vendor: Discord Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Discord is a popular communication platform with over 150 million monthly active users, widely used in gaming,
+  community, and creative spaces. Integrating Discord with Ory Network enables applications to authenticate users with
+  their Discord accounts, access guild (server) membership information, and build community-driven authentication flows.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: generic-oidc
+displayName: Generic OIDC Provider
+vendor: Generic OIDC Provider
+category: generic-protocols
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Ory Network supports integration with any OpenID Connect (OIDC) compliant Identity Provider (IdP) as a social sign-in
+  or enterprise SSO provider. This guide covers configuring a generic OIDC provider with Ory Kratos, applicable to any
+  IdP that implements the OpenID Connect Core specification (e.g., Keycloak, Okta, Auth0, PingFederate, ForgeRock,
+  Authentik, or custom OIDC ser...
+oryMechanism:
+  - standards
+status: active

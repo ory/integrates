@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: duo-security
+displayName: Duo Security
+vendor: Duo Security
+category: mfa
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Duo Security (a Cisco company) is a market-leading enterprise MFA platform with strong push and passcode flows. This
+  integration sends a Duo push challenge from an Ory Actions webhook on login, polls Duo for the user's response, and
+  returns the verdict so Ory can step up authentication or fail the flow.
+oryMechanism:
+  - actions-webhook
+status: active

@@ -1,0 +1,15 @@
+hooks:
+  - hook: web_hook
+    config:
+      url: https://your-deployed-handler.example.com/duo/challenge
+      method: POST
+      body: file://./jsonnet/identity.jsonnet
+      auth:
+        type: api_key
+        config:
+          name: X-Webhook-Secret
+          value: <your-shared-secret>
+          in: header
+      response:
+        ignore: false
+        parse: true

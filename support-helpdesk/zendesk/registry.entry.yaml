@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: zendesk
+displayName: Zendesk
+vendor: Zendesk
+category: support-helpdesk
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Zendesk is a customer service platform providing ticketing, live chat, and knowledge base capabilities. This
+  integration connects Zendesk to Ory Network to display identity context in the agent sidebar, synchronize users for
+  ticket correlation, and enable identity-aware support workflows.
+oryMechanism:
+  - actions-webhook
+status: active

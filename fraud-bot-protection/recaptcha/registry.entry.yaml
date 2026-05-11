@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: recaptcha
+displayName: Google reCAPTCHA v2/v3
+vendor: Google reCAPTCHA v2/v3
+category: fraud-bot-protection
+type: webhook
+maintainedBy: Community contributors
+description: 'Google reCAPTCHA is a CAPTCHA service that protects websites from spam and abuse. It offers two primary versions:'
+oryMechanism:
+  - actions-webhook
+status: active

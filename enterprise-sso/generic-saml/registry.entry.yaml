@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: generic-saml
+displayName: Generic SAML 2.0 SP
+vendor: Generic SAML 2.0 SP
+category: enterprise-sso
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  This integration guide covers configuring Ory Polis as a SAML 2.0 Service Provider (SP) with any SAML 2.0-compliant
+  Identity Provider. This is the go-to reference when your organization's IdP is not covered by one of the
+  provider-specific guides in this directory, or when you need to understand the underlying SAML mechanics that apply to
+  all SAML-based SSO integrations with ...
+oryMechanism:
+  - standards
+status: active

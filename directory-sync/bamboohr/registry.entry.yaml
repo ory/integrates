@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: bamboohr
+displayName: BambooHR
+vendor: BambooHR
+category: directory-sync
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  BambooHR is a popular HRIS for SMB and mid-market companies. This integration enriches Ory identities with employee
+  data from BambooHR via an Ory Actions webhook on login or registration, optionally gating access based on employment
+  status. BambooHR is the source of truth for employment data; Ory remains the source of truth for identity.
+oryMechanism:
+  - actions-webhook
+status: active

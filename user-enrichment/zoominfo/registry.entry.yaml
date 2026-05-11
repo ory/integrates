@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: zoominfo
+displayName: ZoomInfo
+vendor: ZoomInfo
+category: user-enrichment
+type: config
+maintainedBy: Community contributors
+description: >-
+  ZoomInfo is a B2B data intelligence platform providing contact, company, and intent data for sales, marketing, and
+  recruiting teams. This integration enriches Ory Network identities after registration with B2B contact and company
+  data from ZoomInfo's database, enabling lead qualification, account-based marketing, and sales-ready data enrichment.
+oryMechanism:
+  - standards
+status: active

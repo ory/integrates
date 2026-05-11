@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: pulumi
+displayName: Pulumi Provider
+vendor: Pulumi Provider
+category: iac-devops
+type: config
+maintainedBy: Community contributors
+description: Manage your Ory Network configuration as infrastructure-as-code using Pulumi in TypeScript, Go, or Python.
+oryMechanism:
+  - standards
+status: active

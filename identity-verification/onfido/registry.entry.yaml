@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: onfido
+displayName: Onfido
+vendor: Onfido
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Onfido identity verification (Document + Face Matching across EU/US/CA regions) integrated with Ory Network via Ory
+  Actions webhooks.
+oryMechanism:
+  - standards
+status: active

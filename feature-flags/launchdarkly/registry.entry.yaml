@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: launchdarkly
+displayName: LaunchDarkly
+vendor: LaunchDarkly
+category: feature-flags
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  LaunchDarkly is a feature management platform that enables teams to control feature rollouts, run experiments, and
+  manage feature flags at scale. This integration passes Ory Network session traits and identity attributes as
+  LaunchDarkly user context, enabling identity-aware feature flag evaluation based on user properties, organization
+  membership, subscription tier, and othe...
+oryMechanism:
+  - actions-webhook
+status: active

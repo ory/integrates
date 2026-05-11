@@ -1,0 +1,14 @@
+# Copy this file to registry.entry.yaml in your integration directory and fill in the values.
+# Then run `node scripts/build-registry.js` from the repo root to update registry.yaml.
+
+name: <integration-slug>           # lowercase, hyphenated; matches the directory name
+displayName: <Display Name>        # human-friendly name shown on docs and marketing pages
+vendor: <Vendor>                   # third-party vendor name (often same as displayName)
+category: <category>               # must match a top-level category directory
+type: webhook
+maintainedBy: Community contributors   # or "Ory Engineering" or your handle
+description: >-
+  One-paragraph description of what this integration does and the problem it solves.
+oryMechanism:
+  - actions-webhook
+status: active                     # active | scaffold | stub | deprecated | archived

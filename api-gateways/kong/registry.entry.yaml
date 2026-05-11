@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: kong
+displayName: Kong API Gateway + Ory Network
+vendor: Kong API Gateway + Ory Network
+category: api-gateways
+type: config
+maintainedBy: Community contributors
+description: >-
+  Kong Gateway is a cloud-native, platform-agnostic API gateway that provides traffic management, authentication, rate
+  limiting, and observability for APIs and microservices. This integration configures Kong to validate Ory-issued tokens
+  and sessions, enabling centralized identity enforcement at the gateway layer.
+oryMechanism:
+  - standards
+status: active

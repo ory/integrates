@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: idin
+displayName: iDIN
+vendor: iDIN
+category: government-identity
+type: config
+maintainedBy: Community contributors
+description: >-
+  iDIN is a Dutch identity verification service operated by the Dutch banking sector that allows individuals to identify
+  themselves online using their bank credentials. It provides verified identity attributes (name, address, date of
+  birth) backed by KYC data that banks have already collected. iDIN is widely used in the Netherlands for age
+  verification, onboarding, and regulat...
+oryMechanism:
+  - standards
+status: active

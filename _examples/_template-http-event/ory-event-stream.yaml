@@ -1,0 +1,16 @@
+# Configure this on the Ory Network side (via Console or Ory Cloud API) to start
+# delivering events to your handler.
+
+# Target URL with embedded Basic Auth (Ory's auth model for event streams).
+url: https://<user>:<password>@your-handler.example.com/events
+
+# Filter — recommended so Ory only delivers the events your handler cares about.
+events:
+  - IdentityCreated
+  - LoginSucceeded
+  # add more event names as needed; see https://www.ory.sh/docs/kratos/manage-identities/event-streams
+
+# Retry policy on Ory's side. Live events are at-least-once; ensure the handler is idempotent.
+retry:
+  maxAttempts: 5
+  initialBackoff: 1s

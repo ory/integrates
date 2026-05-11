@@ -1,0 +1,55 @@
+name: New integration proposal
+description: Propose a new integration for inclusion in this repository
+title: "[New integration] <vendor name>"
+labels: ["new-integration"]
+body:
+  - type: input
+    id: vendor
+    attributes:
+      label: Vendor / product name
+      placeholder: HubSpot
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - crm
+        - identity-verification
+        - enterprise-sso
+        - fraud-bot
+        - analytics
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    id: shape
+    attributes:
+      label: Integration shape
+      options:
+        - Webhook-style (Ory calls a handler during a flow)
+        - Config-only (configuration in the Ory Console; no webhook code)
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What does this integration do?
+      placeholder: Briefly explain the use case and the data flow between Ory and the vendor.
+    validations:
+      required: true
+  - type: textarea
+    id: ory-mechanism
+    attributes:
+      label: Which Ory Network mechanism does it use?
+      placeholder: "Actions webhook (registration), Live Event Stream (LoginSucceeded), OIDC provider config, etc."
+    validations:
+      required: true
+  - type: input
+    id: maintainer
+    attributes:
+      label: Who will maintain this?
+      placeholder: "Ory Engineering / @your-github-handle / Community contributors"
+    validations:
+      required: true

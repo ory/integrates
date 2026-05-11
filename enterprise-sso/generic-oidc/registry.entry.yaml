@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: generic-oidc
+displayName: Generic OIDC Provider
+vendor: Generic OIDC Provider
+category: enterprise-sso
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  This integration guide covers configuring Ory Polis as an OpenID Connect (OIDC) Relying Party (RP) with any
+  OIDC-compliant Identity Provider (OP). Use this guide when your IdP supports OIDC/OAuth 2.0 and is not covered by a
+  provider-specific guide, or when you need to understand the underlying OIDC mechanics for any OIDC-based SSO
+  integration with Ory.
+oryMechanism:
+  - standards
+status: active

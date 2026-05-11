@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: x-twitter
+displayName: Sign in with X (Twitter) - Ory Network
+vendor: Sign in with X (Twitter) - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  X (formerly Twitter) is a major social media platform with hundreds of millions of active users. X provides OAuth 2.0
+  authentication (with PKCE) for user sign-in. Integrating X with Ory Network enables social applications, media
+  platforms, and community tools to authenticate users via their X accounts.
+oryMechanism:
+  - standards
+status: active

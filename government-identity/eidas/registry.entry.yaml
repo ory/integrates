@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: eidas
+displayName: eIDAS
+vendor: eIDAS
+category: government-identity
+type: config
+maintainedBy: Community contributors
+description: >-
+  eIDAS (electronic IDentification, Authentication and trust Services) is a European Union regulation that establishes a
+  framework for cross-border electronic identification and trust services. Through eIDAS, citizens of EU member states
+  can use their national electronic identity (eID) to access services in other member states. This integration connects
+  Ory Network to eIDAS-co...
+oryMechanism:
+  - standards
+status: active

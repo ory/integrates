@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: microsoft-sentinel
+displayName: Microsoft Sentinel + Ory Network
+vendor: Microsoft Sentinel + Ory Network
+category: siem-security-analytics
+type: config
+maintainedBy: Community contributors
+description: >-
+  Microsoft Sentinel is a cloud-native SIEM and SOAR platform built on Azure. It provides intelligent security
+  analytics, threat detection, and automated response across the enterprise. This integration ingests Ory Network
+  identity and authentication events into Sentinel via the Azure Log Analytics Data Collector API, enabling security
+  monitoring with KQL queries and automated...
+oryMechanism:
+  - standards
+status: active

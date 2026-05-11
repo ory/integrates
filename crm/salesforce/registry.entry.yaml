@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: salesforce
+displayName: Salesforce
+vendor: Salesforce
+category: crm
+type: config
+maintainedBy: Community contributors
+description: >-
+  Create Salesforce Leads or Contacts automatically when users register in Ory. Uses Ory Actions webhooks with OAuth2
+  service-to-service authentication to call the Salesforce REST API.
+oryMechanism:
+  - standards
+status: active

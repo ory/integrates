@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: mparticle
+displayName: mParticle
+vendor: mParticle
+category: cdp-analytics
+type: config
+maintainedBy: Community contributors
+description: >-
+  Send identity and authentication events to mParticle when users register via Ory. Uses Ory Actions webhooks to call
+  mParticle's Events API for server-to-server integration.
+oryMechanism:
+  - standards
+status: active

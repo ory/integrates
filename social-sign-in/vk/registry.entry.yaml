@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: vk
+displayName: VKontakte (VK) Social Sign-In - Ory Network
+vendor: VKontakte (VK) Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  VKontakte (VK) is the largest social network in Russia and the CIS region, with over 100 million monthly active users.
+  Integrating VK with Ory Network is essential for applications targeting the Russian-speaking market. VK provides OAuth
+  2.0 authentication with access to user profiles, friends lists, and social graph data.
+oryMechanism:
+  - standards
+status: active

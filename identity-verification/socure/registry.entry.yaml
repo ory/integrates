@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: socure
+displayName: Socure
+vendor: Socure
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Socure is an ML-based identity verification platform with strong fraud detection and KYC coverage. This integration
+  calls Socure ID+ from an Ory Actions webhook during registration; results are written back to the Ory identity. Socure
+  also supports an asynchronous webhook back to the handler for long-running verifications, which this integration
+  optionally consumes.
+oryMechanism:
+  - actions-webhook
+status: active

@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: microsoft-scim
+displayName: Microsoft Entra ID (Azure AD) SCIM Directory Sync
+vendor: Microsoft Entra ID (Azure AD) SCIM Directory Sync
+category: directory-sync
+type: config
+maintainedBy: Ory Engineering
+description: Automatic user provisioning and deprovisioning from Microsoft Entra ID to Ory Network using SCIM v2.0.
+oryMechanism:
+  - directory-sync
+status: active

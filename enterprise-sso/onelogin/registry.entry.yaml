@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: onelogin
+displayName: OneLogin SAML SSO
+vendor: OneLogin SAML SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  OneLogin is a cloud-based identity and access management platform that provides unified access management, including
+  single sign-on, multi-factor authentication, and user provisioning. OneLogin supports SAML 2.0 federation and is used
+  by enterprises across various industries for workforce identity management.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,19 @@
+# Copy this file to registry.entry.yaml in your integration directory and fill in the values.
+# Then run `node scripts/build-registry.js` from the repo root to update registry.yaml.
+
+name: <integration-slug>
+displayName: <Display Name>
+vendor: <Vendor>
+category: <category>
+type: http-event
+maintainedBy: Community contributors
+description: >-
+  One-paragraph description of what this integration does. Mention the events it
+  consumes (IdentityCreated, LoginSucceeded, etc.) and the third-party system
+  it forwards to.
+oryMechanism:
+  - live-event-http
+subscribedEvents:                 # http-event integrations should declare which events they consume
+  - IdentityCreated
+  - LoginSucceeded
+status: active

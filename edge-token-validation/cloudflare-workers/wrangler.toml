@@ -1,0 +1,21 @@
+# Cloudflare Workers configuration for Ory edge token validation
+#
+# This Worker validates Ory session cookies or JWT tokens at the Cloudflare edge
+# BEFORE traffic reaches your origin server, reducing latency and offloading auth.
+
+name = "ory-edge-auth"
+main = "dist/worker.js"
+compatibility_date = "2024-01-01"
+
+# Environment variables
+# IMPORTANT: Store ORY_SDK_URL as a secret, not a plain-text var.
+#   wrangler secret put ORY_SDK_URL
+[vars]
+PUBLIC_PATHS = "/health,/public,/favicon.ico"
+# LOGIN_REDIRECT_URL = "https://your-app.com/login"
+
+# For production, use different environments:
+# [env.production]
+# vars = { PUBLIC_PATHS = "/health,/public" }
+# [env.staging]
+# vars = { PUBLIC_PATHS = "/health,/public,/debug" }

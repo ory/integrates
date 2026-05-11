@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: auth0
+displayName: Auth0 as Upstream IdP - Ory Network
+vendor: Auth0 as Upstream IdP - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Auth0 can serve as an upstream Identity Provider (IdP) for Ory Network via OIDC federation. This integration is ideal
+  for organizations migrating from Auth0 to Ory or for federated identity scenarios where Auth0 manages a subset of
+  users. By connecting Auth0 as a social sign-in provider, existing Auth0 users can authenticate through Ory without
+  requiring password resets or a...
+oryMechanism:
+  - standards
+status: active

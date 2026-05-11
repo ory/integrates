@@ -1,0 +1,14 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: jumio
+displayName: Jumio
+vendor: Jumio
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Jumio identity verification (Document + Selfie + Face Match) integrated with Ory Network via Ory Actions webhooks.
+oryMechanism:
+  - standards
+status: active

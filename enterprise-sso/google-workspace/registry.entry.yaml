@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: google-workspace
+displayName: Google Workspace SAML SSO
+vendor: Google Workspace SAML SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  Google Workspace (formerly G Suite) is Google's suite of cloud-based productivity and collaboration tools used by
+  millions of organizations worldwide. As a SAML Identity Provider, Google Workspace enables enterprises to use their
+  existing Google identities for single sign-on into applications protected by Ory Network. This is one of the most
+  common enterprise SSO integration...
+oryMechanism:
+  - standards
+status: active

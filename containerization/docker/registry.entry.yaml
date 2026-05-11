@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: docker
+displayName: Docker
+vendor: Docker
+category: containerization
+type: config
+maintainedBy: Community contributors
+description: >-
+  Ory provides official Docker images for all its components (Kratos, Hydra, Keto, Oathkeeper), enabling local
+  development, testing, and containerized deployment. This guide provides docker-compose configurations for running the
+  full Ory stack locally and covers production Docker deployment patterns.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: sparkpost
+displayName: SparkPost — Email Provider
+vendor: SparkPost — Email Provider
+category: email-providers
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  SparkPost (a MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics
+  and deliverability tooling. SparkPost exposes both an SMTP relay and a REST Transmissions API, and can be wired up as
+  an Ory Network courier for verification, recovery, and MFA email delivery. SparkPost is a good fit for customers with
+  high transactional email volume and stringent deliverability requirements.
+oryMechanism:
+  - courier-spi
+status: active

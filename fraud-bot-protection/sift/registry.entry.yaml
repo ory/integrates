@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: sift
+displayName: Sift (Digital Trust & Safety)
+vendor: Sift (Digital Trust & Safety)
+category: fraud-bot-protection
+type: config
+maintainedBy: Community contributors
+description: >-
+  Sift is a digital trust and safety platform that provides real-time fraud detection and account abuse prevention. It
+  uses machine learning to analyze user events and return abuse scores that help you decide whether to allow, review, or
+  block an action.
+oryMechanism:
+  - standards
+status: active

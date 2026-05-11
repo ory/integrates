@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: aws
+displayName: AWS Infrastructure
+vendor: AWS Infrastructure
+category: cloud-infrastructure
+type: config
+maintainedBy: Community contributors
+description: >-
+  This guide covers deploying and integrating Ory with AWS infrastructure. While Ory Network is a managed cloud service
+  that handles the Ory stack, many organizations need to understand how their AWS-hosted applications connect to Ory
+  Network, and some choose to self-host Ory components on AWS using EKS, RDS, and ElastiCache. This document covers both
+  patterns.
+oryMechanism:
+  - standards
+status: active

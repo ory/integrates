@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: gitlab
+displayName: GitLab Social Sign-In - Ory Network
+vendor: GitLab Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  GitLab is a comprehensive DevOps platform used by millions of developers and organizations. GitLab supports OpenID
+  Connect natively, making it a straightforward OIDC provider for Ory Network. This integration is ideal for DevOps
+  tools, CI/CD dashboards, and developer-facing applications. Both GitLab.com and self-managed GitLab instances can be
+  used.
+oryMechanism:
+  - standards
+status: active

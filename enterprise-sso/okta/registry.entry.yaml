@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: okta
+displayName: Okta SAML/OIDC SSO
+vendor: Okta SAML/OIDC SSO
+category: enterprise-sso
+type: config
+maintainedBy: Community contributors
+description: >-
+  Okta is the dominant cloud identity platform, used by thousands of enterprises for workforce and customer identity
+  management. Okta supports both SAML 2.0 and OpenID Connect (OIDC) federation, making it one of the most flexible IdP
+  options for integration with Ory Network.
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: sinch
+displayName: Sinch — SMS Provider
+vendor: Sinch — SMS Provider
+category: sms-providers
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Sinch is an enterprise communications platform offering global SMS delivery and verification services through a
+  straightforward REST API. Sinch can be wired up as an Ory Network SMS courier for verification codes, MFA OTPs, and
+  identity-related messages, with broad carrier coverage and verification-specific features that make it a strong fit for
+  high-trust authentication use cases.
+oryMechanism:
+  - courier-spi
+status: active

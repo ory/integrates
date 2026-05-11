@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: netid
+displayName: NetID Social Sign-In - Ory Network
+vendor: NetID Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  NetID is a European single sign-on standard backed by the European netID Foundation. It provides a privacy-focused,
+  GDPR-compliant identity solution primarily used in Germany and Europe. NetID partners include major media companies,
+  e-commerce platforms, and telecom providers. Integrating NetID with Ory Network enables European applications to offer
+  a trusted, privacy-respec...
+oryMechanism:
+  - standards
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: salesforce
+displayName: Salesforce Social Sign-In - Ory Network
+vendor: Salesforce Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Salesforce is the world's leading CRM platform with a large ecosystem of enterprise users. Salesforce supports OpenID
+  Connect, making it a straightforward OIDC provider for Ory Network. This integration enables enterprise applications
+  to authenticate Salesforce users, making it ideal for CRM integrations, partner portals, and B2B applications where
+  users already have Salesfo...
+oryMechanism:
+  - standards
+status: active

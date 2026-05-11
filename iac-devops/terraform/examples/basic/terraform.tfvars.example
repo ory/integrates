@@ -1,0 +1,12 @@
+# Copy this to terraform.tfvars and fill in your values.
+# IMPORTANT: Never commit terraform.tfvars to version control.
+# Add it to .gitignore.
+
+project_id       = "your-ory-project-id"
+app_url          = "https://app.example.com"
+webhook_base_url = "https://webhooks.example.com"
+
+# SECURITY: Use environment variables or a secret manager for sensitive values.
+# Instead of setting webhook_secret here, use:
+#   export TF_VAR_webhook_secret="your-webhook-secret"
+# webhook_secret = "set-via-env-var"

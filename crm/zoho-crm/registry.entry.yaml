@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: zoho-crm
+displayName: Zoho CRM
+vendor: Zoho CRM
+category: crm
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Zoho CRM contact sync from Ory Network via Ory Actions webhooks. OAuth2 with automatic token refresh, HMAC webhook
+  verification, multi-region support (IN/US/EU).
+oryMechanism:
+  - standards
+status: active

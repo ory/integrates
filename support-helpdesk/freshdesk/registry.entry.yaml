@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: freshdesk
+displayName: Freshdesk
+vendor: Freshdesk
+category: support-helpdesk
+type: config
+maintainedBy: Community contributors
+description: >-
+  Freshdesk is a customer support platform providing ticketing, collaboration, and automation tools. This integration
+  connects Freshdesk to Ory Network to synchronize user data for ticket correlation and display Ory identity context
+  within Freshdesk tickets, enabling support agents to understand a user's authentication state and identity details.
+oryMechanism:
+  - standards
+status: active

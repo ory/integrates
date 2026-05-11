@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: mixpanel
+displayName: Mixpanel
+vendor: Mixpanel
+category: cdp-analytics
+type: config
+maintainedBy: Community contributors
+description: >-
+  Send authentication events to Mixpanel when users register or log in via Ory. Uses Ory Actions webhooks to call
+  Mixpanel's Ingestion API.
+oryMechanism:
+  - standards
+status: active

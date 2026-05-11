@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: linkedin
+displayName: Sign In with LinkedIn - Ory Network
+vendor: Sign In with LinkedIn - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  LinkedIn is the world's largest professional network with over 900 million members. LinkedIn provides OIDC-compliant
+  authentication through its "Sign In with LinkedIn using OpenID Connect" product. This integration is ideal for B2B
+  applications, recruitment platforms, professional networking tools, and any application that benefits from verified
+  professional identity.
+oryMechanism:
+  - standards
+status: active

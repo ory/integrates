@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: skyfire
+displayName: Skyfire
+vendor: Skyfire
+category: agent-identity
+type: config
+maintainedBy: Community contributors
+description: >-
+  Skyfire is an AI agent identity and payment platform that enables "Know Your Agent" (KYA) verification for autonomous
+  AI agents. By integrating with Ory Hydra and Ory Kratos, Skyfire provides OAuth2-based authentication and identity for
+  AI agents, allowing them to authenticate to APIs, manage credentials, and establish trust in multi-agent systems.
+oryMechanism:
+  - standards
+status: active

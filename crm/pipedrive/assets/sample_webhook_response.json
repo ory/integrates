@@ -1,0 +1,277 @@
+{
+   "ctx": {
+      "flow": {
+         "active": "password",
+         "created_at": "2025-10-14T09:46:21.085831Z",
+         "expires_at": "2025-10-14T10:16:21.079825Z",
+         "id": "d6d8cb6f-1080-404e-97bd-60208f7b6529",
+         "issued_at": "2025-10-14T09:46:21.079825Z",
+         "organization_id": null,
+         "refresh": false,
+         "request_url": "https://kind-bhaskara-g6yoralijp.projects.oryapis.com/self-service/login/browser?aal=&refresh=&return_to=&organization=&via=",
+         "requested_aal": "aal1",
+         "state": "choose_method",
+         "transient_payload": { },
+         "type": "browser",
+         "ui": {
+            "action": "https://kind-bhaskara-g6yoralijp.projects.oryapis.com/self-service/login?flow=d6d8cb6f-1080-404e-97bd-60208f7b6529",
+            "method": "POST",
+            "nodes": [
+               {
+                  "attributes": {
+                     "autocomplete": "username webauthn",
+                     "disabled": false,
+                     "name": "identifier",
+                     "node_type": "input",
+                     "required": true,
+                     "type": "hidden",
+                     "value": "parth.inamdar.ext+3@ory.sh"
+                  },
+                  "group": "identifier_first",
+                  "messages": [ ],
+                  "meta": {
+                     "label": {
+                        "context": {
+                           "name": "traits.email",
+                           "title": "E-Mail"
+                        },
+                        "id": 1070002,
+                        "text": "E-Mail",
+                        "type": "info"
+                     }
+                  },
+                  "type": "input"
+               },
+               {
+                  "attributes": {
+                     "disabled": false,
+                     "name": "csrf_token",
+                     "node_type": "input",
+                     "required": true,
+                     "type": "hidden",
+                     "value": "QK/LSfM35evaZGn8Hmaq2RHNlVPBBiDEkb0n0xu/RrN3x1GNOhtMNkUnVtOA7UvsZRgEyh+d2V8jdgRsMQBqeg=="
+                  },
+                  "group": "default",
+                  "messages": [ ],
+                  "meta": { },
+                  "type": "input"
+               },
+               {
+                  "attributes": {
+                     "autocomplete": "current-password",
+                     "disabled": false,
+                     "name": "password",
+                     "node_type": "input",
+                     "required": true,
+                     "type": "password"
+                  },
+                  "group": "password",
+                  "messages": [ ],
+                  "meta": {
+                     "label": {
+                        "id": 1070001,
+                        "text": "Password",
+                        "type": "info"
+                     }
+                  },
+                  "type": "input"
+               },
+               {
+                  "attributes": {
+                     "disabled": false,
+                     "name": "method",
+                     "node_type": "input",
+                     "type": "submit",
+                     "value": "password"
+                  },
+                  "group": "password",
+                  "messages": [ ],
+                  "meta": {
+                     "label": {
+                        "id": 1010022,
+                        "text": "Sign in with password",
+                        "type": "info"
+                     }
+                  },
+                  "type": "input"
+               },
+               {
+                  "attributes": {
+                     "disabled": false,
+                     "name": "method",
+                     "node_type": "input",
+                     "type": "submit",
+                     "value": "code"
+                  },
+                  "group": "code",
+                  "messages": [ ],
+                  "meta": {
+                     "label": {
+                        "id": 1010015,
+                        "text": "Send sign in code",
+                        "type": "info"
+                     }
+                  },
+                  "type": "input"
+               }
+            ]
+         },
+         "updated_at": "2025-10-14T09:46:21.085831Z"
+      },
+      "identity": {
+         "created_at": "2025-10-14T09:45:29.850675Z",
+         "id": "92cfbc5b-47bc-4e88-be06-92fb6aae7e8b",
+         "metadata_public": null,
+         "organization_id": null,
+         "recovery_addresses": [
+            {
+               "created_at": "2025-10-14T09:45:30.097499Z",
+               "id": "5911fff0-19d5-47e0-8b8e-5abd6c56625a",
+               "updated_at": "2025-10-14T09:45:30.097499Z",
+               "value": "parth.inamdar.ext+3@ory.sh",
+               "via": "email"
+            }
+         ],
+         "schema_id": "preset://email",
+         "schema_url": "https://kind-bhaskara-g6yoralijp.projects.oryapis.com/schemas/cHJlc2V0Oi8vZW1haWw",
+         "state": "active",
+         "state_changed_at": "2025-10-14T09:45:29.848583Z",
+         "traits": {
+            "email": "parth.inamdar.ext+3@ory.sh"
+         },
+         "updated_at": "2025-10-14T09:45:29.850675Z",
+         "verifiable_addresses": [
+            {
+               "created_at": "2025-10-14T09:45:29.855926Z",
+               "id": "98b14612-c6c2-4859-961c-fd7dce2df667",
+               "status": "completed",
+               "updated_at": "2025-10-14T09:45:29.855926Z",
+               "value": "parth.inamdar.ext+3@ory.sh",
+               "verified": true,
+               "verified_at": "2025-10-14T09:45:47.281019Z",
+               "via": "email"
+            }
+         ]
+      },
+      "request_cookies": {
+         "__cf_bm": "Nr6nRf8x71he3SC0P6RXNtp7dRUptyO9iA8V3Dft2xs-1760435133-1.0.1.1-4ld9Xmw.lSkNFBwkHUVy3M6kid2uZtt8RedwODEF26CYAGNWH4wDIjRyfzODbdkol5n4K24Ia1Mu3Ut0YFcZOaapTODuaN8j4JhC_Gr7j9fKpqyik7J361rtZCwEldkk",
+         "__cflb": "04dTofjtHwhfCny3TibYMM4LURzprwaJhBGCjRSx7V",
+         "cf_clearance": "A7BVuYFdVFe8goJtsNUnbIMmhXvbSBOxsxa6fyfFhEQ-1746254758-1.2.1.1-BjVtV3qgSTD7SOVf843r7H0F2BTaeuURt0IkrVVU3HqlRk.6RINXJALayImCi6nbsoDTQp_ZL_jSDjoDxkOhKBd6Brwy4egB4qdr4rkSA9pOEq1CbTyVXZqqeuCbY5mJZjH2tEn05eJsS.Y0iZklMU.1mOczhKrAXA2rWgAXHvngXQgcxcqHosM9YWIKUh3cKEITbQ8bfniYQ0i1K5ZduytiPRq7dzrfs.4aGz30QJc1oKf1uSIPlR.dixoCeFGdeFeLfgd2GC27MVd5EP8v_rUQBBUELbOSvezDMZEscDXB1WBAv0hhnnp7W3vnA64MALfpJdu0t6uJSdO8ZsbUxuVFHXLvFL7T6N9wfPDOFqCo8RZAKI8DtW3wLbWutd20",
+         "csrf_token_9fd5d7bdd662e6bf9eadd96770e74156303af0005e126839319c063b64bc2f62": "N2iaxMksqd2fQz8vnovhNXTVkZnem/mbsssjvyq/LMk=",
+         "ory_kratos_continuity": "MTc2MDM2MzMzMHxEWDhFQVFMX2dBQUJFQUVRQUFCZl80QUFBUVp6ZEhKcGJtY01Jd0FoYjNKNVgydHlZWFJ2YzE5dmFXUmpYMkYxZEdoZlkyOWtaVjl6WlhOemFXOXVCbk4wY21sdVp3d21BQ1F4WW1KbU1qazRaaTAyTWprMExUUTVZakl0WVdOak9TMDBNelpoWVRaaE5tWmpOMk09fA-JZd2mx90oKD4JmysvYSLFB98e6jq0XAm6JOmY0YWZ"
+      },
+      "request_headers": {
+         "Accept": [
+            "application/json"
+         ],
+         "Accept-Encoding": [
+            "gzip, br"
+         ],
+         "Accept-Language": [
+            "en-US,en;q=0.9"
+         ],
+         "Cf-Ipcountry": [
+            "IN"
+         ],
+         "Content-Length": [
+            "205"
+         ],
+         "Content-Type": [
+            "application/json"
+         ],
+         "Origin": [
+            "https://kind-bhaskara-g6yoralijp.projects.oryapis.com"
+         ],
+         "Priority": [
+            "u=1, i"
+         ],
+         "Referer": [
+            "https://kind-bhaskara-g6yoralijp.projects.oryapis.com/login?flow=d6d8cb6f-1080-404e-97bd-60208f7b6529"
+         ],
+         "Sec-Ch-Ua": [
+            "\"Google Chrome\";v=\"141\", \"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"141\""
+         ],
+         "Sec-Ch-Ua-Mobile": [
+            "?0"
+         ],
+         "Sec-Ch-Ua-Platform": [
+            "\"macOS\""
+         ],
+         "Sec-Fetch-Dest": [
+            "empty"
+         ],
+         "Sec-Fetch-Mode": [
+            "cors"
+         ],
+         "Sec-Fetch-Site": [
+            "same-origin"
+         ],
+         "True-Client-Ip": [
+            "45.252.73.165"
+         ],
+         "User-Agent": [
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+         ]
+      },
+      "request_method": "POST",
+      "request_url": "https://kind-bhaskara-g6yoralijp.projects.oryapis.com/self-service/login?flow=d6d8cb6f-1080-404e-97bd-60208f7b6529",
+      "session": {
+         "active": true,
+         "authenticated_at": "2025-10-14T09:46:29.791865494Z",
+         "authentication_methods": [
+            {
+               "aal": "aal1",
+               "completed_at": "2025-10-14T09:46:29.791785301Z",
+               "method": "password"
+            }
+         ],
+         "authenticator_assurance_level": "aal1",
+         "devices": [
+            {
+               "id": "00000000-0000-0000-0000-000000000000",
+               "ip_address": "45.252.73.165",
+               "location": "Pimpri, IN",
+               "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+            }
+         ],
+         "expires_at": "2025-10-14T10:01:29.791865494Z",
+         "id": "00000000-0000-0000-0000-000000000000",
+         "identity": {
+            "created_at": "2025-10-14T09:45:29.850675Z",
+            "id": "92cfbc5b-47bc-4e88-be06-92fb6aae7e8b",
+            "metadata_public": null,
+            "organization_id": null,
+            "recovery_addresses": [
+               {
+                  "created_at": "2025-10-14T09:45:30.097499Z",
+                  "id": "5911fff0-19d5-47e0-8b8e-5abd6c56625a",
+                  "updated_at": "2025-10-14T09:45:30.097499Z",
+                  "value": "parth.inamdar.ext+3@ory.sh",
+                  "via": "email"
+               }
+            ],
+            "schema_id": "preset://email",
+            "schema_url": "https://kind-bhaskara-g6yoralijp.projects.oryapis.com/schemas/cHJlc2V0Oi8vZW1haWw",
+            "state": "active",
+            "state_changed_at": "2025-10-14T09:45:29.848583Z",
+            "traits": {
+               "email": "parth.inamdar.ext+3@ory.sh"
+            },
+            "updated_at": "2025-10-14T09:45:29.850675Z",
+            "verifiable_addresses": [
+               {
+                  "created_at": "2025-10-14T09:45:29.855926Z",
+                  "id": "98b14612-c6c2-4859-961c-fd7dce2df667",
+                  "status": "completed",
+                  "updated_at": "2025-10-14T09:45:29.855926Z",
+                  "value": "parth.inamdar.ext+3@ory.sh",
+                  "verified": true,
+                  "verified_at": "2025-10-14T09:45:47.281019Z",
+                  "via": "email"
+               }
+            ]
+         },
+         "issued_at": "2025-10-14T09:46:29.791865494Z"
+      }
+   }
+}

@@ -1,0 +1,50 @@
+# Traefik Dynamic Configuration
+#
+# This configures Traefik to use the Ory ForwardAuth middleware
+# for session validation on all routes.
+#
+# How it works:
+#   1. Request arrives at Traefik
+#   2. Traefik forwards it to the ForwardAuth service (ory-auth)
+#   3. ory-auth checks the session cookie with Ory's /sessions/whoami
+#   4. If valid: returns 200 + identity headers → Traefik forwards to upstream
+#   5. If invalid: returns 401 → Traefik returns 401 or redirects to login
+
+http:
+  middlewares:
+    ory-auth:
+      forwardAuth:
+        address: "http://ory-auth-service:4181"
+        # Forward these headers from the original request to the auth service
+        trustForwardHeader: true
+        # Copy these response headers from the auth service to the upstream request
+        authResponseHeaders:
+          - "X-User-Id"
+          - "X-User-Email"
+          - "X-User-Name"
+          - "X-Session-Id"
+          - "X-Auth-AAL"
+          - "X-User-Metadata"
+
+  routers:
+    # Protected API route — requires valid Ory session
+    api:
+      rule: "PathPrefix(`/api`)"
+      service: api-service
+      middlewares:
+        - ory-auth
+      entryPoints:
+        - websecure
+
+    # Public route — no authentication required
+    public:
+      rule: "PathPrefix(`/public`) || PathPrefix(`/health`)"
+      service: api-service
+      entryPoints:
+        - websecure
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://your-backend-service:8080"

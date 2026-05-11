@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: gbg-acuant
+displayName: GBG (Acuant)
+vendor: GBG (Acuant)
+category: identity-verification
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  GBG (which acquired Acuant) is a global identity verification provider with deep document and biometric coverage. This
+  integration calls the GBG identity verification API from an Ory Actions webhook during registration to verify document
+  + selfie evidence, and writes the verification outcome back into the Ory identity for downstream policy decisions.
+oryMechanism:
+  - actions-webhook
+status: active

@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: yubikey
+displayName: YubiKey (WebAuthn/FIDO2)
+vendor: YubiKey (WebAuthn/FIDO2)
+category: mfa
+type: config
+maintainedBy: Community contributors
+description: >-
+  YubiKey is a hardware security key manufactured by Yubico that supports WebAuthn/FIDO2, FIDO U2F, and other
+  authentication protocols. Ory Network natively supports WebAuthn/FIDO2 for multi-factor authentication (MFA), allowing
+  users to register YubiKeys and other FIDO2-compliant authenticators as second factors. This enables phishing-resistant
+  authentication at AAL2 (Authent...
+oryMechanism:
+  - standards
+status: active

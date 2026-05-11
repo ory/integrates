@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: vonage
+displayName: Vonage (Nexmo) — SMS Provider
+vendor: Vonage (Nexmo) — SMS Provider
+category: sms-providers
+type: config
+maintainedBy: Community contributors
+description: >-
+  Vonage (formerly Nexmo) is a global cloud communications platform providing SMS, voice, and messaging APIs. Vonage has
+  particularly strong coverage in EMEA and APAC regions and is known for reliable message delivery and competitive
+  international pricing. It is a solid alternative to Twilio for organizations with significant international user
+  bases.
+oryMechanism:
+  - courier-spi
+status: active

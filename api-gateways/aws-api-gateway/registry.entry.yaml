@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: aws-api-gateway
+displayName: AWS API Gateway + Ory Network
+vendor: AWS API Gateway + Ory Network
+category: api-gateways
+type: config
+maintainedBy: Community contributors
+description: >-
+  AWS API Gateway is a fully managed service for creating, publishing, and securing APIs at scale. This integration uses
+  a **Lambda authorizer** (formerly "custom authorizer") to validate Ory-issued JWTs at the gateway layer before
+  requests reach your backend services.
+oryMechanism:
+  - standards
+status: active

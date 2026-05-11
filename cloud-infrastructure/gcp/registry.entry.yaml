@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: gcp
+displayName: GCP Infrastructure
+vendor: GCP Infrastructure
+category: cloud-infrastructure
+type: config
+maintainedBy: Community contributors
+description: >-
+  This guide covers deploying and integrating Ory with Google Cloud Platform infrastructure. While Ory Network is a
+  managed cloud service, organizations hosting applications on GCP need to understand connectivity patterns. This
+  document covers both connecting GCP-hosted applications to Ory Network (managed) and self-hosting Ory on GKE with
+  Cloud SQL.
+oryMechanism:
+  - standards
+status: active

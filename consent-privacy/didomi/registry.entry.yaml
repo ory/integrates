@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: didomi
+displayName: Didomi
+vendor: Didomi
+category: consent-privacy
+type: config
+maintainedBy: Community contributors
+description: >-
+  Didomi is a consent management platform (CMP) that enables organizations to collect, store, and manage user consent
+  for data processing activities in compliance with GDPR, CCPA, ePrivacy, and other privacy regulations. This
+  integration connects Didomi to Ory Network to synchronize consent preferences with Ory identity metadata and handle
+  data subject requests through Ory's a...
+oryMechanism:
+  - standards
+status: active

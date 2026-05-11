@@ -1,0 +1,13 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: hookdeck
+displayName: Hookdeck — Webhook Reliability Layer
+vendor: Hookdeck — Webhook Reliability Layer
+category: webhook-infrastructure
+type: config
+maintainedBy: Community contributors
+description: Route Ory Network events through Hookdeck for reliable delivery, automatic retries, rate limiting, and observability.
+oryMechanism:
+  - standards
+status: active

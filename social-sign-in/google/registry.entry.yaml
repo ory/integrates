@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: google
+displayName: Sign in with Google - Ory Network
+vendor: Sign in with Google - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Google is the most ubiquitous social sign-in provider, with billions of Google accounts worldwide. Google supports
+  both traditional OIDC and the newer FedCM (Federated Credential Management) API for privacy-preserving authentication.
+  Integrating Google with Ory Network provides a frictionless sign-in experience that most users are already familiar
+  with.
+oryMechanism:
+  - standards
+status: active

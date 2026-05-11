@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: ibm-security-verify
+displayName: IBM Security Verify
+vendor: IBM Security Verify
+category: enterprise-sso
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  IBM Security Verify is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and
+  SAML 2.0 endpoints for federation, and can be configured as an upstream identity provider in Ory Network so that
+  IBM-managed enterprise identities can sign in to Ory-protected applications.
+oryMechanism:
+  - standards
+status: active

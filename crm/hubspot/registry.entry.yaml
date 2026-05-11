@@ -1,0 +1,15 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: hubspot
+displayName: HubSpot
+vendor: HubSpot
+category: crm
+type: webhook
+maintainedBy: Ory Engineering
+description: >-
+  Sync Ory identities to HubSpot contacts automatically using Ory Actions webhooks. When a user registers or updates
+  their profile, a webhook fires and creates or updates the corresponding HubSpot contact record.
+oryMechanism:
+  - actions-webhook
+status: active

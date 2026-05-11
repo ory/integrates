@@ -1,0 +1,30 @@
+name: Bug in an existing integration
+description: Report a problem with an integration in this repository
+labels: ["bug"]
+body:
+  - type: input
+    id: integration
+    attributes:
+      label: Which integration?
+      placeholder: crm/hubspot
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      placeholder: Describe the unexpected behavior. Include stack traces, request/response payloads (with secrets redacted), and your Ory Network project version if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true

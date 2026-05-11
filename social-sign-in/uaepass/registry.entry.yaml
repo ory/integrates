@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: uaepass
+displayName: UAEPass — Social Sign-In
+vendor: UAEPass — Social Sign-In
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  UAEPass is the United Arab Emirates' national digital identity, used to access government and licensed private-sector
+  services. UAEPass exposes a standard OAuth 2.0 / OIDC interface and can be configured as a federated identity provider
+  in Ory Kratos for any application that targets UAE users or needs regional compliance.
+oryMechanism:
+  - standards
+status: active

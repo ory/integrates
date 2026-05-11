@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: azure
+displayName: Microsoft Azure
+vendor: Microsoft Azure
+category: cloud-infrastructure
+type: config
+maintainedBy: Community contributors
+description: >-
+  Microsoft Azure is a major public cloud and a common deployment target for self-hosted Ory products. Open-source
+  Kratos, Hydra, Keto, and Oathkeeper run cleanly on Azure Kubernetes Service (AKS) or Azure Container Apps with Azure
+  Database for PostgreSQL or Azure Cosmos DB for PostgreSQL as the data store, and integrate with Microsoft Entra ID for
+  enterprise SSO use cases.
+oryMechanism:
+  - standards
+status: active

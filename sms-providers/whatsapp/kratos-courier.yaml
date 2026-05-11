@@ -1,0 +1,14 @@
+# Snippet to merge into the Kratos identity-config under /courier/channels.
+# Replace ORY_WEBHOOK_SECRET with the value you set in webhook/.env, and the URL
+# with your deployed handler URL.
+courier:
+  channels:
+    - id: sms
+      type: http
+      request_config:
+        url: https://your-deployed-handler.example.com/whatsapp/send
+        method: POST
+        body: file://./jsonnet/sms-body.jsonnet
+        headers:
+          x-webhook-secret: <your-shared-secret>
+          content-type: application/json

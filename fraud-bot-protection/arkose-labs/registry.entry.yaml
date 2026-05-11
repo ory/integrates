@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: arkose-labs
+displayName: Arkose Labs
+vendor: Arkose Labs
+category: fraud-bot-protection
+type: config
+maintainedBy: Community contributors
+description: >-
+  Arkose Labs is a bot detection and fraud prevention platform that uses adaptive enforcement challenges to stop
+  automated attacks while allowing legitimate users through. It is designed for high-value transactions such as account
+  creation, login, and payment flows.
+oryMechanism:
+  - standards
+status: active

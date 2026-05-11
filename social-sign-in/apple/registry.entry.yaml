@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: apple
+displayName: Sign in with Apple - Ory Network
+vendor: Sign in with Apple - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Sign in with Apple allows users to authenticate using their Apple ID. Apple provides a privacy-focused authentication
+  experience with features like private email relay (Hide My Email), which generates unique, random email addresses that
+  forward to the user's real email. Integrating Apple with Ory Network is **mandatory for iOS apps that offer any
+  third-party social login** p...
+oryMechanism:
+  - standards
+status: active

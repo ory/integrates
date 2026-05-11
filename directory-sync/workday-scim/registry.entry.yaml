@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: workday-scim
+displayName: Workday SCIM
+vendor: Workday SCIM
+category: directory-sync
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Workday is one of the most widely deployed enterprise HCM systems, and acts as the source of truth for employee data in
+  HR-driven access flows. Workday emits SCIM v2.0 to downstream systems, which Ory Network can consume to provision,
+  update, and deprovision identities automatically as employees are hired, change roles, or leave. This pattern keeps
+  Ory's identity store in lock-step with HR ground truth without bespoke integration code.
+oryMechanism:
+  - scim
+status: active

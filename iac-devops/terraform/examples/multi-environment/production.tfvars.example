@@ -1,0 +1,8 @@
+environment        = "production"
+project_id         = "your-production-project-id"
+app_url            = "https://app.example.com"
+webhook_base_url   = "https://webhooks.example.com"
+
+enable_stripe_webhook  = true
+enable_segment_webhook = true
+enable_splunk_webhook  = true

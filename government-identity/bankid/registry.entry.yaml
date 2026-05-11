@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: bankid
+displayName: BankID
+vendor: BankID
+category: government-identity
+type: config
+maintainedBy: Community contributors
+description: >-
+  BankID is a high-assurance electronic identification system used in Sweden and Norway for online authentication and
+  digital signing. It is issued by banks and provides a government-recognized identity verification level suitable for
+  financial services, healthcare, and public sector applications. Integrating BankID with Ory Network requires a
+  licensed broker intermediary (suc...
+oryMechanism:
+  - standards
+status: active

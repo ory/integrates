@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: yandex
+displayName: Yandex Login - Ory Network
+vendor: Yandex Login - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  Yandex is Russia's largest technology company and internet services provider, with services spanning search, email,
+  maps, ride-hailing, and more. Yandex ID provides OAuth 2.0 authentication with access to Yandex user profiles.
+  Integrating Yandex with Ory Network is important for applications targeting the Russian market, where Yandex services
+  are widely used.
+oryMechanism:
+  - standards
+status: active

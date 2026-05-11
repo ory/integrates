@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: castle
+displayName: Castle.io
+vendor: Castle.io
+category: fraud-bot-protection
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Castle is an adaptive risk scoring platform that provides real-time threat detection for authentication flows. It
+  analyzes device context, IP addresses, user behavior, and network signals to produce a risk score and recommended
+  action for each authentication event.
+oryMechanism:
+  - actions-webhook
+status: active

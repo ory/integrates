@@ -1,0 +1,17 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: dingtalk
+displayName: DingTalk Social Sign-In - Ory Network
+vendor: DingTalk Social Sign-In - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  DingTalk (by Alibaba Group) is a leading enterprise collaboration platform widely used in China with over 600 million
+  users. Integrating DingTalk with Ory Network enables B2B applications targeting the Chinese market to authenticate
+  users with their DingTalk corporate accounts. This is essential for enterprise applications, SaaS platforms, and
+  internal tools serving organiza...
+oryMechanism:
+  - standards
+status: active

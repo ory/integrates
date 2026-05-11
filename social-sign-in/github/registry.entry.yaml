@@ -1,0 +1,16 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: github
+displayName: Sign in with GitHub - Ory Network
+vendor: Sign in with GitHub - Ory Network
+category: social-sign-in
+type: config
+maintainedBy: Ory Engineering
+description: >-
+  GitHub is the world's leading software development platform with over 100 million developers. Integrating GitHub with
+  Ory Network is ideal for developer tools, DevOps platforms, and technical applications. GitHub's OAuth flow provides
+  access to user profile data, email addresses, and organization/team membership, enabling org-based access control.
+oryMechanism:
+  - standards
+status: active
