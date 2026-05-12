@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T00:08:16Z
+  generated: 2026-05-12T00:21:44Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -391,8 +391,8 @@ integrations:
     vendor: Pipedrive
     oryMechanism:
       - standards
-  - name: salesforce
-    displayName: Salesforce
+  - name: salesforce-crm
+    displayName: Salesforce (CRM)
     category: crm
     path: crm/salesforce
     maintainedBy: Community contributors
@@ -1770,31 +1770,61 @@ integrations:
     oryMechanism:
       - standards
   - name: auth0
-    displayName: Auth0 as Upstream IdP - Ory Network
+    displayName: Auth0
     category: social-sign-in
     path: social-sign-in/auth0
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Auth0 can serve as an upstream Identity Provider (IdP) for Ory Network via OIDC federation. This integration is
-      ideal for organizations migrating from Auth0 to Ory or for federated identity scenarios where Auth0 manages a subset
-      of users. By connecting Auth0 as a social sign-in provider, existing Auth0 users can authenticate through Ory
-      without requiring password resets or a...
+      Auth0 as an upstream OIDC provider in Ory Network. Useful for migrations from Auth0 to Ory (run side-by-side and
+      federate Auth0 users into Ory until cutover) or for products that already issue identities through Auth0 and want to
+      layer Ory's flows on top.
     status: active
-    vendor: Auth0 as Upstream IdP - Ory Network
+    vendor: Auth0 (Okta)
+    useCase: >-
+      An org migrating from Auth0 to Ory wants existing Auth0 users to authenticate through Ory without password resets
+      during the cutover. Pre-existing Auth0 sessions remain valid; new Ory identities are created on first sign-in.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: auth0`); both Console wizard and CLI configurations supported.
+
+      - Tenant URL is required (typically https://<tenant>.auth0.com) for issuer validation against the customer's
+      specific Auth0 tenant.
+
+      - Standard scopes: openid, profile, email. Default Jsonnet returns email gated on email_verified; optional
+      `nickname` → `username` mapping.
+
+      - Auth0 application type must be "Regular Web Applications"; the Ory redirect URI goes into Auth0's Allowed Callback
+      URLs.
+
+      - Common migration pattern: run Auth0 + Ory side-by-side with Auth0 as the upstream IdP, then disable the Auth0
+      provider once enough users have been transparently linked to native Ory identities.
     oryMechanism:
       - standards
   - name: battle-net
-    displayName: Battle.net Login - Ory Network
+    displayName: Battle.net
     category: social-sign-in
     path: social-sign-in/battle-net
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
-      > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Battle.net
-      supports standard OAuth 2.0 with OIDC, making it straightforward to integrate.
+      Battle.net (Blizzard) as a social sign-in provider in Ory Network. OIDC-compliant and configures cleanly as a
+      generic OIDC provider; no Battle.net-specific Ory page yet — pattern follows the generic-OIDC docs.
     status: active
-    vendor: Battle.net Login - Ory Network
+    vendor: Blizzard Entertainment
+    useCase: >-
+      A gaming product targeting Blizzard's player base (World of Warcraft, Overwatch, Hearthstone, Diablo) wants sign-in
+      via the OAuth provider its players already use to access their games and battle.tag identity.
+    coreFunctionality: >-
+      - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI) — Battle.net is
+      OIDC-certified.
+
+      - Issuer URL: https://oauth.battle.net (global identity; regional aliases also resolve here).
+
+      - Standard scopes: openid (basic identity); add `wow.profile` / `sc2.profile` etc. for game-specific data.
+
+      - Default Jsonnet maps battle_tag, sub, email when present.
+
+      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
   - name: dingtalk
@@ -1852,16 +1882,26 @@ integrations:
     oryMechanism:
       - standards
   - name: epic-games
-    displayName: Epic Games Login - Ory Network
+    displayName: Epic Games
     category: social-sign-in
     path: social-sign-in/epic-games
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
-      > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Epic Games
-      supports standard OAuth 2.0, making it possible to integrate as a generic provider.
+      Epic Games (Epic Online Services) as a social sign-in provider in Ory Network. Configures as a generic OAuth/OIDC
+      provider in Ory; no Epic-specific page yet.
     status: active
-    vendor: Epic Games Login - Ory Network
+    vendor: Epic Games
+    useCase: >-
+      A gaming product targeting Fortnite, Rocket League, or Unreal-engine titles wants sign-in via the Epic Account
+      identity its players already use. Often paired with Steam or Battle.net for broader gamer coverage.
+    coreFunctionality: |-
+      - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI).
+      - Issuer URL: https://api.epicgames.dev/epic/oauth/v2 — Epic Online Services (EOS) issues the tokens.
+      - Standard scopes: openid, basic_profile.
+      - Default Jsonnet maps sub (Epic Account ID), preferred_username, email when present.
+      - Epic Games Developer Portal manages client provisioning; the EOS application client is what backs OAuth.
+      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
   - name: facebook
@@ -1922,18 +1962,37 @@ integrations:
     oryMechanism:
       - standards
   - name: github-app
-    displayName: GitHub App Authentication - Ory Network
+    displayName: GitHub App
     category: social-sign-in
     path: social-sign-in/github-app
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      GitHub App authentication goes beyond simple OAuth login by leveraging GitHub Apps, which can act on behalf of users
-      with fine-grained permissions and can also authenticate as the app itself for server-to-server operations. This
-      integration uses Ory Hydra for OAuth2 server capabilities alongside Ory Kratos for identity management, enabling
-      complex token issuance flows for Gi...
+      Sign in via a GitHub App (the modern variant of GitHub OAuth Apps) so the same identity flow that authenticates the
+      user also pairs with an app installation that can act on their org/repos with fine-grained permissions and
+      per-installation rate limits. The Ory side reuses the standard GitHub OIDC provider; the difference is on the GitHub
+      side where you register an App instead of an OAuth App.
     status: active
-    vendor: GitHub App Authentication - Ory Network
+    vendor: GitHub
+    useCase: >-
+      A developer-tool product (CI, code review, security scanner, automation) needs both user login and the ability to
+      act on the user's repositories — opening PRs, posting check runs, reading code. The GitHub App flow gives scoped
+      per-repo permissions and a separate JWT-based server-to-server credential, neither of which OAuth Apps provide.
+    coreFunctionality: >-
+      - Kratos provider configuration uses `provider: github` with a distinct `id` (e.g. `github-app`); the user-facing
+      OAuth flow is identical to the regular GitHub provider.
+
+      - GitHub-side registration uses GitHub Apps (settings/apps/new) instead of OAuth Apps, with the Ory redirect URI set
+      as the Callback URL and "Request user authorization (OAuth) during installation" enabled.
+
+      - Fine-grained per-repository permissions, per-installation rate limits (5,000 req/hr per installation), and rich
+      webhook events.
+
+      - Server-to-server authentication via JWT signed with the App's private key, exchanged at GitHub for an installation
+      access token — handled by the application, not by Ory.
+
+      - Use the regular `github` provider instead if only user login is needed; choose this variant when the product also
+      needs to act on installations.
     oryMechanism:
       - standards
   - name: gitlab
@@ -1991,16 +2050,31 @@ integrations:
     oryMechanism:
       - standards
   - name: kakao
-    displayName: Kakao Login - Ory Network
+    displayName: Kakao
     category: social-sign-in
     path: social-sign-in/kakao
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
-      > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Kakao supports
-      standard OIDC, making it straightforward to integrate.
+      Kakao Login as a social sign-in provider in Ory Network. Kakao is the dominant identity and messaging platform in
+      South Korea; OIDC-compliant and configures as a generic OIDC provider in Ory.
     status: active
-    vendor: Kakao Login - Ory Network
+    vendor: Kakao
+    useCase: >-
+      A consumer product targeting South Korean users wants sign-in via the platform that nearly every Korean smartphone
+      user has installed for messaging, payments, and identity.
+    coreFunctionality: >-
+      - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI).
+
+      - Issuer URL: https://kauth.kakao.com.
+
+      - Standard scopes: openid, profile_nickname, account_email; Kakao requires explicit scope opt-in for email and other
+      PII fields on the app's "Consent Items" screen.
+
+      - Client Secret must be explicitly enabled under the app's Security settings (it's optional for Kakao apps by
+      default).
+
+      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
   - name: lark
@@ -2115,16 +2189,31 @@ integrations:
     oryMechanism:
       - standards
   - name: naver
-    displayName: Naver Login - Ory Network
+    displayName: Naver
     category: social-sign-in
     path: social-sign-in/naver
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
-      > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Naver uses
-      standard OAuth 2.0, making it straightforward to integrate as a generic provider.
+      Naver Login as a social sign-in provider in Ory Network. Naver is South Korea's largest search portal — a
+      complementary sign-in option to Kakao for products targeting Korean users. OAuth 2.0 (not OIDC).
     status: active
-    vendor: Naver Login - Ory Network
+    vendor: Naver
+    useCase: >-
+      A consumer product targeting South Korean users wants sign-in via Naver in addition to (or instead of) Kakao — Naver
+      dominates search and adjacent services in Korea while Kakao dominates messaging.
+    coreFunctionality: >-
+      - Configured via the Ory CLI as a generic provider — Naver isn't OIDC (no /.well-known/openid-configuration), so the
+      Console wizard's discovery flow doesn't apply.
+
+      - Authorization endpoint: https://nid.naver.com/oauth2.0/authorize; Token endpoint:
+      https://nid.naver.com/oauth2.0/token; Profile API: https://openapi.naver.com/v1/nid/me.
+
+      - Default Jsonnet maps response.id (Naver user id), response.email, response.nickname.
+
+      - Configured at the Naver Developers Console (developers.naver.com/apps).
+
+      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
   - name: netid
@@ -2265,16 +2354,36 @@ integrations:
     oryMechanism:
       - standards
   - name: steam
-    displayName: Steam Login - Ory Network
+    displayName: Steam
     category: social-sign-in
     path: social-sign-in/steam
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
-      > **Status: Community/Proposed** — This integration does not have official Ory documentation. Steam uses **OpenID
-      2.0** (legacy), NOT OAuth 2.0 or OIDC, which requires special handling.
+      Sign in with Steam — Valve's PC gaming platform — surfaced through Ory Network. Steam predates OAuth/OIDC and uses
+      OpenID 2.0, so Kratos cannot consume it directly; a small OpenID 2.0 → OIDC proxy in front of Steam is the
+      recommended bridge, with Kratos then configured as a generic OIDC provider against the proxy.
     status: active
-    vendor: Steam Login - Ory Network
+    vendor: Valve
+    useCase: >-
+      A gaming, esports, community, or game-launcher product wants Sign in with Steam so users authenticate with their
+      existing Steam identity rather than creating a separate account.
+    coreFunctionality: >-
+      - Steam is NOT natively supported by Kratos — it speaks OpenID 2.0 (2007 spec), not OAuth 2.0/OIDC.
+
+      - Recommended pattern: deploy a small OpenID 2.0 → OIDC proxy that wraps Steam's
+      `https://steamcommunity.com/openid/login` endpoint and exposes a normal OIDC issuer; configure Kratos against the
+      proxy as a generic provider.
+
+      - Alternative: implement Steam OpenID 2.0 in your backend and create/lookup identities via the Kratos Admin API,
+      bypassing the social-signin subsystem.
+
+      - Steam does NOT share email; design the identity schema to use the 64-bit Steam ID as the credential identifier.
+
+      - A Steam Web API key (from steamcommunity.com/dev/apikey) is needed to fetch profile data via GetPlayerSummaries;
+      profile visibility may be restricted.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: telegram
@@ -2308,17 +2417,34 @@ integrations:
     oryMechanism:
       - actions-webhook
   - name: tiktok
-    displayName: TikTok — Social Sign-In
+    displayName: TikTok
     category: social-sign-in
     path: social-sign-in/tiktok
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
-      TikTok is one of the largest short-video platforms globally with strong reach in younger demographics. The TikTok
-      Login Kit exposes a standard OAuth 2.0 / OIDC-style flow that Ory Kratos can consume as a generic OIDC provider,
-      giving customers a frictionless sign-in for TikTok's user base.
+      Add Login with TikTok as a social sign-in provider in Ory Network. Useful for consumer media products, creator
+      tools, and short-form video adjacent apps where TikTok is the audience graph. TikTok Login Kit is OAuth 2.0 (not
+      OIDC) and is configured as a generic provider with explicit endpoints.
     status: active
-    vendor: TikTok — Social Sign-In
+    vendor: TikTok
+    useCase: >-
+      A consumer media or creator product wants Login with TikTok in addition to Google/Facebook so users with strong
+      TikTok presence can sign in with the account they actually use day to day.
+    coreFunctionality: >-
+      - Configured via the Ory CLI as a generic provider — TikTok isn't OIDC so the Console wizard's discovery flow
+      doesn't apply.
+
+      - Authorization endpoint: https://www.tiktok.com/v2/auth/authorize; Token:
+      https://open.tiktokapis.com/v2/oauth/token/; Profile:
+      https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name.
+
+      - Default Jsonnet maps data.user.open_id, display_name, and email (when the email scope is granted).
+
+      - Scopes opt-in: `user.info.basic` is base; `user.info.email` is a separately approved scope and may require TikTok
+      app review.
+
+      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
   - name: twitch
@@ -2377,44 +2503,95 @@ integrations:
     oryMechanism:
       - standards
   - name: vk
-    displayName: VKontakte (VK) Social Sign-In - Ory Network
+    displayName: VKontakte
     category: social-sign-in
     path: social-sign-in/vk
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      VKontakte (VK) is the largest social network in Russia and the CIS region, with over 100 million monthly active
-      users. Integrating VK with Ory Network is essential for applications targeting the Russian-speaking market. VK
-      provides OAuth 2.0 authentication with access to user profiles, friends lists, and social graph data.
+      VKontakte (VK) as a social sign-in provider in Ory Network. The dominant Russian-language social network — the
+      natural sign-in option for consumer products targeting Russia and CIS markets.
     status: active
-    vendor: VKontakte (VK) Social Sign-In - Ory Network
+    vendor: VK
+    useCase: >-
+      A consumer product targeting Russian-speaking users wants sign-in via the OAuth provider those users use as their
+      primary social network. Often paired with the Yandex provider for broader CIS coverage.
+    coreFunctionality: >-
+      - First-party Kratos OAuth2 provider (`provider: vk`); CLI-only configuration.
+
+      - VK returns an access_token only (no id_token); Ory calls VK's users.get API to populate the claims envelope.
+
+      - Default Jsonnet maps email when present (VK doesn't expose email_verified, so the default is conservative —
+      `email` scope is required for any chance of getting it).
+
+      - Configured via the VK developers portal (vk.com/apps?act=manage); App ID = Client ID, Secure key = Client Secret.
+
+      - Optional VK scopes for friends list, photos, etc. — enable per app needs.
     oryMechanism:
       - standards
   - name: wechat
-    displayName: WeChat Login - Ory Network
+    displayName: WeChat
     category: social-sign-in
     path: social-sign-in/wechat
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
-      > **Status: Community/Proposed** — This integration does not have official Ory documentation. WeChat uses a
-      non-standard OAuth flow that requires special handling.
+      Sign in with WeChat (微信) — Tencent's super-app and the default identity for products targeting users in mainland
+      China. WeChat's OAuth dialect is non-standard (uses appid/secret instead of client_id/client_secret, no id_token,
+      and surface-specific authorization endpoints), so a small OIDC proxy in front of WeChat is the recommended bridge to
+      Kratos.
     status: active
-    vendor: WeChat Login - Ory Network
+    vendor: Tencent
+    useCase: >-
+      A consumer product targeting users in mainland China needs Sign in with WeChat as effectively the default identity
+      provider — comparable to how Google sign-in functions in Western markets.
+    coreFunctionality: >-
+      - WeChat is NOT natively supported by Kratos — its OAuth dialect renames client_id/client_secret to appid/secret and
+      never returns an id_token.
+
+      - Recommended pattern: deploy an OIDC proxy that translates the standard OIDC request to WeChat's flow and returns a
+      normal id_token; configure Kratos against the proxy as a generic provider.
+
+      - Three distinct authorization endpoints by surface: web QR-code (open.weixin.qq.com/connect/qrconnect), in-app
+      (open.weixin.qq.com/connect/oauth2/authorize), and Mini Programs.
+
+      - Use `unionid` (cross-app stable identifier under one Open Platform account) rather than `openid` (per-app) for the
+      identity credential.
+
+      - WeChat does NOT share email; identity schema must accommodate.
+
+      - Operational prerequisites: Chinese business entity for Open Platform registration, ICP filing for the callback
+      domain, and testing from within China for reliable connectivity.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: x-twitter
-    displayName: Sign in with X (Twitter) - Ory Network
+    displayName: X / Twitter
     category: social-sign-in
     path: social-sign-in/x-twitter
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      X (formerly Twitter) is a major social media platform with hundreds of millions of active users. X provides OAuth
-      2.0 authentication (with PKCE) for user sign-in. Integrating X with Ory Network enables social applications, media
-      platforms, and community tools to authenticate users via their X accounts.
+      Sign in with X (Twitter) as a social sign-in provider in Ory Network. Useful for consumer apps where Twitter/X is
+      part of the audience graph — content discovery, social-adjacent products, creator tools.
     status: active
-    vendor: Sign in with X (Twitter) - Ory Network
+    vendor: X
+    useCase: >-
+      A consumer or creator-tooling product wants sign-in via the OAuth provider its users use to follow / discover
+      content. Twitter v2 free tier supports social sign-in without a paid API subscription.
+    coreFunctionality: >-
+      - First-party Kratos OAuth2 provider — Ory provider id is `twitter` (not `x` or `x-twitter`); registry name
+      `x-twitter` reflects the post-rebrand vendor name.
+
+      - Confidential Client app type required (not Public Client); "Request email from users" toggle controls whether
+      email is returned.
+
+      - PKCE supported and enabled by default for the Twitter v2 OAuth flow.
+
+      - Default Jsonnet maps the username and email when present.
+
+      - Free Twitter Developer tier suffices — no paid subscription required for social sign-in.
     oryMechanism:
       - standards
   - name: yandex
