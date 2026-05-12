@@ -46,8 +46,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 2. Body templates: [`jsonnet/sync-user.jsonnet`](jsonnet/sync-user.jsonnet) and [`jsonnet/track-login.jsonnet`](jsonnet/track-login.jsonnet).
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
-<!-- TODO: link to hosted demo videos (basic user sync + login activity tracking).
-     The original .mov demos were removed from the repo to keep clone size small. -->
+<!-- TODO: link to hosted demo videos (basic user sync + login activity tracking). -->
 A sample of the webhook response Pipedrive returns lives at [`assets/sample_webhook_response.json`](assets/sample_webhook_response.json).
 
 ## Troubleshooting
