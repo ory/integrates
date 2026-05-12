@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T05:02:24Z
+  generated: 2026-05-12T13:37:58Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -306,12 +306,29 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Drata is an automated security and compliance platform that continuously monitors infrastructure and workflows to
-      maintain compliance with SOC 2, ISO 27001, HIPAA, PCI DSS, GDPR, and other frameworks. This integration connects
-      Drata to Ory Network to collect identity and access management evidence, enabling automated control monitoring and
-      audit readiness.
+      Pull identity and access management evidence from Ory Network into Drata for automated compliance monitoring (SOC 2,
+      ISO 27001, HIPAA, PCI DSS, GDPR). No dedicated Ory docs or first-party Drata connector exists; integration via
+      Drata's Generic Custom Connector polling the Ory admin API on a schedule.
     status: active
     vendor: Drata
+    useCase: >-
+      An Ory Network customer pursuing or maintaining SOC 2 / ISO 27001 / similar compliance wants Drata to auto-collect
+      IAM evidence from Ory rather than running manual evidence-gathering each audit cycle.
+    coreFunctionality: >-
+      - Drata Generic Custom Connector polls the Ory admin API on a schedule using a Project-scoped API key with read
+      access.
+
+      - Common evidence pulls: GET /admin/identities (user list + lifecycle timestamps + MFA enrollment), GET
+      /admin/identities/{id} (per-user roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service
+      accounts), Ory project config (password policy, session lifespan, MFA requirements).
+
+      - JML controls map to identity create / update / deactivate timestamps.
+
+      - Privileged access: OAuth2 clients with admin scopes can be flagged.
+
+      - MFA enforcement: flag identities without TOTP/WebAuthn credentials where policy requires it.
+
+      - Status: community/proposed — no dedicated ory/docs page; implementation lives in Drata's custom-connector layer.
     oryMechanism:
       - standards
   - name: vanta
@@ -321,12 +338,30 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Vanta is an automated security and compliance platform that continuously monitors an organization's security posture
-      to streamline SOC 2, ISO 27001, HIPAA, and other compliance frameworks. This integration connects Vanta to Ory
-      Network's admin API to collect evidence related to identity and access management controls, enabling automated
-      compliance reporting without manual ev...
+      Pull identity and access management evidence from Ory Network into Vanta for automated compliance monitoring (SOC 2,
+      ISO 27001, HIPAA, etc.). No dedicated Ory docs or first-party Vanta connector exists; integration via Vanta's Custom
+      Integration / API integration polling the Ory admin API on a schedule.
     status: active
     vendor: Vanta
+    useCase: >-
+      An Ory Network customer pursuing or maintaining SOC 2 / ISO 27001 / similar compliance wants Vanta to auto-collect
+      IAM evidence from Ory rather than running manual evidence-gathering each audit cycle.
+    coreFunctionality: >-
+      - Vanta Custom Integration polls the Ory admin API on a schedule using a Project-scoped API key with read access.
+
+      - Common evidence pulls: GET /admin/identities (user list + lifecycle + MFA enrollment), GET /admin/identities/{id}
+      (roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service accounts), Ory project config
+      (password policy, session lifespan, MFA).
+
+      - Access reviews: dormant-account detection via identity list + last-active timestamps.
+
+      - Termination controls: deactivation timestamps close the loop on offboarding evidence.
+
+      - MFA enforcement: flag identities without TOTP/WebAuthn where policy requires it.
+
+      - Password policy: validate against Ory project config minimum-complexity rules.
+
+      - Status: community/proposed — no dedicated ory/docs page; implementation lives in Vanta's custom-integration layer.
     oryMechanism:
       - standards
   - name: didomi
@@ -336,12 +371,29 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Didomi is a consent management platform (CMP) that enables organizations to collect, store, and manage user consent
-      for data processing activities in compliance with GDPR, CCPA, ePrivacy, and other privacy regulations. This
-      integration connects Didomi to Ory Network to synchronize consent preferences with Ory identity metadata and handle
-      data subject requests through Ory's a...
+      Sync user consent state from Didomi (consent management platform — GDPR/CCPA/ePrivacy) into Ory Network identity
+      metadata via a custom webhook + admin API client. Also handles DSAR fulfillment (GDPR Art. 15/17) via the same
+      handler against Ory's admin API. No first-party connector or Ory docs page exists; integration is
+      customer-implemented.
     status: active
     vendor: Didomi
+    useCase: >-
+      A regulated B2C product using Didomi for cookie/consent banners wants the consent decisions visible alongside Ory
+      identity records so downstream services can respect consent decisions without separate Didomi lookups.
+    coreFunctionality: >-
+      - Didomi → webhook → Ory admin API pattern. No first-party connector or Ory docs page.
+
+      - Didomi webhook configured under Consent Notice → Webhooks; fires on consent events with HMAC-signed payloads.
+
+      - Handler verifies HMAC, resolves the Ory identity by Didomi user_id (matched to an identity trait or
+      metadata_public.didomi_user_id), PATCHes metadata_public.consent.didomi with the consent record.
+
+      - DSAR fulfillment (GDPR Article 15 access / 17 erasure): GET /admin/identities/{id} for access; DELETE
+      /admin/identities/{id} for erasure. 30-day statutory window — design for reliable processing.
+
+      - Consent strings (TCF v2 + Didomi-specific) stored in metadata_public only — not credentials.
+
+      - Status: community/proposed — implementation lives in the customer's webhook handler.
     oryMechanism:
       - standards
   - name: onetrust
@@ -383,12 +435,31 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Osano is a data privacy platform that provides consent management, data discovery, and vendor monitoring for privacy
-      compliance (GDPR, CCPA, LGPD). This integration connects Osano to Ory Network to synchronize user consent
-      preferences captured through Osano's consent management platform (CMP) with Ory identity metadata, and to fulfill
-      data subject requests through Ory's admi...
+      Sync user consent state from Osano (data-privacy platform — GDPR/CCPA/LGPD consent management, data discovery,
+      vendor monitoring) into Ory Network identity metadata via a custom webhook + admin API client. Also handles DSAR
+      fulfillment (GDPR Art. 15/17/20) via the same handler. No first-party connector or Ory docs page exists; integration
+      is customer-implemented.
     status: active
     vendor: Osano
+    useCase: >-
+      A regulated B2C product using Osano for consent and DSAR workflow orchestration wants Osano-tracked decisions
+      visible alongside Ory identity records, with DSAR fulfillment wired to Ory as the identity source of truth.
+    coreFunctionality: >-
+      - Osano → webhook → Ory admin API pattern. No first-party connector or Ory docs page.
+
+      - Osano webhook configured under Subject Rights → Integrations; fires on consent and DSAR events with signed
+      payloads.
+
+      - Handler verifies signature, resolves the Ory identity by Osano user_id (matched to an identity trait or
+      metadata_public.osano_user_id), PATCHes metadata_public.consent.osano with the consent record (purposes, timestamp,
+      jurisdiction).
+
+      - DSAR fulfillment: GET /admin/identities/{id} (Article 15 access), DELETE /admin/identities/{id} (Article 17
+      erasure), traits export (Article 20 portability).
+
+      - Time-bounded responses — 30 days GDPR / 45 days CCPA; design for reliable processing.
+
+      - Status: community/proposed — implementation lives in the customer's webhook handler.
     oryMechanism:
       - standards
   - name: docker
@@ -572,58 +643,159 @@ integrations:
     oryMechanism:
       - actions-webhook
   - name: google-workspace-scim
-    displayName: Google Workspace Directory Sync
+    displayName: Google Workspace SCIM
     category: directory-sync
     path: directory-sync/google-workspace-scim
     maintainedBy: Ory Engineering
     type: config
-    description: Automatic user provisioning and deprovisioning from Google Workspace to Ory Network.
+    description: >-
+      Automatic user provisioning and deprovisioning from Google Workspace into Ory Network via SCIM 2.0. Documented
+      directly in /kratos/manage-identities/scim/google-workspace (Ory Network managed) and
+      /polis/directory-sync/providers/google (Ory Polis self-hosted).
     status: active
-    vendor: Google Workspace Directory Sync
+    vendor: Google
+    useCase: >-
+      An Ory Network customer running enterprise SSO from Google Workspace wants user lifecycle events (create / update /
+      disable) in Workspace to flow into Ory automatically — no manual user management, no stale identities after
+      offboarding.
+    coreFunctionality: >-
+      - Configured in Google Workspace Admin Console → Apps → Web and mobile apps → app → Auto-provisioning. Pastes SCIM
+      endpoint URL + access token from Ory's setup-link.
+
+      - Attribute mapping: primary email → userName; given/family name → name.givenName / name.familyName; groups →
+      groups.
+
+      - Workspace pushes lifecycle events on its own schedule (typically within a few minutes of directory change) — no
+      manual "push now".
+
+      - Deactivation in Workspace becomes a deactivate in Ory (preserves identity record) — not a hard delete.
+
+      - SCIM provisioning is a separate concern from SSO — pair with enterprise-sso/google-workspace for the federated
+      sign-in side.
     oryMechanism:
       - directory-sync
   - name: jumpcloud-scim
-    displayName: JumpCloud SCIM Directory Sync
+    displayName: JumpCloud SCIM
     category: directory-sync
     path: directory-sync/jumpcloud-scim
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
-    description: Automatic user provisioning and deprovisioning from JumpCloud to Ory Network using SCIM v2.0.
+    description: >-
+      Automatic user provisioning and deprovisioning from JumpCloud into Ory Network / Ory Polis via SCIM 2.0. Documented
+      directly in /polis/directory-sync/providers/jumpcloud. Pair with enterprise-sso/jumpcloud for the federated sign-in
+      side.
     status: active
-    vendor: JumpCloud SCIM Directory Sync
+    vendor: JumpCloud
+    useCase: >-
+      An Ory customer running enterprise SSO from JumpCloud wants user lifecycle events (create / update / disable) in
+      JumpCloud to flow into Ory automatically — no manual user management, no stale identities after offboarding.
+    coreFunctionality: >-
+      - Configured in JumpCloud Admin Console → SSO Applications → app → Identity Management tab. Pastes SCIM Base URL +
+      API key from Ory's directory-sync setup-link.
+
+      - Attribute mapping: email → userName; given/family name → name.givenName / name.familyName; group membership →
+      groups.
+
+      - SCIM provisioning is tied to a SAML application — cannot run SCIM without also having the corresponding SAML app
+      configured.
+
+      - JumpCloud pushes only members of assigned user groups; manage scope via group assignment, not user assignment.
+
+      - Pushes lifecycle events on its own schedule; no manual sync button.
     oryMechanism:
       - directory-sync
   - name: microsoft-scim
-    displayName: Microsoft Entra ID (Azure AD) SCIM Directory Sync
+    displayName: Microsoft Entra ID SCIM
     category: directory-sync
     path: directory-sync/microsoft-scim
     maintainedBy: Ory Engineering
     type: config
-    description: Automatic user provisioning and deprovisioning from Microsoft Entra ID to Ory Network using SCIM v2.0.
+    description: >-
+      Automatic user provisioning and deprovisioning from Microsoft Entra ID (formerly Azure AD) into Ory Network / Ory
+      Polis via SCIM 2.0. Documented directly in /kratos/manage-identities/scim/ms-entra (Ory Network) and
+      /polis/directory-sync/providers/azure (Ory Polis self-hosted).
     status: active
-    vendor: Microsoft Entra ID (Azure AD) SCIM Directory Sync
+    vendor: Microsoft
+    useCase: >-
+      An Ory customer running enterprise SSO from Microsoft Entra ID wants user lifecycle events (create / update /
+      disable) to flow into Ory automatically — no manual user management, no stale identities after offboarding.
+    coreFunctionality: >-
+      - Configured in Microsoft Entra Admin Center → Enterprise applications → app → Provisioning → Automatic; paste
+      Tenant URL + Secret token from Ory's directory-sync setup-link.
+
+      - Default mappings for User and Group attributes are usually fine; customize if identity schema needs extra fields.
+
+      - Entra ID syncs on a 40-minute cycle by default; "Provision on demand" forces one user through immediately for
+      troubleshooting.
+
+      - Provisioning Mode defaults to Manual (does nothing) — must be explicitly switched to Automatic.
+
+      - Scope via "Sync only assigned users and groups" setting to limit which directory entries are pushed.
+
+      - Pair with enterprise-sso/microsoft-entra-id for the federated sign-in side.
     oryMechanism:
       - directory-sync
   - name: okta-scim
-    displayName: Okta SCIM Directory Sync
+    displayName: Okta SCIM
     category: directory-sync
     path: directory-sync/okta-scim
     maintainedBy: Ory Engineering
     type: config
-    description: Automatic user provisioning and deprovisioning from Okta to Ory Network using SCIM v2.0.
+    description: >-
+      Automatic user provisioning and deprovisioning from Okta into Ory Network / Ory Polis via SCIM 2.0. Documented
+      directly in /kratos/manage-identities/scim/okta (Ory Network) and /polis/directory-sync/providers/okta (Ory Polis
+      self-hosted).
     status: active
-    vendor: Okta SCIM Directory Sync
+    vendor: Okta
+    useCase: >-
+      An Ory customer running enterprise SSO from Okta wants user lifecycle events (create / update / disable) to flow
+      into Ory automatically — no manual user management, no stale identities after offboarding.
+    coreFunctionality: >-
+      - Configured in Okta Admin Console → Applications → app → Provisioning → Integration → Configure API Integration;
+      paste Base URL + API Token from Ory's directory-sync setup-link.
+
+      - Enable Provisioning → To App: Create Users, Update User Attributes, Deactivate Users.
+
+      - Okta pushes lifecycle events in near-real-time (typically within seconds) — faster than Entra ID's 40-minute
+      cycle.
+
+      - Deactivation in Okta becomes a deactivate in Ory (preserves identity record); only deactivate-then-delete in Okta
+      will hard-remove.
+
+      - SCIM provisioning requires the Okta app to have been created from an SCIM-capable template — older custom apps may
+      not have the Provisioning tab.
+
+      - Pair with enterprise-sso/okta for the federated sign-in side.
     oryMechanism:
       - directory-sync
   - name: onelogin-scim
-    displayName: OneLogin SCIM Directory Sync
+    displayName: OneLogin SCIM
     category: directory-sync
     path: directory-sync/onelogin-scim
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
-    description: Automatic user provisioning and deprovisioning from OneLogin to Ory Network using SCIM v2.0.
+    description: >-
+      Automatic user provisioning and deprovisioning from OneLogin (One Identity) into Ory Network / Ory Polis via SCIM
+      2.0. Documented directly in /polis/directory-sync/providers/onelogin. Pair with enterprise-sso/onelogin for the
+      federated sign-in side.
     status: active
-    vendor: OneLogin SCIM Directory Sync
+    vendor: One Identity (OneLogin)
+    useCase: >-
+      An Ory customer running enterprise SSO from OneLogin wants user lifecycle events (create / update / disable) to flow
+      into Ory automatically — no manual user management, no stale identities after offboarding.
+    coreFunctionality: >-
+      - Configured in OneLogin Admin Portal → Applications → app → Configuration tab; paste SCIM Base URL + API Bearer
+      Token from Ory's directory-sync setup-link.
+
+      - Provisioning tab: enable provisioning and select which events trigger automatic vs manual approval (Create User,
+      Delete User, Update User).
+
+      - Parameters mappings: OneLogin attributes → SCIM userName / name.givenName / name.familyName / emails[].value /
+      groups[].
+
+      - SCIM connector requires a matching SAML/OIDC application — directory sync is tied to an SSO app, not standalone.
+
+      - Now branded as One Identity OneLogin following the Quest Software / One Identity acquisition.
     oryMechanism:
       - directory-sync
   - name: workday-scim
@@ -633,14 +805,33 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Workday is one of the most widely deployed enterprise HCM systems, and acts as the source of truth for employee data
-      in HR-driven access flows. Workday emits SCIM v2.0 to downstream systems, which Ory Network can consume to
-      provision, update, and deprovision identities automatically as employees are hired, change roles, or leave. This
-      pattern keeps Ory's identity store in lock-step with HR ground truth without bespoke integration code.
+      Provision identities from Workday into Ory Network via SCIM 2.0. Workday is the most widely deployed enterprise HCM
+      and the source of truth for employee data in many enterprises; wiring Workday → Ory keeps Ory's identity store in
+      lock-step with HR ground truth. No dedicated Ory docs page — Workday's SCIM connector is not turnkey.
     status: active
-    vendor: Workday SCIM
+    vendor: Workday
+    useCase: >-
+      A large enterprise where Workday is the system of record for employee lifecycle wants Ory identities to be created /
+      updated / disabled in response to HR events (hire, promotion, termination) automatically — without the workforce IdP
+      (Okta / Entra ID) being on the critical path.
+    coreFunctionality: >-
+      - No turnkey Workday → SCIM connector ships with Workday; integration requires one of three patterns.
+
+      - Pattern A (canonical): Workday Studio / Integration System maps Workday data sources (Worker, Position, etc.) into
+      SCIM 2.0 calls against Ory's directory-sync endpoint. Requires Workday Studio licensing and developer hours.
+
+      - Pattern B: deploy a mid-tier connector (Tools4ever HelloID, Saviynt, or a custom service) that pulls Workday
+      REST/SOAP and pushes to Ory's SCIM endpoint.
+
+      - Pattern C (most common in practice): provision Workday → Okta/Entra via the IdP's native Workday connector, then
+      Okta/Entra → Ory via the existing SCIM integration. Avoids touching Workday directly.
+
+      - Ory side is a standard SCIM 2.0 endpoint with bearer-token auth, accepting Users and Groups; endpoint URL and
+      token come from the directory-sync setup-link.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - scim
+      - directory-sync
   - name: akamai-edgeworkers
     displayName: Akamai EdgeWorkers — Ory Token Validation
     category: edge-token-validation
@@ -1586,26 +1777,61 @@ integrations:
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Ory Network supports integration with any OpenID Connect (OIDC) compliant Identity Provider (IdP) as a social
-      sign-in or enterprise SSO provider. This guide covers configuring a generic OIDC provider with Ory Kratos,
-      applicable to any IdP that implements the OpenID Connect Core specification (e.g., Keycloak, Okta, Auth0,
-      PingFederate, ForgeRock, Authentik, or custom OIDC ser...
+      Configure any OpenID Connect-compliant Identity Provider with Ory. OIDC shows up in two product surfaces: Ory Kratos
+      (consumer / federated sign-in — Kratos is the RP) and Ory Polis (B2B enterprise SSO with per-organization isolation
+      — Polis is the RP). Same source content mirrored under enterprise-sso/generic-oidc.
     status: active
-    vendor: Generic OIDC Provider
+    vendor: Ory
+    useCase: >-
+      An Ory customer needs to integrate an OIDC IdP that isn't on a vendor-specific docs list — open-source IdPs
+      (Keycloak, Authentik, Zitadel), in-house implementations, or any custom OIDC server. Same reference works whether
+      the use case is consumer sign-in (Kratos) or B2B enterprise SSO (Polis).
+    coreFunctionality: >-
+      - Two product surfaces: Kratos social sign-in (docs/kratos/social-signin/generic — for consumer/user-facing flows)
+      and Polis (docs/polis/sso-providers/generic-oidc — for B2B enterprise SSO).
+
+      - Discovery via /.well-known/openid-configuration on the issuer URL — Ory fetches and caches automatically.
+
+      - Required from the IdP: issuer URL, client id, client secret, plus the Ory callback URL configured as redirect URI.
+
+      - Standard scopes: openid (required), profile, email; groups when claim mapping needs them.
+
+      - Same content mirrored at enterprise-sso/generic-oidc — categorization choice; either entry resolves to the same
+      authoritative Ory docs.
     oryMechanism:
       - standards
   - name: generic-saml
-    displayName: Generic SAML 2.0 SP
+    displayName: Generic SAML 2.0
     category: generic-protocols
     path: generic-protocols/generic-saml
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Ory Network supports SAML 2.0 Service Provider (SP) integration via Ory Polis, enabling enterprise SSO with any SAML
-      2.0 compliant Identity Provider (IdP). This guide covers configuring Ory as a SAML SP for any IdP, including ADFS,
-      Shibboleth, SimpleSAMLphp, PingFederate, OneLogin, or custom SAML implementations.
+      Configure any SAML 2.0-compliant Identity Provider with Ory. SAML support is provided by Ory Polis (formerly SAML
+      Jackson) acting as the SAML Service Provider — Kratos does not natively speak SAML. Same source content mirrored
+      under enterprise-sso/generic-saml.
     status: active
-    vendor: Generic SAML 2.0 SP
+    vendor: Ory
+    useCase: >-
+      An Ory Polis customer needs to integrate a SAML IdP that isn't on the supported-vendor list (CyberArk, ForgeRock,
+      IBM Security Verify, in-house Shibboleth or SimpleSAMLphp, custom SAML), or wants the protocol mechanics documented
+      for debugging or non-default configuration.
+    coreFunctionality: >-
+      - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-saml; Polis acts as the SAML SP, IdP
+      as the IdP.
+
+      - From the IdP: metadata XML (preferred — Polis can consume URL or upload), or manual entity-id / SSO URL / signing
+      certificate paste.
+
+      - To the IdP: Polis SP metadata XML from the Ory organization's setup-link, or manual ACS URL / entity-id /
+      certificate.
+
+      - Attribute mapping defined IdP-side; Polis maps the released attributes to Ory identity traits.
+
+      - SP-initiated only — Polis does not consume IdP-initiated SAML responses.
+
+      - Same content mirrored at enterprise-sso/generic-saml — categorization choice; either entry resolves to the same
+      authoritative Ory Polis page.
     oryMechanism:
       - standards
   - name: aadhaar
