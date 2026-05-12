@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T00:52:32Z
+  generated: 2026-05-12T03:35:21Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -621,106 +621,222 @@ integrations:
     oryMechanism:
       - standards
   - name: aws-ses
-    displayName: Amazon SES — Email Provider
+    displayName: Amazon SES
     category: email-providers
     path: email-providers/aws-ses
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Amazon Simple Email Service (SES) is a cloud-based email sending service from AWS designed for transactional and
-      marketing email. It offers high deliverability, pay-per-use pricing, and deep integration with the AWS ecosystem.
-      SES is a strong choice for organizations already running infrastructure on AWS.
+      Use Amazon SES as the SMTP courier for Ory Network transactional emails. SES is AWS's email service with high
+      deliverability, pay-per-use pricing, and deep AWS integration; documented directly in the Ory SMTP courier page.
+      Natural choice when the rest of the stack is on AWS.
     status: active
-    vendor: Amazon SES — Email Provider
+    vendor: Amazon Web Services
+    useCase: >-
+      An Ory Network customer running on AWS wants email delivery from the same cloud, billed and observed alongside the
+      rest of their AWS infrastructure (CloudWatch metrics, SNS bounce/complaint notifications, IAM-based credential
+      rotation).
+    coreFunctionality: >-
+      - Configured via Kratos's SMTP courier per docs/kratos/emails-sms/sending-emails-smtp#aws-ses (no code).
+
+      - Connection URI: smtps://<smtp_user>:<url-encoded smtp_pass>@email-smtp.<region>.amazonaws.com:465 (or :587 for
+      STARTTLS).
+
+      - SES SMTP credentials are generated in the SES console and wrap an IAM user — they are NOT the same as IAM access
+      keys.
+
+      - URL-encode "+", "/", "=" in the SMTP password (commonly appear) — %2B, %2F, %3D.
+
+      - New SES accounts are sandboxed and only deliver to verified recipients; production access must be requested.
+
+      - Easy DKIM (three CNAME records) is the standard deliverability setup; bounce/complaint notifications via SNS feed
+      back into reputation.
     oryMechanism:
       - courier-spi
   - name: brevo
-    displayName: Brevo (formerly Sendinblue) — Email Provider
+    displayName: Brevo (Sendinblue)
     category: email-providers
     path: email-providers/brevo
     maintainedBy: Community contributors
     type: config
     description: >-
-      Brevo (formerly Sendinblue) is a European email and marketing platform with strong GDPR posture. Brevo exposes both
-      an SMTP relay and a REST v3 API for transactional email, and can be wired up as an Ory Network courier for
-      verification, recovery, and MFA email delivery. Brevo is a good fit for customers that want EU-hosted email
-      infrastructure or need Brevo-side analytics on identity-driven email.
+      Use Brevo (formerly Sendinblue) as the SMTP or HTTP courier for Ory Network transactional emails. EU-headquartered
+      vendor with strong GDPR posture, exposing both an SMTP relay and a REST v3 transactional-email API. No dedicated
+      section in the Ory docs; configures as a generic SMTP courier (or HTTP courier for the REST variant).
     status: active
-    vendor: Brevo (formerly Sendinblue) — Email Provider
+    vendor: Brevo
+    useCase: >-
+      An Ory Network customer with EU data-residency or GDPR concerns wants a EU-headquartered email vendor for identity
+      emails, in addition to or instead of US-based providers like SendGrid or Mailgun.
+    coreFunctionality: >-
+      - SMTP relay (recommended): smtps://<smtp_login>:<smtp_key>@smtp-relay.brevo.com:587 (STARTTLS) or :465 (TLS).
+
+      - REST API alternative: POST https://api.brevo.com/v3/smtp/email with header `api-key: <brevo-api-key>` and a
+      Jsonnet body wired via Kratos's HTTP courier.
+
+      - Brevo SMTP keys are distinct from API keys — do not confuse them.
+
+      - Free tier rate-limits SMTP; identity flows at scale should be on a paid plan.
+
+      - DKIM and Return-Path must be aligned with the From domain for Gmail/Microsoft deliverability.
     oryMechanism:
       - courier-spi
   - name: mailchimp-transactional
-    displayName: Mailchimp Transactional (Mandrill) — Email Provider
+    displayName: Mailchimp Transactional (Mandrill)
     category: email-providers
     path: email-providers/mailchimp-transactional
     maintainedBy: Community contributors
     type: config
     description: >-
-      Mailchimp Transactional (formerly Mandrill) is the transactional email service built into the Mailchimp platform. It
-      is designed for automated, triggered emails such as verification codes, password resets, and notifications.
-      Mailchimp Transactional is a natural choice for organizations already using Mailchimp for marketing, as it shares
-      the same account, billing, and sender ...
+      Use Mailchimp Transactional (Mandrill) as the SMTP courier for Ory Network transactional emails. The transactional
+      product built into Mailchimp; natural choice when the marketing side already runs on Mailchimp and you want shared
+      billing, sender reputation, and dashboards. Distinct from the marketing-audience Mailchimp integration under
+      cdp-analytics/mailchimp.
     status: active
-    vendor: Mailchimp Transactional (Mandrill) — Email Provider
+    vendor: Mailchimp
+    useCase: >-
+      An Ory Network customer already using Mailchimp for marketing wants identity emails (verification, recovery, MFA)
+      sent from the same vendor account so reputation, billing, and analytics stay consolidated.
+    coreFunctionality: >-
+      - Configured via Kratos's SMTP courier (no code) — no dedicated section in Ory docs; uses the generic SMTP courier
+      path.
+
+      - Connection URI: smtps://apikey:<API_KEY>@smtp.mandrillapp.com:465 — username is any string (apikey is
+      conventional); password is the Mandrill API key.
+
+      - Mandrill is a PAID add-on to Mailchimp requiring a transactional email block purchase.
+
+      - Domain verification (SPF include:spf.mandrillapp.com + DKIM TXT) is mandatory for production sending.
+
+      - Don't use Mandrill server-side templates — Ory renders templates before handing to SMTP.
+
+      - For the marketing-audience use case (adding registered users to a Mailchimp list), use cdp-analytics/mailchimp
+      instead.
     oryMechanism:
       - courier-spi
   - name: mailgun
-    displayName: Mailgun — Email Provider
+    displayName: Mailgun
     category: email-providers
     path: email-providers/mailgun
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Mailgun is an email delivery service built for developers, offering both SMTP and REST API interfaces. It provides
-      robust email sending, tracking, and analytics capabilities. Mailgun is well-suited for transactional email with
-      strong deliverability tooling, including automatic suppression management, detailed event logs, and built-in email
-      validation.
+      Use Mailgun as the SMTP courier for Ory Network transactional emails. Developer-focused vendor with strong
+      deliverability tooling (automatic suppression management, detailed event logs, built-in validation) and documented
+      directly in the Ory SMTP courier page.
     status: active
-    vendor: Mailgun — Email Provider
+    vendor: Mailgun
+    useCase: >-
+      An Ory Network customer wants a developer-friendly transactional email vendor with strong deliverability tooling and
+      per-region (US vs EU) hosting for data-residency requirements.
+    coreFunctionality: >-
+      - Configured via Kratos's SMTP courier per docs/kratos/emails-sms/sending-emails-smtp#mailgun (no code).
+
+      - Connection URI: smtp://postmaster%40<domain>:<smtp_password>@smtp.mailgun.org:587 (US) or smtp.eu.mailgun.org
+      (EU).
+
+      - The "@" in the SMTP username MUST be URL-encoded as %40 in the connection URI.
+
+      - DNS verification (SPF, DKIM, CNAME tracking) is critical for deliverability — sandbox domains only deliver to
+      pre-authorized recipients.
+
+      - Mailgun auto-manages bounce/complaint/unsubscribe suppression lists.
     oryMechanism:
       - courier-spi
   - name: postmark
-    displayName: Postmark — Email Provider
+    displayName: Postmark
     category: email-providers
     path: email-providers/postmark
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Postmark is a transactional email service known for exceptional deliverability and speed. Unlike general-purpose
-      email platforms, Postmark focuses exclusively on transactional email, enforcing strict sending policies that result
-      in consistently high inbox placement rates. It is an excellent choice for identity-related emails where delivery
-      speed and reliability are paramount.
+      Use Postmark as the SMTP courier for Ory Network transactional emails. Transactional-only sending policy produces
+      industry-leading deliverability and speed (delivery often within seconds); documented directly in the Ory SMTP
+      courier page.
     status: active
-    vendor: Postmark — Email Provider
+    vendor: Postmark (ActiveCampaign)
+    useCase: >-
+      An Ory Network customer where time-to-inbox matters most — typically high-traffic consumer products that send
+      verification codes, MFA OTPs, and password recovery links and care more about deliverability speed than about
+      marketing-email features.
+    coreFunctionality: >-
+      - Configured via Kratos's SMTP courier per docs/kratos/emails-sms/sending-emails-smtp#postmark (no code).
+
+      - Connection URI: smtps://<SERVER_API_TOKEN>:<SERVER_API_TOKEN>@smtp.postmarkapp.com:465 — Postmark uses the Server
+      API Token as BOTH the SMTP username and password.
+
+      - Each Postmark "Server" gets its own token; pick a server scoped to identity emails to keep streams separate from
+      app-level transactional or marketing.
+
+      - Domain verification with DKIM CNAMEs is preferred over per-address sender signatures.
+
+      - Postmark approves new accounts manually; transactional identity emails fit the policy cleanly.
+
+      - Postmark auto-deactivates hard-bouncing addresses to protect reputation.
     oryMechanism:
       - courier-spi
   - name: sendgrid
-    displayName: SendGrid — Email Provider
+    displayName: SendGrid
     category: email-providers
     path: email-providers/sendgrid
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      SendGrid (a Twilio company) is one of the most widely used email delivery platforms, supporting both transactional
-      and marketing email. It offers a robust SMTP relay, a REST API, and extensive analytics. SendGrid is a solid choice
-      for teams that need a well-documented, widely adopted email provider with generous free-tier sending limits.
+      Use SendGrid (a Twilio company) as the SMTP or HTTP courier for Ory Network transactional emails. SendGrid is one of
+      the most widely used transactional-email platforms; documented directly in the Ory SMTP courier page with both SMTP
+      and HTTP variants.
     status: active
-    vendor: SendGrid — Email Provider
+    vendor: SendGrid
+    useCase: >-
+      Default email provider choice for many Ory Network customers — well-known, well-documented, generous free tier for
+      development, and supports both SMTP (simplest) and HTTP API (richer payload control via Jsonnet) wiring.
+    coreFunctionality: >-
+      - Configured via Kratos's email courier per docs/kratos/emails-sms/sending-emails-smtp#sendgrid (no code).
+
+      - SMTP: smtps://apikey:<API_KEY>@smtp.sendgrid.net:465 (or smtp:// on 587 for STARTTLS); username is the literal
+      string "apikey".
+
+      - HTTP: POST https://api.sendgrid.com/v3/mail/send with Authorization: Bearer <API_KEY> and a Jsonnet body
+      (request_config delivery strategy).
+
+      - API key needs only "Mail Send" permission — no need for full account access.
+
+      - Domain authentication (SPF/DKIM CNAMEs in DNS) strongly recommended over single-sender verification for
+      deliverability.
+
+      - Don't use SendGrid dynamic templates — Ory renders templates before sending; SendGrid should receive final
+      content.
     oryMechanism:
       - courier-spi
   - name: sparkpost
-    displayName: SparkPost — Email Provider
+    displayName: SparkPost
     category: email-providers
     path: email-providers/sparkpost
     maintainedBy: Community contributors
     type: config
     description: >-
-      SparkPost (a MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics
-      and deliverability tooling. SparkPost exposes both an SMTP relay and a REST Transmissions API, and can be wired up
-      as an Ory Network courier for verification, recovery, and MFA email delivery. SparkPost is a good fit for customers
-      with high transactional email volume and stringent deliverability requirements.
+      Use SparkPost as the SMTP or HTTP courier for Ory Network transactional emails. Enterprise-grade transactional email
+      platform (now part of Bird/MessageBird) with strong delivery analytics and per-region (US vs EU) hosting. No
+      dedicated section in the Ory docs; configures as a generic SMTP or HTTP courier.
     status: active
-    vendor: SparkPost — Email Provider
+    vendor: SparkPost (Bird)
+    useCase: >-
+      An Ory Network customer with high transactional email volume and stringent deliverability requirements wants
+      enterprise-grade tooling and per-region (US vs EU) hosting for data-residency.
+    coreFunctionality: >-
+      - SMTP relay (recommended): smtps://SMTP_Injection:<API_KEY>@smtp.sparkpostmail.com:587 (US) or
+      smtp.eu.sparkpost.com (EU). The literal username "SMTP_Injection" is correct for all customers; password is the API
+      key.
+
+      - REST Transmissions API alternative: POST https://api.sparkpost.com/api/v1/transmissions (US) or
+      api.eu.sparkpost.com (EU) with `Authorization: <API_KEY>` and a Jsonnet body.
+
+      - SparkPost separates US and EU accounts — pick data residency before integration; migrations are not trivial.
+
+      - API key needs the "Send via SMTP" permission; minimum scope is sufficient.
+
+      - Stored templates available via the API if SparkPost-side template management is preferred over Kratos-side
+      rendering (not recommended — Ory renders templates by default).
     oryMechanism:
       - courier-spi
   - name: auth0-saml
@@ -1634,78 +1750,143 @@ integrations:
     oryMechanism:
       - standards
   - name: messagebird
-    displayName: MessageBird (Bird) — SMS Provider
+    displayName: MessageBird (Bird)
     category: sms-providers
     path: sms-providers/messagebird
     maintainedBy: Community contributors
     type: config
     description: >-
-      MessageBird (now rebranded as Bird) is a European-headquartered cloud communications platform providing SMS, voice,
-      and messaging APIs. It offers strong coverage across Europe, Asia-Pacific, and globally, with a focus on reliability
-      and regulatory compliance. MessageBird is a compelling choice for organizations with European user bases or those
-      looking for an alternative to ...
+      Use MessageBird (rebranded as Bird) as the HTTP SMS courier for Ory Network OTPs and verification codes. Strong
+      EU/APAC coverage and a common alternative to US-based SMS providers for products with EU regulatory or
+      data-residency requirements.
     status: active
-    vendor: MessageBird (Bird) — SMS Provider
+    vendor: Bird
+    useCase: >-
+      An Ory Network customer with significant EU or APAC user volume — or one that prefers a EU-headquartered vendor for
+      compliance reasons — wants to route OTP/verification SMS through MessageBird rather than Twilio.
+    coreFunctionality: >-
+      - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+
+      - Endpoint POST https://rest.messagebird.com/messages with Authorization: AccessKey <API_KEY>.
+
+      - Originator is either a MessageBird virtual number or an alphanumeric sender ID (up to 11 chars; not allowed in
+      US/Canada/China).
+
+      - Jsonnet body strips the leading "+" from Ory's E.164 recipient before passing it to MessageBird (MSISDN format).
+
+      - Optional reportUrl in the body enables real-time delivery callbacks.
     oryMechanism:
       - courier-spi
   - name: plivo
-    displayName: Plivo — SMS Provider
+    displayName: Plivo
     category: sms-providers
     path: sms-providers/plivo
     maintainedBy: Community contributors
     type: config
     description: >-
-      Plivo is a cloud communications platform offering SMS and voice APIs with a focus on reliability and
-      cost-effectiveness. Plivo provides competitive per-message pricing, direct carrier connections in over 190
-      countries, and a straightforward REST API. It is a strong alternative for organizations seeking lower SMS costs
-      without sacrificing delivery quality.
+      Use Plivo as the HTTP SMS courier for Ory Network OTPs and verification codes. Plivo is mentioned alongside Twilio
+      in the Ory SMS docs as a supported HTTP courier target — a common pick when SMS unit economics matter.
     status: active
-    vendor: Plivo — SMS Provider
+    vendor: Plivo
+    useCase: >-
+      An Ory Network customer with high SMS volume wants to lower per-message cost without giving up direct-carrier
+      delivery quality, or wants a second SMS provider for failover from Twilio.
+    coreFunctionality: |-
+      - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+      - Endpoint POST https://api.plivo.com/v1/Account/<AUTH_ID>/Message/ with HTTP Basic auth (Auth ID : Auth Token).
+      - JSON body: src (E.164 of your Plivo number), dst (E.164 recipient — Ory provides this directly), text.
+      - For production, use a Plivo Powerpack (number pool with intelligent routing) — replace src with powerpack_uuid.
+      - Optional `url` field in the body enables real-time delivery callbacks.
     oryMechanism:
       - courier-spi
   - name: sinch
-    displayName: Sinch — SMS Provider
+    displayName: Sinch
     category: sms-providers
     path: sms-providers/sinch
     maintainedBy: Community contributors
     type: config
     description: >-
-      Sinch is an enterprise communications platform offering global SMS delivery and verification services through a
-      straightforward REST API. Sinch can be wired up as an Ory Network SMS courier for verification codes, MFA OTPs, and
-      identity-related messages, with broad carrier coverage and verification-specific features that make it a strong fit
-      for high-trust authentication use cases.
+      Use Sinch as the HTTP SMS courier for Ory Network OTPs and verification codes. Sinch is an enterprise communications
+      platform with broad carrier coverage and verification-specific features — a fit for high-trust authentication flows.
     status: active
-    vendor: Sinch — SMS Provider
+    vendor: Sinch
+    useCase: >-
+      An Ory Network customer wants global SMS delivery from an enterprise vendor with strong verification-flow experience
+      and per-region routing (US/EU stacks), in addition to or in place of Twilio/MessageBird.
+    coreFunctionality: >-
+      - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+
+      - Endpoint POST https://{region}.sms.api.sinch.com/xms/v1/<service-plan-id>/batches with Bearer token auth (`us.` or
+      `eu.` host).
+
+      - JSON body: from (registered sender — long/short code or alphanumeric per country regulations), to[] (E.164), body.
+
+      - Sinch enforces per-country sender registration; using the wrong sender for a region silently degrades delivery.
+
+      - Sinch's higher-level Verification API is intentionally NOT used here; Kratos's OTP generation/validation stays the
+      source of truth.
+
+      - Delivery status: configure a Sinch delivery-report webhook to your own service; Kratos does not consume reports
+      directly.
     oryMechanism:
       - courier-spi
   - name: twilio
-    displayName: Twilio — SMS Provider
+    displayName: Twilio
     category: sms-providers
     path: sms-providers/twilio
     maintainedBy: Community contributors
     type: config
     description: >-
-      Twilio Programmable SMS is the leading cloud communications platform for sending and receiving text messages
-      globally. It offers extensive carrier coverage, reliable delivery, and a well-documented REST API. Twilio is the
-      primary SMS provider used with Ory Network for sending SMS-based verification codes, MFA one-time passwords, and
-      other identity-related messages.
+      Use Twilio Programmable SMS as the HTTP SMS courier for Ory Network OTPs and verification codes. Twilio is the most
+      widely deployed cloud SMS platform and is the canonical example used in the Ory SMS docs.
     status: active
-    vendor: Twilio — SMS Provider
+    vendor: Twilio
+    useCase: >-
+      Default SMS provider for most Ory Network customers shipping phone-based verification or MFA — broad carrier
+      coverage, mature tooling, and the path of least resistance off the existing Ory documentation.
+    coreFunctionality: >-
+      - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms (the example uses Twilio
+      directly).
+
+      - Endpoint POST https://api.twilio.com/2010-04-01/Accounts/<SID>/Messages.json with HTTP Basic auth (Account SID :
+      Auth Token).
+
+      - Content-Type MUST be application/x-www-form-urlencoded (Twilio rejects JSON); body is URL-encoded To, From, Body.
+
+      - For production, prefer a Twilio Messaging Service (replace From=... with MessagingServiceSid=MGxxxx...) for sender
+      pooling and per-country routing.
+
+      - Twilio Test Credentials (separate SID/Token) simulate sends without delivery or charges — useful for CI.
     oryMechanism:
       - courier-spi
   - name: vonage
-    displayName: Vonage (Nexmo) — SMS Provider
+    displayName: Vonage (Nexmo)
     category: sms-providers
     path: sms-providers/vonage
     maintainedBy: Community contributors
     type: config
     description: >-
-      Vonage (formerly Nexmo) is a global cloud communications platform providing SMS, voice, and messaging APIs. Vonage
-      has particularly strong coverage in EMEA and APAC regions and is known for reliable message delivery and competitive
-      international pricing. It is a solid alternative to Twilio for organizations with significant international user
-      bases.
+      Use Vonage (formerly Nexmo) as the HTTP SMS courier for Ory Network OTPs and verification codes. Strong EMEA and
+      APAC carrier coverage and competitive international pricing make Vonage a common alternative to Twilio for products
+      with significant non-US user bases.
     status: active
-    vendor: Vonage (Nexmo) — SMS Provider
+    vendor: Vonage
+    useCase: >-
+      An Ory Network customer with EMEA/APAC user concentration wants SMS delivery from a vendor strongest in those
+      regions, in addition to or instead of US-centric Twilio.
+    coreFunctionality: >-
+      - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+
+      - Endpoint POST https://rest.nexmo.com/sms/json. Authentication is API key + secret in the request BODY (not
+      headers), so the Kratos courier `auth` block stays empty and credentials live in the Jsonnet template.
+
+      - JSON body: api_key, api_secret, from (alphanumeric ID up to 11 chars OR a Vonage virtual number — alphanumeric not
+      allowed in US/Canada), to, text.
+
+      - Vonage accepts E.164 with or without leading "+"; strip in Jsonnet if a country rejects the + form.
+
+      - Newer Messages API (api.nexmo.com/v1/messages) available with JWT/header auth; the REST SMS API above is simpler
+      for SMS-only use.
     oryMechanism:
       - courier-spi
   - name: whatsapp
