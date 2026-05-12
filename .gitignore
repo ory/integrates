@@ -37,3 +37,10 @@ Thumbs.db
 # Test artifacts
 *.test.js.snap
 .nyc_output/
+
+# Demo videos and large binary assets — host these elsewhere (S3, Loom, etc.)
+# and link from the README. Keeping them out of git keeps clone size small.
+**/assets/*.mov
+**/assets/*.mp4
+**/assets/*.mkv
+**/assets/*.webm
