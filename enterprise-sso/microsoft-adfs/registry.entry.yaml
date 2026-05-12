@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: microsoft-adfs
-displayName: Microsoft AD FS SAML SSO
-vendor: Microsoft AD FS SAML SSO
+displayName: Microsoft AD FS
+vendor: Microsoft
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Microsoft Active Directory Federation Services (AD FS) is an on-premises identity federation solution that extends
-  Active Directory identities to cloud applications. AD FS is widely used by enterprises that maintain on-premises
-  Active Directory infrastructure and need to provide SSO to cloud-based applications without migrating to a fully
-  cloud-based IdP.
+  Configure on-premises Microsoft Active Directory Federation Services (AD FS) as a SAML 2.0 Identity Provider
+  into Ory Polis. Documented directly in the Ory Polis SSO providers docs. Common path for enterprises
+  maintaining on-prem Active Directory who want SSO to cloud apps without migrating to Entra ID.
+useCase: >-
+  An enterprise with significant investment in on-prem Active Directory wants their AD-anchored workforce
+  identities to authenticate to Ory-protected applications without migrating user management to a cloud IdP.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/microsoft-adfs; Polis acts as the SAML SP, AD FS as the IdP.
+  - AD FS side: Relying Party Trusts → Add Relying Party Trust → import Polis SP metadata XML.
+  - Claim Issuance Policy: LDAP attribute mapping (E-Mail-Addresses → Email, Given-Name → Given Name, Surname → Surname); NameID format Email.
+  - Token signing certificate auto-rollover (typically yearly) requires updating metadata in Polis — subscribe to AD FS event 102 or pull metadata on a schedule.
+  - Group claims via Group SID or Token-Groups Unqualified Names attribute; map server-side in Ory.
+  - WS-Federation NOT supported — Polis only consumes SAML 2.0.
 oryMechanism:
   - standards
 status: active

@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: rippling
-displayName: Rippling SSO
-vendor: Rippling SSO
+displayName: Rippling
+vendor: Rippling
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Rippling is a unified workforce management platform that combines HR, IT, and Finance. Rippling's identity management
-  capabilities allow organizations to manage employee lifecycle, device management, and application access from a single
-  platform. As a SAML Identity Provider, Rippling enables SSO for employees into applications protected by Ory Network,
-  with the added benefit...
+  Configure Rippling (the unified HR + IT + Finance workforce platform) as a SAML 2.0 Identity Provider into
+  Ory Polis. Documented directly in the Ory Polis SSO providers docs. Less common as a pure SSO IdP than Okta
+  or Entra ID, but a natural fit for organizations using Rippling for HR-driven access lifecycle.
+useCase: >-
+  A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer is already using
+  Rippling to manage employee onboarding, offboarding, and role changes — and wants application access to
+  follow those HR events automatically.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/rippling; Polis acts as the SAML SP, Rippling as the IdP.
+  - Rippling side: IT Management → Single Sign-On → Add Custom App → SAML; configure ACS URL and SP Entity ID from Ory's setup-link.
+  - Attribute mapping pulls HR fields (work email, first name, last name, department, employee ID) into SAML attributes.
+  - Distinguishing feature: HR-driven access lifecycle — when an employee changes role or leaves, Rippling removes them from SAML app's assigned users, deactivating SSO access automatically.
+  - SCIM provisioning into Ory available as a separate Rippling add-on; configure pointing at Ory Network's SCIM endpoint.
 oryMechanism:
   - standards
 status: active

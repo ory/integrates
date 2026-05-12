@@ -1,27 +1,31 @@
-# Okta as an OIDC provider
+# Okta
 
 > **Maintained by:** Ory Engineering
 
-Use Okta as a social sign-in / federated identity provider for your Ory project. **No webhook code required** — this integration is pure configuration in the Ory Console.
+Configure [Okta](https://www.okta.com) as a SAML 2.0 (preferred for B2B SSO) or OIDC Identity Provider into Ory Polis. Okta is the dominant cloud workforce identity platform — a near-default option in most enterprise SSO conversations.
 
-**Docs page:** [ory.com/docs/integrations/okta](https://ory.com/docs/integrations/okta)
+**Type:** config (Polis SAML or OIDC connection — no webhook code)
+**Docs page:** [ory.com/docs/polis/sso-providers/okta](https://www.ory.com/docs/polis/sso-providers/okta)
 
 ## Setup
 
-See [`ory-console-steps.md`](ory-console-steps.md) for the full Console flow.
+The full walkthrough lives in the [Ory docs page above](https://www.ory.com/docs/polis/sso-providers/okta). Short version:
 
-The short version:
+1. In the **Okta Admin Console** → **Applications** → **Create App Integration** → choose **SAML 2.0**.
+2. On the SAML Settings step, configure:
+   - **Single sign-on URL** = Polis ACS URL.
+   - **Audience URI (SP Entity ID)** = Polis Entity ID.
+   - Both from your Ory Network organization's setup-link.
+3. Add the standard attribute statements: `email`, `firstName`, `lastName`. Add a Group attribute statement if you map groups.
+4. Assign people / groups to the application.
+5. From the application's **Sign On** tab, copy the **Identity Provider metadata** URL (or download the XML) and paste into Ory.
 
-1. In Okta: create a new OIDC application (Web) with sign-in redirect:
-   `https://<your-ory-project>.projects.oryapis.com/self-service/methods/oidc/callback/okta`
-2. Note the Client ID and Client Secret from Okta.
-3. In the Ory Console: **Authentication → Social Sign-In** → add a Generic OIDC provider with:
-   - **Provider:** generic
-   - **Issuer URL:** `https://<your-okta-domain>/oauth2/default`
-   - **Client ID** and **Client Secret:** from step 2
-   - **Scopes:** `openid email profile`
-4. Save and test by signing in to your Ory-powered application.
+## Notes
+
+- For OIDC instead of SAML, create an **OIDC Web Application** in Okta — same flow, but you trade the metadata XML for issuer URL + client id + secret.
+- Okta's **Sign-on Policies** (MFA, network zones, device trust) sit at the IdP layer; resulting authenticated assertion flows through to Ory.
+- Group claims are released **only** if explicitly mapped in the SAML application's attribute statements (or in the OIDC client's claims).
 
 ## License
 
-Apache-2.0. (No source code in this directory; license applies to the configuration documentation.)
+Apache-2.0. (Configuration-only — no source code in this directory.)

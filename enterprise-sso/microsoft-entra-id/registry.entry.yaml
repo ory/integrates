@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: microsoft-entra-id
-displayName: Microsoft Entra ID (Azure AD) SAML SSO
-vendor: Microsoft Entra ID (Azure AD) SAML SSO
+displayName: Microsoft Entra ID (Azure AD)
+vendor: Microsoft
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Microsoft Entra ID (formerly Azure Active Directory) is the world's most widely adopted cloud-based identity and
-  access management service. It is the default IdP for organizations using Microsoft 365, Azure, and the broader
-  Microsoft ecosystem. As a SAML Identity Provider, Entra ID enables enterprises to extend their existing directory to
-  applications protected by Ory Networ...
+  Configure Microsoft Entra ID (formerly Azure AD) as a SAML 2.0 Identity Provider into Ory Polis. Documented
+  directly in the Ory Polis SSO providers docs (under the historical `azure` filename — Microsoft renamed Azure
+  AD to Entra ID in 2023). The most common enterprise SSO integration alongside Google Workspace because Entra
+  ID is the default IdP for organizations on Microsoft 365 / Azure.
+useCase: >-
+  A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity
+  is in Microsoft Entra ID — this integration is the per-customer SAML connection setup against Entra ID.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/azure (URL filename predates the Entra ID rename); Polis acts as the SAML SP, Entra ID as the IdP.
+  - Entra side: Enterprise applications → New application → Non-gallery → Single sign-on → SAML; configure Identifier (Entity ID) and Reply URL (ACS) from Ory's setup-link; download Federation Metadata XML.
+  - Assignment required is ON by default — users must be in an assigned group (or directly assigned) to sign in. Common gotcha.
+  - Conditional Access policies (MFA, device compliance, named locations) sit at the Entra layer; resulting authenticated assertion flows through to Ory.
+  - For OIDC sign-in (consumer/low-friction), use social-sign-in/microsoft instead — Polis SAML is for B2B enterprise SSO with per-organization isolation.
+  - For SCIM provisioning into Ory, see directory-sync/microsoft-scim (separate concern).
 oryMechanism:
   - standards
 status: active

@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: keycloak
-displayName: Keycloak SSO
-vendor: Keycloak SSO
+displayName: Keycloak
+vendor: Keycloak (CNCF)
 category: enterprise-sso
 type: config
 maintainedBy: Community contributors
 description: >-
-  Keycloak is an open-source identity and access management solution maintained by Red Hat. It provides SAML 2.0, OpenID
-  Connect, and OAuth 2.0 federation capabilities, making it a popular choice for enterprises that need a self-hosted or
-  hybrid identity provider. Keycloak is widely deployed in organizations that require full control over their identity
-  infrastructure, need to...
+  Configure Keycloak — the open-source CNCF-graduated identity and access management server — as an upstream
+  OIDC (preferred) or SAML 2.0 identity provider in Ory Polis. Common when an enterprise self-hosts their IdP
+  for control, data residency, or vendor-lock-in avoidance. No dedicated docs; configures via the Polis
+  generic OIDC or generic SAML walkthrough.
+useCase: >-
+  An enterprise running a self-hosted Keycloak as their workforce IdP wants Ory-protected applications to
+  consume Keycloak-issued sessions instead of standing up a separate identity store.
+coreFunctionality: |-
+  - Configured as a generic OIDC RP (recommended — Keycloak's OIDC support is first-class) or generic SAML SP in Ory Polis pointing at a Keycloak client.
+  - Keycloak side: Clients → Create client (OpenID Connect, Confidential type); set Valid redirect URI to Polis ACS URL.
+  - Issuer URL pattern: https://<keycloak-host>/realms/<realm-name>; Polis uses /.well-known/openid-configuration automatically.
+  - Group claims released via a Group Membership mapper on the client's dedicated client scope — must be added explicitly.
+  - Self-hosted: pin both Keycloak and Polis library versions; test upgrades against staging since Keycloak's protocol responses occasionally change in major releases.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

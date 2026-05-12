@@ -2,15 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: jumpcloud
-displayName: JumpCloud SSO
-vendor: JumpCloud SSO
+displayName: JumpCloud
+vendor: JumpCloud
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  JumpCloud is a cloud-based directory platform that provides unified identity, access, and device management. As an
-  alternative to traditional Active Directory, JumpCloud serves as a modern cloud directory for organizations looking to
-  manage identities across platforms (Windows, macOS, Linux) without on-premises infrastructure.
+  Configure JumpCloud (the cloud directory platform — modern alternative to on-prem Active Directory) as a SAML
+  2.0 Identity Provider into Ory Polis. Documented directly in the Ory Polis SSO providers docs. Common
+  workforce IdP for organizations without legacy AD.
+useCase: >-
+  A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity
+  is in JumpCloud — this integration is the per-customer SAML connection setup.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/jumpcloud; Polis acts as the SAML SP, JumpCloud as the IdP.
+  - JumpCloud side: Admin console → SSO → Custom SAML App; configure IdP Entity ID, ACS URL, Audience URI from Ory's setup-link.
+  - Attribute mapping: email, firstname, lastname; memberOf for group claims.
+  - User groups MUST be explicitly assigned to the SAML app — users in the directory but not in an assigned group cannot sign in.
+  - For SCIM provisioning of JumpCloud users into Ory, see directory-sync/jumpcloud-scim (separate concern from SSO).
 oryMechanism:
   - standards
 status: active

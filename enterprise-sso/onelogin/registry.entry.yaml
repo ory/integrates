@@ -2,15 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: onelogin
-displayName: OneLogin SAML SSO
-vendor: OneLogin SAML SSO
+displayName: OneLogin
+vendor: One Identity (OneLogin)
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  OneLogin is a cloud-based identity and access management platform that provides unified access management, including
-  single sign-on, multi-factor authentication, and user provisioning. OneLogin supports SAML 2.0 federation and is used
-  by enterprises across various industries for workforce identity management.
+  Configure OneLogin (One Identity) as a SAML 2.0 Identity Provider into Ory Polis. Documented directly in the
+  Ory Polis SSO providers docs. Common workforce IdP competing with Okta and JumpCloud in the cloud-IAM space.
+useCase: >-
+  A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity
+  is in OneLogin — this integration is the per-customer SAML connection setup.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/onelogin; Polis acts as the SAML SP, OneLogin as the IdP.
+  - OneLogin side: Applications → Add App → SAML Custom Connector (Advanced); configure Audience/EntityID, Recipient, ACS Consumer URL, ACS Consumer URL Validator (regex).
+  - Parameters map outbound attributes: Email, First Name, Last Name; add Groups parameter if mapping group claims.
+  - ACS URL Validator is a regex — escape ? and & if the ACS URL contains them.
+  - Now branded as One Identity OneLogin following the Quest Software / One Identity acquisition; older docs may use either name.
+  - For SCIM provisioning of OneLogin users into Ory, see directory-sync/onelogin-scim (separate concern).
 oryMechanism:
   - standards
 status: active

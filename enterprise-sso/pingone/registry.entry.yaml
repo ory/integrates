@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: pingone
-displayName: PingOne SSO
-vendor: PingOne SSO
+displayName: PingOne
+vendor: Ping Identity
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  PingOne is Ping Identity's cloud-based identity platform designed for enterprise and regulated industries. PingOne
-  provides identity verification, single sign-on, multi-factor authentication, and access management. It is particularly
-  prevalent in financial services, healthcare, government, and other highly regulated sectors where strict identity
-  governance and compliance are...
+  Configure PingOne (Ping Identity's cloud identity platform) as a SAML 2.0 Identity Provider into Ory Polis.
+  Documented directly in the Ory Polis SSO providers docs. Common in regulated industries (financial services,
+  healthcare, government) where Ping's compliance posture matters.
+useCase: >-
+  A regulated SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce
+  identity is in PingOne — this integration is the per-customer SAML connection setup.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/pingone; Polis acts as the SAML SP, PingOne as the IdP.
+  - PingOne side: Connections → Applications → Add Application → Web App → SAML; configure ACS URL and Entity ID from Ory's setup-link.
+  - Attribute Mapping: email, firstName, lastName; add Group attribute if mapping group claims.
+  - Don't confuse PingOne (cloud) with PingFederate (on-prem) — both speak SAML, configuration paths differ. This entry covers PingOne; PingFederate configures as a generic SAML SP.
+  - Following the 2023 ForgeRock acquisition, Ping Identity owns both products — see enterprise-sso/forgerock-am for the legacy on-prem product.
 oryMechanism:
   - standards
 status: active
