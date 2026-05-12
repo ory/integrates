@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T04:20:53Z
+  generated: 2026-05-12T04:27:54Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -916,18 +916,31 @@ integrations:
     oryMechanism:
       - courier-spi
   - name: auth0-saml
-    displayName: Auth0 SAML SSO
+    displayName: Auth0 SAML
     category: enterprise-sso
     path: enterprise-sso/auth0-saml
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Auth0 is a flexible identity platform that provides authentication and authorization services. When used as a SAML
-      Identity Provider (IdP), Auth0 enables enterprise organizations to federate their existing Auth0-managed identities
-      into applications protected by Ory Network. This integration configures Auth0 as a SAML 2.0 IdP with Ory Polis
-      acting as the SAML Service Provider...
+      Configure Auth0 as a SAML 2.0 Identity Provider into Ory Polis (the SAML SP). Documented directly in the Ory Polis
+      SSO providers docs. Common when workforce identities live in Auth0 but Ory Network is the customer-facing identity
+      layer with B2B SSO support.
     status: active
-    vendor: Auth0 SAML SSO
+    vendor: Auth0 (Okta)
+    useCase: >-
+      A SaaS product with an Ory Network identity stack offers enterprise SSO ("login with your own IdP") and a customer's
+      IdP happens to be Auth0 — this integration is the per-customer connection setup.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/auth0; Polis acts as the SAML SP, Auth0 as the IdP.
+
+      - Auth0 side: Regular Web Application + SAML2 WEB APP addon; configure ACS URL + Audience from Ory's setup-link.
+
+      - SP-initiated only — Auth0 also supports IdP-initiated but Polis consumes SP-initiated.
+
+      - Use Auth0 Actions (not the addon's claims editor) for non-trivial attribute transformations — version-controlled,
+      supported path.
+
+      - MFA enforcement sits at the Auth0 IdP layer; Ory consumes the resulting authenticated assertion.
     oryMechanism:
       - standards
   - name: cyberark-identity
@@ -937,12 +950,26 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      CyberArk Identity (the SSO and identity portion of the CyberArk platform, distinct from CyberArk's PAM product)
-      exposes standard SAML 2.0 and OIDC endpoints for federation. It can be configured as an upstream identity provider
-      in Ory Network to bring CyberArk-managed enterprise identities into Ory-protected applications. PAM-specific REST
-      integration is a separate work item — open an issue if you need it.
+      Configure CyberArk Identity (the SSO/identity portion of the CyberArk platform — distinct from CyberArk's PAM
+      product) as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. No dedicated docs; configures via the Polis
+      generic SAML or generic OIDC provider walkthrough.
     status: active
-    vendor: CyberArk Identity
+    vendor: CyberArk
+    useCase: >-
+      An enterprise customer running CyberArk Identity as their workforce IdP needs Ory-protected applications to consume
+      CyberArk-issued sessions instead of standing up a separate identity store.
+    coreFunctionality: >-
+      - Configured as a generic SAML 2.0 SP (preferred for enterprise SSO) or generic OIDC RP in Ory Polis pointing at the
+      CyberArk app.
+
+      - CyberArk side: create a Custom SAML App (or Custom OIDC App), paste in Polis SP metadata, map outbound attributes
+      (email, firstname, lastname, groups).
+
+      - Group-based access stays on the CyberArk side; Ory only sees the authentication result and released attributes.
+
+      - PAM-specific REST integration (privileged sessions, credential rotation) is out of scope — separate work item.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: forgerock-am
@@ -952,11 +979,28 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      ForgeRock Access Management (now part of Ping Identity) is a widely deployed enterprise IAM platform that supports
-      OIDC, OAuth 2.0, and SAML 2.0. Customers running ForgeRock AM upstream can federate it into Ory Network as either an
-      OIDC or SAML identity provider, allowing existing enterprise sessions to flow through to Ory-protected applications.
+      Configure ForgeRock Access Management (now part of Ping Identity following the 2023 acquisition) as an upstream SAML
+      2.0 or OIDC identity provider in Ory Polis. No dedicated docs; configures via the Polis generic SAML or generic OIDC
+      walkthrough.
     status: active
-    vendor: ForgeRock Access Management
+    vendor: Ping Identity (ForgeRock)
+    useCase: >-
+      An enterprise running ForgeRock AM (or the rebranded Ping Identity Platform) as their workforce IdP wants
+      Ory-protected applications to consume ForgeRock-issued sessions instead of standing up a separate identity store.
+    coreFunctionality: >-
+      - Configured as a generic SAML 2.0 SP (preferred for enterprise SSO) or generic OIDC RP in Ory Polis pointing at the
+      ForgeRock entity / OAuth client.
+
+      - ForgeRock side: SAML entity under Realms → Applications → Federation, or OAuth 2.0 client under OAuth 2.0 →
+      Clients.
+
+      - SP-initiated only — Polis does not consume IdP-initiated SAML assertions; configure the ForgeRock side
+      accordingly.
+
+      - OIDC supports openid / profile / email / groups; group claims may need a custom scope mapper depending on AM
+      version.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: generic-oidc
@@ -966,57 +1010,124 @@ integrations:
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      This integration guide covers configuring Ory Polis as an OpenID Connect (OIDC) Relying Party (RP) with any
-      OIDC-compliant Identity Provider (OP). Use this guide when your IdP supports OIDC/OAuth 2.0 and is not covered by a
-      provider-specific guide, or when you need to understand the underlying OIDC mechanics for any OIDC-based SSO
-      integration with Ory.
+      Configure ANY OIDC-compliant Identity Provider into Ory Polis as the OIDC Relying Party. Canonical reference for
+      OIDC-based enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP. Same source page
+      is mirrored under generic-protocols/generic-oidc.
     status: active
-    vendor: Generic OIDC Provider
+    vendor: Ory
+    useCase: >-
+      An Ory Polis customer needs to integrate an OIDC IdP that isn't on the supported-vendor list (open-source IdPs like
+      Keycloak, Authentik, Zitadel, or any custom OIDC implementation), or wants the protocol mechanics documented for
+      debugging or non-default configuration.
+    coreFunctionality: >-
+      - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-oidc; Polis acts as the OIDC RP, IdP
+      as the OP.
+
+      - Discovery via /.well-known/openid-configuration on the issuer URL — Polis fetches and caches automatically.
+
+      - Required from the IdP: issuer URL, client id, client secret, plus the Polis ACS URL configured on the IdP side as
+      the redirect URI.
+
+      - Standard scopes: openid (required), profile, email; add groups if attribute mapping needs them.
+
+      - Same content mirrored at generic-protocols/generic-oidc — categorization choice; either entry resolves to the same
+      Polis page.
     oryMechanism:
       - standards
   - name: generic-saml
-    displayName: Generic SAML 2.0 SP
+    displayName: Generic SAML 2.0
     category: enterprise-sso
     path: enterprise-sso/generic-saml
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      This integration guide covers configuring Ory Polis as a SAML 2.0 Service Provider (SP) with any SAML 2.0-compliant
-      Identity Provider. This is the go-to reference when your organization's IdP is not covered by one of the
-      provider-specific guides in this directory, or when you need to understand the underlying SAML mechanics that apply
-      to all SAML-based SSO integrations with ...
+      Configure ANY SAML 2.0-compliant Identity Provider into Ory Polis as the SAML Service Provider. Canonical reference
+      for SAML-based enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP. Same source
+      page is mirrored under generic-protocols/generic-saml.
     status: active
-    vendor: Generic SAML 2.0 SP
+    vendor: Ory
+    useCase: >-
+      An Ory Polis customer needs to integrate a SAML IdP that isn't on the supported-vendor list (CyberArk, ForgeRock,
+      IBM Security Verify, custom in-house SAML), or wants the protocol mechanics documented for debugging or non-default
+      configuration.
+    coreFunctionality: >-
+      - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-saml; Polis acts as the SAML SP, IdP
+      as the IdP.
+
+      - From the IdP: metadata XML (preferred — Polis can consume URL or upload), or manual entity-id / SSO URL / signing
+      certificate paste.
+
+      - To the IdP: Polis SP metadata XML from the Ory organization's setup-link, or manual ACS URL / entity-id /
+      certificate.
+
+      - Attribute mapping defined IdP-side; Polis maps the released attributes to Ory identity traits.
+
+      - SP-initiated only — Polis does not consume IdP-initiated SAML responses.
+
+      - Same content mirrored at generic-protocols/generic-saml — categorization choice; either entry resolves to the same
+      Polis page.
     oryMechanism:
       - standards
   - name: google-workspace
-    displayName: Google Workspace SAML SSO
+    displayName: Google Workspace SAML
     category: enterprise-sso
     path: enterprise-sso/google-workspace
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Google Workspace (formerly G Suite) is Google's suite of cloud-based productivity and collaboration tools used by
-      millions of organizations worldwide. As a SAML Identity Provider, Google Workspace enables enterprises to use their
-      existing Google identities for single sign-on into applications protected by Ory Network. This is one of the most
-      common enterprise SSO integration...
+      Configure Google Workspace (formerly G Suite) as a SAML Identity Provider into Ory Polis. Documented directly in the
+      Ory Polis SSO providers docs. One of the most common enterprise SSO integrations because workforce identities
+      already live in Workspace and the Admin Console makes SAML app setup straightforward.
     status: active
-    vendor: Google Workspace SAML SSO
+    vendor: Google
+    useCase: >-
+      A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity is in
+      Google Workspace — this integration is the per-customer SAML connection setup against Workspace.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/google; Polis acts as the SAML SP, Workspace as the IdP.
+
+      - Workspace side: Admin Console → Apps → Web and mobile apps → Add custom SAML app; download IdP metadata XML.
+
+      - Attribute mapping: Primary email → email, First name → firstName, Last name → lastName; Group Membership for
+      groups.
+
+      - SAML app must be ENABLED per organizational unit before users in that OU can sign in — common gotcha.
+
+      - For OIDC sign-in (consumer/social), use social-sign-in/google instead — Polis SAML is for enterprise B2B SSO with
+      per-organization isolation.
     oryMechanism:
       - standards
   - name: hid-global
-    displayName: HID Global Identity Services SSO
+    displayName: HID Global Identity Services
     category: enterprise-sso
     path: enterprise-sso/hid-global
     maintainedBy: Community contributors
     type: config
     description: >-
-      HID Global is a leader in trusted identity solutions, providing both physical and digital identity management. HID
-      Global's identity services unify physical access (badge readers, smart cards, mobile credentials) with digital
-      identity (SSO, MFA, certificate-based authentication). This makes HID Global a unique IdP for organizations in
-      government, healthcare, financial servic...
+      Configure HID Global Identity Services as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. HID unifies
+      physical (badge readers, smart cards, mobile credentials) and digital identity, common in government, healthcare,
+      financial services, and manufacturing. No dedicated docs; configures via the Polis generic SAML or generic OIDC
+      walkthrough.
     status: active
-    vendor: HID Global Identity Services SSO
+    vendor: HID Global
+    useCase: >-
+      An enterprise running HID Global as their unified physical + digital identity provider wants Ory-protected
+      applications to consume the same authenticated sessions used for facility access and certificate-based workforce
+      authentication.
+    coreFunctionality: >-
+      - Configured as a generic SAML 2.0 SP (preferred) or generic OIDC RP in Ory Polis pointing at an HID Authentication
+      Service application.
+
+      - HID side: SAML 2.0 or OIDC application with attribute release for email, firstName, lastName, plus group claims as
+      needed.
+
+      - HID's certificate-based auth (PIV / CAC / smart card) enforced at the HID IdP layer; Ory consumes the resulting
+      session.
+
+      - Step-up to physical badge / token for high-value flows is configured as an HID policy that triggers re-auth before
+      releasing the assertion to Polis.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: ibm-security-verify
@@ -1026,11 +1137,27 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      IBM Security Verify is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and
-      SAML 2.0 endpoints for federation, and can be configured as an upstream identity provider in Ory Network so that
-      IBM-managed enterprise identities can sign in to Ory-protected applications.
+      Configure IBM Security Verify (IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or OIDC identity provider
+      in Ory Polis. No dedicated docs; configures via the Polis generic SAML or generic OIDC walkthrough.
     status: active
-    vendor: IBM Security Verify
+    vendor: IBM
+    useCase: >-
+      An enterprise running IBM Security Verify (Verify Cloud SaaS or Verify Access on-prem) as their workforce IdP wants
+      Ory-protected applications to consume IBM-issued sessions instead of standing up a separate identity store.
+    coreFunctionality: >-
+      - Configured as a generic SAML 2.0 SP (preferred) or generic OIDC RP in Ory Polis pointing at an IBM Verify Custom
+      SAML 2.0 / Custom OIDC application.
+
+      - Same federation flows for both Verify Cloud (SaaS) and Verify Access (on-prem) — difference is administration
+      location.
+
+      - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Polis consumes the resulting
+      authenticated assertion.
+
+      - Passkey / FIDO2 enforcement configured in IBM Verify's policy engine; Ory consumes the assurance level reported in
+      the assertion.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: jumpcloud
