@@ -3,14 +3,23 @@
 
 name: ibm-security-verify
 displayName: IBM Security Verify
-vendor: IBM Security Verify
+vendor: IBM
 category: enterprise-sso
 type: config
 maintainedBy: Community contributors
 description: >-
-  IBM Security Verify is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and
-  SAML 2.0 endpoints for federation, and can be configured as an upstream identity provider in Ory Network so that
-  IBM-managed enterprise identities can sign in to Ory-protected applications.
+  Configure IBM Security Verify (IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or OIDC identity
+  provider in Ory Polis. No dedicated docs; configures via the Polis generic SAML or generic OIDC walkthrough.
+useCase: >-
+  An enterprise running IBM Security Verify (Verify Cloud SaaS or Verify Access on-prem) as their workforce IdP
+  wants Ory-protected applications to consume IBM-issued sessions instead of standing up a separate identity
+  store.
+coreFunctionality: |-
+  - Configured as a generic SAML 2.0 SP (preferred) or generic OIDC RP in Ory Polis pointing at an IBM Verify Custom SAML 2.0 / Custom OIDC application.
+  - Same federation flows for both Verify Cloud (SaaS) and Verify Access (on-prem) — difference is administration location.
+  - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Polis consumes the resulting authenticated assertion.
+  - Passkey / FIDO2 enforcement configured in IBM Verify's policy engine; Ory consumes the assurance level reported in the assertion.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

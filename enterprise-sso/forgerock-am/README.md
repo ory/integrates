@@ -1,98 +1,31 @@
-# ForgeRock Access Management — Ory Network Integration
+# ForgeRock Access Management
 
-> **Maintained by:** Ory Engineering
+> **Maintained by:** Community contributors
 
-## Overview
+[ForgeRock Access Management](https://www.pingidentity.com/en/platform/forgerock.html) (now part of Ping Identity) is a widely deployed enterprise IAM platform supporting OIDC, OAuth 2.0, and SAML 2.0. Configure as an upstream IdP in Ory Network so existing ForgeRock-managed sessions flow through to Ory-protected applications.
 
-ForgeRock Access Management (now part of Ping Identity) is a widely deployed enterprise IAM platform. Customers running ForgeRock AM upstream can federate it into Ory Network as either an **OIDC** or **SAML 2.0** identity provider, allowing existing enterprise sessions to flow through to Ory-protected applications without rebuilding workforce identity in Ory.
+**Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
+**Docs page:** No dedicated ForgeRock page on ory.com/docs. Configures via:
+- [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml).
+- [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc).
 
-## Pick a federation mode
+## Setup outline
 
-| Mode | When to use |
-|---|---|
-| **OIDC federation** | New deployments; you control the ForgeRock AM `oauth2` realm; you want JSON token claims and JWKS-based key rotation |
-| **SAML 2.0 federation** | Existing AM environments already issuing SAML to other relying parties; corporate policy mandates SAML |
-
-The two modes are not mutually exclusive — Ory can accept both for the same project.
-
-## Prerequisites
-
-1. **Ory Network account.**
-2. **ForgeRock AM 7.x or later** with administrative access.
-3. **Discovery endpoint** for OIDC: `https://<your-am-host>/am/oauth2/.well-known/openid-configuration` (or under a specific realm: `/am/oauth2/realms/<realm>/...`).
-
-## OIDC configuration
-
-In ForgeRock AM, register an OAuth 2.0 client:
-- Client ID: `ory-network`
-- Client Secret: generate
-- Redirect URI:
-  ```
-  https://{your-project-slug}.projects.oryapis.com/self-service/methods/oidc/callback/forgerock-am
-  ```
-- Grant types: `Authorization Code`
-- Scopes: `openid profile email`
-
-In Ory:
-
-```bash
-ory patch identity-config \
-  --project <your-project-id> \
-  --workspace <your-workspace-id> \
-  --add '/selfservice/methods/oidc/config/providers/-={
-    "id": "forgerock-am",
-    "provider": "generic",
-    "issuer_url": "https://<your-am-host>/am/oauth2",
-    "client_id": "ory-network",
-    "client_secret": "<secret>",
-    "scope": ["openid", "profile", "email"],
-    "mapper_url": "base64://'"$(base64 < forgerock-mapper.jsonnet)"'"
-  }'
-```
-
-Sample mapper (`forgerock-mapper.jsonnet`):
-
-```jsonnet
-local claims = std.extVar('claims');
-
-{
-  identity: {
-    traits: {
-      [if 'email' in claims then 'email' else null]: claims.email,
-      name: {
-        [if 'given_name' in claims then 'first' else null]: claims.given_name,
-        [if 'family_name' in claims then 'last' else null]: claims.family_name,
-      },
-    },
-  },
-}
-```
-
-## SAML 2.0 configuration
-
-For SAML, federate ForgeRock AM as an upstream IdP via Ory Polis:
-1. Export ForgeRock's IdP metadata XML from the AM console.
-2. Upload it to the Ory Console under **Authentication → Enterprise SSO → SAML providers**.
-3. Configure the assertion consumer service (ACS) URL Ory provides into ForgeRock AM as a relying party.
-4. Map SAML attribute statements to your Ory identity schema.
-
-## Technical details
-
-| Field | Value |
-|---|---|
-| OIDC discovery (default) | `https://<host>/am/oauth2/.well-known/openid-configuration` |
-| OIDC discovery (per-realm) | `https://<host>/am/oauth2/realms/<realm>/.well-known/openid-configuration` |
-| SAML metadata | Exported from AM console per circle of trust |
+1. In ForgeRock AM, create a SAML 2.0 entity (or OIDC client) — typically under **Realms → Applications → Federation** for SAML, or **OAuth 2.0 → Clients** for OIDC.
+2. Configure the Ory Polis SP metadata (entity ID, ACS URL, certificate) into the ForgeRock app.
+3. In Ory Network, configure the SSO connection using the generic SAML/OIDC walkthrough; paste ForgeRock's metadata XML (SAML) or OIDC discovery URL + client credentials.
+4. Map ForgeRock's released attributes to Ory identity traits.
 
 ## Notes
 
-- ForgeRock AM realms each have their own OIDC discovery URL. Confirm which realm your enterprise users authenticate against before configuring the issuer.
-- Ory does not call ForgeRock's REST APIs directly — federation is purely token-based. PAM-style API integration is out of scope for this entry.
-- If you are migrating off ForgeRock AM, the same OIDC config can be used for the migration window; the upstream provider just changes.
+- ForgeRock SAML supports both IdP-initiated and SP-initiated flows. Polis only consumes SP-initiated assertions; configure the ForgeRock side accordingly.
+- ForgeRock OIDC supports the standard `openid`, `profile`, `email`, `groups` scopes; group claims may need a custom OIDC scope mapper depending on your AM version.
+- ForgeRock AM is now branded as **Ping Identity Platform** following the 2023 acquisition; older docs may use either name.
 
-## Resources
+## Status
 
-- [ForgeRock AM OAuth 2.0 / OIDC docs](https://docs.pingidentity.com/auth-server/latest/oauth2-guide/index.html)
-- [ForgeRock AM SAML 2.0 docs](https://docs.pingidentity.com/auth-server/latest/saml2-guide/index.html)
-- [Ory generic OIDC provider docs](https://www.ory.com/docs/kratos/social-signin/generic)
-- [Ory Polis SAML federation](https://www.ory.com/docs/identities/sign-in/saml)
+Community / proposed — no dedicated Ory documentation. Configures via the generic SAML or OIDC path.
+
+## License
+
+Apache-2.0. (Configuration-only — no source code in this directory.)

@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: hid-global
-displayName: HID Global Identity Services SSO
-vendor: HID Global Identity Services SSO
+displayName: HID Global Identity Services
+vendor: HID Global
 category: enterprise-sso
 type: config
 maintainedBy: Community contributors
 description: >-
-  HID Global is a leader in trusted identity solutions, providing both physical and digital identity management. HID
-  Global's identity services unify physical access (badge readers, smart cards, mobile credentials) with digital
-  identity (SSO, MFA, certificate-based authentication). This makes HID Global a unique IdP for organizations in
-  government, healthcare, financial servic...
+  Configure HID Global Identity Services as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. HID
+  unifies physical (badge readers, smart cards, mobile credentials) and digital identity, common in government,
+  healthcare, financial services, and manufacturing. No dedicated docs; configures via the Polis generic SAML
+  or generic OIDC walkthrough.
+useCase: >-
+  An enterprise running HID Global as their unified physical + digital identity provider wants Ory-protected
+  applications to consume the same authenticated sessions used for facility access and certificate-based
+  workforce authentication.
+coreFunctionality: |-
+  - Configured as a generic SAML 2.0 SP (preferred) or generic OIDC RP in Ory Polis pointing at an HID Authentication Service application.
+  - HID side: SAML 2.0 or OIDC application with attribute release for email, firstName, lastName, plus group claims as needed.
+  - HID's certificate-based auth (PIV / CAC / smart card) enforced at the HID IdP layer; Ory consumes the resulting session.
+  - Step-up to physical badge / token for high-value flows is configured as an HID policy that triggers re-auth before releasing the assertion to Polis.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

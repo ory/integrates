@@ -3,15 +3,24 @@
 
 name: generic-oidc
 displayName: Generic OIDC Provider
-vendor: Generic OIDC Provider
+vendor: Ory
 category: enterprise-sso
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  This integration guide covers configuring Ory Polis as an OpenID Connect (OIDC) Relying Party (RP) with any
-  OIDC-compliant Identity Provider (OP). Use this guide when your IdP supports OIDC/OAuth 2.0 and is not covered by a
-  provider-specific guide, or when you need to understand the underlying OIDC mechanics for any OIDC-based SSO
-  integration with Ory.
+  Configure ANY OIDC-compliant Identity Provider into Ory Polis as the OIDC Relying Party. Canonical reference
+  for OIDC-based enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP. Same
+  source page is mirrored under generic-protocols/generic-oidc.
+useCase: >-
+  An Ory Polis customer needs to integrate an OIDC IdP that isn't on the supported-vendor list (open-source IdPs
+  like Keycloak, Authentik, Zitadel, or any custom OIDC implementation), or wants the protocol mechanics
+  documented for debugging or non-default configuration.
+coreFunctionality: |-
+  - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-oidc; Polis acts as the OIDC RP, IdP as the OP.
+  - Discovery via /.well-known/openid-configuration on the issuer URL — Polis fetches and caches automatically.
+  - Required from the IdP: issuer URL, client id, client secret, plus the Polis ACS URL configured on the IdP side as the redirect URI.
+  - Standard scopes: openid (required), profile, email; add groups if attribute mapping needs them.
+  - Same content mirrored at generic-protocols/generic-oidc — categorization choice; either entry resolves to the same Polis page.
 oryMechanism:
   - standards
 status: active

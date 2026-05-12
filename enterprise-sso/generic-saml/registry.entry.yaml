@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: generic-saml
-displayName: Generic SAML 2.0 SP
-vendor: Generic SAML 2.0 SP
+displayName: Generic SAML 2.0
+vendor: Ory
 category: enterprise-sso
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  This integration guide covers configuring Ory Polis as a SAML 2.0 Service Provider (SP) with any SAML 2.0-compliant
-  Identity Provider. This is the go-to reference when your organization's IdP is not covered by one of the
-  provider-specific guides in this directory, or when you need to understand the underlying SAML mechanics that apply to
-  all SAML-based SSO integrations with ...
+  Configure ANY SAML 2.0-compliant Identity Provider into Ory Polis as the SAML Service Provider. Canonical
+  reference for SAML-based enterprise SSO with Ory and the fallback when no provider-specific guide covers an
+  IdP. Same source page is mirrored under generic-protocols/generic-saml.
+useCase: >-
+  An Ory Polis customer needs to integrate a SAML IdP that isn't on the supported-vendor list (CyberArk,
+  ForgeRock, IBM Security Verify, custom in-house SAML), or wants the protocol mechanics documented for
+  debugging or non-default configuration.
+coreFunctionality: |-
+  - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-saml; Polis acts as the SAML SP, IdP as the IdP.
+  - From the IdP: metadata XML (preferred — Polis can consume URL or upload), or manual entity-id / SSO URL / signing certificate paste.
+  - To the IdP: Polis SP metadata XML from the Ory organization's setup-link, or manual ACS URL / entity-id / certificate.
+  - Attribute mapping defined IdP-side; Polis maps the released attributes to Ory identity traits.
+  - SP-initiated only — Polis does not consume IdP-initiated SAML responses.
+  - Same content mirrored at generic-protocols/generic-saml — categorization choice; either entry resolves to the same Polis page.
 oryMechanism:
   - standards
 status: active

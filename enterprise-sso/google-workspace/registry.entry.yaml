@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: google-workspace
-displayName: Google Workspace SAML SSO
-vendor: Google Workspace SAML SSO
+displayName: Google Workspace SAML
+vendor: Google
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Google Workspace (formerly G Suite) is Google's suite of cloud-based productivity and collaboration tools used by
-  millions of organizations worldwide. As a SAML Identity Provider, Google Workspace enables enterprises to use their
-  existing Google identities for single sign-on into applications protected by Ory Network. This is one of the most
-  common enterprise SSO integration...
+  Configure Google Workspace (formerly G Suite) as a SAML Identity Provider into Ory Polis. Documented directly
+  in the Ory Polis SSO providers docs. One of the most common enterprise SSO integrations because workforce
+  identities already live in Workspace and the Admin Console makes SAML app setup straightforward.
+useCase: >-
+  A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity
+  is in Google Workspace — this integration is the per-customer SAML connection setup against Workspace.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/google; Polis acts as the SAML SP, Workspace as the IdP.
+  - Workspace side: Admin Console → Apps → Web and mobile apps → Add custom SAML app; download IdP metadata XML.
+  - Attribute mapping: Primary email → email, First name → firstName, Last name → lastName; Group Membership for groups.
+  - SAML app must be ENABLED per organizational unit before users in that OU can sign in — common gotcha.
+  - For OIDC sign-in (consumer/social), use social-sign-in/google instead — Polis SAML is for enterprise B2B SSO with per-organization isolation.
 oryMechanism:
   - standards
 status: active

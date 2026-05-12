@@ -1,81 +1,31 @@
-# IBM Security Verify — Ory Network Integration
+# IBM Security Verify
 
-> **Maintained by:** Ory Engineering
+> **Maintained by:** Community contributors
 
-## Overview
+[IBM Security Verify](https://www.ibm.com/products/verify-identity) is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and SAML 2.0 endpoints for federation. Configure as an upstream IdP in Ory Network so IBM-managed enterprise identities can sign in to Ory-protected applications.
 
-IBM Security Verify is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and SAML 2.0 endpoints for federation, and can be configured as an upstream identity provider in Ory Network so that IBM-managed enterprise identities can sign in to Ory-protected applications.
+**Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
+**Docs page:** No dedicated IBM page on ory.com/docs. Configures via:
+- [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml).
+- [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc).
 
-## Prerequisites
+## Setup outline
 
-1. **Ory Network account.**
-2. **IBM Security Verify tenant** (URL of the form `https://<tenant>.verify.ibm.com`).
-3. **Administrator access** to register an application and grant entitlements.
+1. In IBM Security Verify Admin → **Applications** → **Add application** — pick **Custom SAML 2.0** or **Custom OIDC**.
+2. Configure the application with Ory Polis SP details from your Ory Network organization's setup-link.
+3. Map the attribute release — IBM Verify exposes a flexible attribute mapper; map email, name, and any group claims you need.
+4. In Ory Network, configure the SSO connection using the generic SAML/OIDC walkthrough; paste IBM's metadata XML or OIDC discovery URL + client credentials.
 
-## OIDC configuration
+## Notes
 
-In the IBM Security Verify admin console:
-1. Go to **Applications → Add application → Custom application**.
-2. Choose **OIDC** as the sign-on method.
-3. Set the redirect URI:
-   ```
-   https://{your-project-slug}.projects.oryapis.com/self-service/methods/oidc/callback/ibm-security-verify
-   ```
-4. Enable **Authorization Code** grant type.
-5. Note the **Client ID** and **Client Secret**.
-6. Grant the application the entitlement to your user community.
+- IBM Verify supports both Verify Cloud (SaaS) and Verify Access (on-prem) — the federation flows are the same; the difference is where you administer the IdP.
+- IBM-style "access policies" with risk-based authentication stay on the IBM side; Polis consumes the resulting authenticated assertion.
+- For passkey / FIDO2 enforcement at the IdP layer, configure that in IBM Verify's policy engine — Ory simply consumes the assurance level reported in the assertion.
 
-In Ory:
+## Status
 
-```bash
-ory patch identity-config \
-  --project <your-project-id> \
-  --workspace <your-workspace-id> \
-  --add '/selfservice/methods/oidc/config/providers/-={
-    "id": "ibm-security-verify",
-    "provider": "generic",
-    "issuer_url": "https://<tenant>.verify.ibm.com/oidc/endpoint/default",
-    "client_id": "<isv-client-id>",
-    "client_secret": "<isv-client-secret>",
-    "scope": ["openid", "profile", "email"],
-    "mapper_url": "base64://'"$(base64 < isv-mapper.jsonnet)"'"
-  }'
-```
+Community / proposed — no dedicated Ory documentation. Configures via the generic SAML or OIDC path.
 
-Sample mapper (`isv-mapper.jsonnet`):
+## License
 
-```jsonnet
-local claims = std.extVar('claims');
-
-{
-  identity: {
-    traits: {
-      [if 'email' in claims then 'email' else null]: claims.email,
-      name: {
-        [if 'given_name' in claims then 'first' else null]: claims.given_name,
-        [if 'family_name' in claims then 'last' else null]: claims.family_name,
-      },
-    },
-  },
-}
-```
-
-## SAML 2.0 configuration
-
-If your enterprise standard is SAML, register Ory as a SAML relying party in IBM Security Verify, then federate it through Ory Polis. Export the IBM IdP metadata XML, upload it under **Authentication → Enterprise SSO → SAML providers** in the Ory Console, and configure the ACS URL Ory provides back in IBM.
-
-## Technical details
-
-| Field | Value |
-|---|---|
-| OIDC discovery | `https://<tenant>.verify.ibm.com/oidc/endpoint/default/.well-known/openid-configuration` |
-| Authorization URL | `https://<tenant>.verify.ibm.com/oidc/endpoint/default/authorize` |
-| Token URL | `https://<tenant>.verify.ibm.com/oidc/endpoint/default/token` |
-| Userinfo URL | `https://<tenant>.verify.ibm.com/oidc/endpoint/default/userinfo` |
-| Common scopes | `openid`, `profile`, `email` |
-
-## Resources
-
-- [IBM Security Verify — OIDC integration](https://www.ibm.com/docs/en/security-verify?topic=oidc-integrating-applications-using-protocol)
-- [IBM Security Verify — SAML integration](https://www.ibm.com/docs/en/security-verify?topic=saml-integrating-applications-using-2)
-- [Ory generic OIDC provider docs](https://www.ory.com/docs/kratos/social-signin/generic)
+Apache-2.0. (Configuration-only — no source code in this directory.)

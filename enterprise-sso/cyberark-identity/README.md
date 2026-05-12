@@ -1,83 +1,31 @@
-# CyberArk Identity — Ory Network Integration
+# CyberArk Identity
 
-> **Maintained by:** Ory Engineering
+> **Maintained by:** Community contributors
 
-## Overview
+[CyberArk Identity](https://www.cyberark.com/products/identity/) (the SSO and identity portion of the CyberArk platform — distinct from CyberArk's PAM product) exposes standard SAML 2.0 and OIDC endpoints for federation. Configure as an upstream IdP in Ory Network so CyberArk-managed enterprise identities can sign in to Ory-protected applications.
 
-CyberArk Identity is the SSO and identity portion of the CyberArk platform — distinct from CyberArk's PAM (Privileged Access Management) product. It exposes standard SAML 2.0 and OIDC endpoints for federation, and can be configured as an upstream identity provider in Ory Network to bring CyberArk-managed enterprise identities into Ory-protected applications.
+**Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
+**Docs page:** No dedicated CyberArk page on ory.com/docs. Configures via:
+- [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml) (recommended for enterprise SSO).
+- [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc) if your CyberArk app is configured for OIDC.
 
-> **Scope note.** This integration covers **CyberArk Identity SSO** only. PAM-specific REST integration (vaulting, session management, privileged-credential workflows) is out of scope here. If you have a customer use case for PAM integration, open an issue and we can scope a webhook integration.
+## Setup outline
 
-## Prerequisites
+1. In CyberArk Identity, create a **Custom SAML App** (or **Custom OIDC App**).
+2. Configure the Ory Polis SP metadata (entity ID, ACS URL, certificate) into the CyberArk app.
+3. In Ory Network, configure the SSO connection using the generic SAML/OIDC provider walkthrough above; paste CyberArk's metadata XML (SAML) or issuer URL + client credentials (OIDC).
+4. Map the CyberArk attributes (`email`, `firstname`, `lastname`, group memberships) to Ory identity traits.
+5. Enable the connection on your Ory organization.
 
-1. **Ory Network account.**
-2. **CyberArk Identity tenant** (URL of the form `https://<tenant>.id.cyberark.cloud` or the legacy `https://<tenant>.idaptive.app`).
-3. **Administrator access** to register a web application in CyberArk Identity.
+## Notes
 
-## OIDC configuration
+- PAM-specific REST integration (privileged sessions, credential rotation, etc.) is **out of scope** for this entry — open an issue if you need that pattern.
+- CyberArk's group-based access policies stay on the CyberArk side; Ory only sees the resulting authentication and the attributes the IdP releases.
 
-In the CyberArk Identity admin portal:
-1. Go to **Apps & Widgets → Web Apps → Add Web App → Custom**.
-2. Choose **OpenID Connect**.
-3. Set:
-   - Application ID: `ory-network`
-   - Redirect URI:
-     ```
-     https://{your-project-slug}.projects.oryapis.com/self-service/methods/oidc/callback/cyberark-identity
-     ```
-   - Scopes: `openid`, `profile`, `email`
-4. Note the **Client ID** and **Client Secret**.
-5. Assign the application to the CyberArk roles or users that should be able to sign in.
+## Status
 
-In Ory:
+Community / proposed — no dedicated Ory documentation. Configures via the generic SAML or OIDC path.
 
-```bash
-ory patch identity-config \
-  --project <your-project-id> \
-  --workspace <your-workspace-id> \
-  --add '/selfservice/methods/oidc/config/providers/-={
-    "id": "cyberark-identity",
-    "provider": "generic",
-    "issuer_url": "https://<tenant>.id.cyberark.cloud",
-    "client_id": "<cyberark-client-id>",
-    "client_secret": "<cyberark-client-secret>",
-    "scope": ["openid", "profile", "email"],
-    "mapper_url": "base64://'"$(base64 < cyberark-mapper.jsonnet)"'"
-  }'
-```
+## License
 
-Sample mapper (`cyberark-mapper.jsonnet`):
-
-```jsonnet
-local claims = std.extVar('claims');
-
-{
-  identity: {
-    traits: {
-      [if 'email' in claims then 'email' else null]: claims.email,
-      name: {
-        [if 'given_name' in claims then 'first' else null]: claims.given_name,
-        [if 'family_name' in claims then 'last' else null]: claims.family_name,
-      },
-    },
-  },
-}
-```
-
-## SAML 2.0 configuration
-
-If your standard is SAML, register the application as a **SAML web app** in CyberArk Identity. Export the IdP metadata XML and upload it under **Authentication → Enterprise SSO → SAML providers** in the Ory Console.
-
-## Technical details
-
-| Field | Value |
-|---|---|
-| OIDC discovery | `https://<tenant>.id.cyberark.cloud/.well-known/openid-configuration` |
-| Common scopes | `openid`, `profile`, `email` |
-
-## Resources
-
-- [CyberArk Identity OIDC docs](https://docs.cyberark.com/identity/Latest/en/Content/Applications/AppsCustom/AddOpenIDConnect.htm)
-- [CyberArk Identity SAML docs](https://docs.cyberark.com/identity/Latest/en/Content/Applications/AppsWeb/U2-AddSAMLApp.htm)
-- [Ory generic OIDC provider docs](https://www.ory.com/docs/kratos/social-signin/generic)
-- [Ory Polis SAML federation](https://www.ory.com/docs/identities/sign-in/saml)
+Apache-2.0. (Configuration-only — no source code in this directory.)

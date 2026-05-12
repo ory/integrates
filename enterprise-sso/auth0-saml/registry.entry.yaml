@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: auth0-saml
-displayName: Auth0 SAML SSO
-vendor: Auth0 SAML SSO
+displayName: Auth0 SAML
+vendor: Auth0 (Okta)
 category: enterprise-sso
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Auth0 is a flexible identity platform that provides authentication and authorization services. When used as a SAML
-  Identity Provider (IdP), Auth0 enables enterprise organizations to federate their existing Auth0-managed identities
-  into applications protected by Ory Network. This integration configures Auth0 as a SAML 2.0 IdP with Ory Polis acting
-  as the SAML Service Provider...
+  Configure Auth0 as a SAML 2.0 Identity Provider into Ory Polis (the SAML SP). Documented directly in the Ory
+  Polis SSO providers docs. Common when workforce identities live in Auth0 but Ory Network is the
+  customer-facing identity layer with B2B SSO support.
+useCase: >-
+  A SaaS product with an Ory Network identity stack offers enterprise SSO ("login with your own IdP") and a
+  customer's IdP happens to be Auth0 — this integration is the per-customer connection setup.
+coreFunctionality: |-
+  - Configured per Ory Polis docs at /polis/sso-providers/auth0; Polis acts as the SAML SP, Auth0 as the IdP.
+  - Auth0 side: Regular Web Application + SAML2 WEB APP addon; configure ACS URL + Audience from Ory's setup-link.
+  - SP-initiated only — Auth0 also supports IdP-initiated but Polis consumes SP-initiated.
+  - Use Auth0 Actions (not the addon's claims editor) for non-trivial attribute transformations — version-controlled, supported path.
+  - MFA enforcement sits at the Auth0 IdP layer; Ory consumes the resulting authenticated assertion.
 oryMechanism:
   - standards
 status: active
