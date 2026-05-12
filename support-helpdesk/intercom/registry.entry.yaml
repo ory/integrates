@@ -8,9 +8,22 @@ category: support-helpdesk
 type: config
 maintainedBy: Community contributors
 description: >-
-  Intercom is a customer messaging platform providing live chat, product tours, and customer engagement tools. This
-  integration connects Intercom to Ory Network to enrich Intercom user profiles with identity data and keep them
-  synchronized via webhooks, enabling identity-aware customer communication.
+  Sync Ory identities into Intercom Contacts via Ory Actions on registration.after / settings.after so chat,
+  support, and lifecycle messaging are identity-aware. Wiring is Ory Action config + Jsonnet body calling
+  Intercom's REST API — no first-party handler.
+useCase: >-
+  A SaaS product running customer messaging on Intercom (chat / support / lifecycle campaigns) wants Ory-managed
+  identities to appear as Intercom contacts automatically and wants the Intercom Messenger to recognize
+  authenticated users via HMAC identity verification.
+coreFunctionality: |-
+  - Ory Action on registration.after / settings.after calls Intercom POST https://api.intercom.io/contacts with role: "user".
+  - Auth: header Authorization: Bearer <ACCESS_TOKEN> + Intercom-Version: 2.11 (or current stable).
+  - Optional: store Intercom's returned id on metadata_public.intercom_id for downstream calls.
+  - response.ignore: true — Intercom availability never blocks user flows.
+  - Intercom Messenger identity verification: HMAC `user_hash` shared secret prevents spoofing of authenticated chat sessions; configure in Intercom security settings.
+  - Tracking events ("user verified email", etc.) uses Events API (POST /events), not contact updates.
+  - Rate limits 10K calls/minute (Pro+) — generous for signup-rate flows.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

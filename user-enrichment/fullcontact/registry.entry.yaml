@@ -5,13 +5,23 @@ name: fullcontact
 displayName: FullContact
 vendor: FullContact
 category: user-enrichment
-type: config
+type: webhook
 maintainedBy: Community contributors
 description: >-
-  FullContact is a person and company data enrichment platform that resolves identity fragments (email, phone, social
-  handle) into unified person and company profiles. This integration enriches Ory Network identities after registration
-  with demographic, firmographic, and social data, enabling personalization and lead qualification without additional
-  form fields.
+  Enrich Ory identities post-registration with demographic, firmographic, and social data from FullContact's
+  person/company resolution graph. Wired via an async Ory Action on registration.after calling a custom
+  handler that fetches FullContact enrichment and PATCHes metadata_public.fullcontact on the Ory identity.
+useCase: >-
+  A B2B SaaS product wants newly registered users enriched with name, employer, role, location, and social
+  handles automatically — for lead qualification, personalization, and routing — without making the user fill
+  out a longer signup form.
+coreFunctionality: |-
+  - Pattern: Ory Action registration.after (async, response.ignore: true) → handler verifies shared secret → handler calls POST https://api.fullcontact.com/v3/person.enrich → handler PATCHes metadata_public.fullcontact on the identity via @ory/client.
+  - Best-effort enrichment — coverage varies by region and email type (personal vs business); handler should silently no-op on 404 misses.
+  - Per-resolved-record billing — configure FullContact's multi-field resolution to avoid wasting credits.
+  - DSAR / right-to-be-forgotten: FullContact API supports a delete call; wire to your DSAR flow.
+  - SDK: native fetch + @ory/client for admin PATCH.
+  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
 oryMechanism:
-  - standards
+  - actions
 status: active

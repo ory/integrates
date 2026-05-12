@@ -5,12 +5,22 @@ name: arkose-labs
 displayName: Arkose Labs
 vendor: Arkose Labs
 category: fraud-bot-protection
-type: config
+type: webhook
 maintainedBy: Community contributors
 description: >-
-  Arkose Labs is a bot detection and fraud prevention platform that uses adaptive enforcement challenges to stop
-  automated attacks while allowing legitimate users through. It is designed for high-value transactions such as account
-  creation, login, and payment flows.
+  Bot and fraud prevention via Arkose Labs's adaptive enforcement challenges (invisible scoring escalating to
+  interactive puzzles on risk). Wired into Ory via an Ory Action on registration.before / login.before with
+  can_interrupt, verifying the Arkose token from the client SDK. No dedicated Ory docs page.
+useCase: >-
+  A high-value B2C product (financial, gaming, marketplace) needs strong bot defense at signup and login —
+  more friction-sensitive than reCAPTCHA but more capable against sophisticated automation.
+coreFunctionality: |-
+  - Pattern: client SDK collects token → form submits token to Ory → Ory Action calls handler with can_interrupt → handler verifies via Arkose /api/v4/verify/ → handler returns success/failure → Ory consumes via response.parse.
+  - Two Arkose keys: Public Key (client SDK) and Private Key (server verify); never expose Private.
+  - Arkose tokens are one-time-use — handler must not retry verify with the same token.
+  - Use a per-flow token (don't reuse across registration and login).
+  - Adaptive challenges escalate per-risk; pick challenge type per-flow risk profile via Arkose's game configuration.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

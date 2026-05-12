@@ -3,14 +3,24 @@
 
 name: cloudflare-turnstile
 displayName: Cloudflare Turnstile
-vendor: Cloudflare Turnstile
+vendor: Cloudflare
 category: fraud-bot-protection
-type: config
+type: webhook
 maintainedBy: Community contributors
 description: >-
-  Cloudflare Turnstile is a non-interactive CAPTCHA alternative that validates users without presenting visual puzzles.
-  It uses a combination of browser signals, machine learning, and proof-of-work challenges to distinguish humans from
-  bots, all without requiring user interaction in most cases.
+  Non-interactive CAPTCHA via Cloudflare Turnstile — invisible challenge using browser signals, ML, and
+  proof-of-work. Free with no per-call limit and privacy-preserving. Wired into Ory via an Ory Action on
+  registration.before / login.before with can_interrupt, verifying the Turnstile token from the client widget.
+useCase: >-
+  A consumer product wants bot defense at signup/login without visible CAPTCHA friction — Turnstile's
+  invisible challenge keeps conversion high while still blocking obvious automation.
+coreFunctionality: |-
+  - Pattern: client widget collects token (cf-turnstile-response) → form submits token to Ory → Ory Action with can_interrupt calls handler → handler verifies via POST https://challenges.cloudflare.com/turnstile/v0/siteverify → handler returns success/failure → Ory consumes via response.parse.
+  - Two keys: Site Key (public, client widget) and Secret Key (server verify); never expose Secret.
+  - Tokens are one-time-use and expire ~5 minutes after issue.
+  - Free with no per-call limit — practical default for new projects.
+  - Optional remoteip field in siteverify enables IP-binding check; pass the client IP through the reverse proxy.
+  - Status: community/proposed — no dedicated ory/docs page; same pattern as hCaptcha / reCAPTCHA / Arkose.
 oryMechanism:
-  - standards
+  - actions
 status: active

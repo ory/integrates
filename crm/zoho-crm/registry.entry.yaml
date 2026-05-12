@@ -3,13 +3,24 @@
 
 name: zoho-crm
 displayName: Zoho CRM
-vendor: Zoho CRM
+vendor: Zoho
 category: crm
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Zoho CRM contact sync from Ory Network via Ory Actions webhooks. OAuth2 with automatic token refresh, HMAC webhook
-  verification, multi-region support (IN/US/EU).
+  Sync Ory identities to Zoho CRM Contact records via Ory Actions webhooks. Async upsert keyed by email using
+  Zoho's bulk upsert endpoint; handler manages OAuth token caching and refresh. Multi-region (US / IN / EU /
+  AU / JP / CA / CN) — match ZOHO_API_BASE_URL to the data-center your Zoho org lives in.
+useCase: >-
+  An Ory Network customer running their CRM on Zoho wants newly registered users to land in Zoho as Contact
+  records automatically — no separate sync job, no manual exports.
+coreFunctionality: |-
+  - One async endpoint POST /zoho/sync-contact called from registration.after and settings.after with response.ignore: true so Zoho availability never blocks user flows.
+  - OAuth flow: long-lived ZOHO_REFRESH_TOKEN exchanged for short-lived access tokens (1-hour TTL); handler caches and refreshes automatically.
+  - Refresh tokens are rate-limited (15 per 7 minutes per org) — must reuse the env-provided refresh token, never generate fresh per request.
+  - Multi-region: regional API base hosts (zohoapis.com US / .in IN / .eu EU / .com.au AU / .jp JP / .ca CA / .com.cn CN) and matching accounts URLs.
+  - Upsert keyed by email via Zoho's bulk upsert endpoint — idempotent across re-runs.
+  - SDK: native fetch (no Zoho SDK); @ory/client not used (handler doesn't read back from Ory).
 oryMechanism:
-  - standards
+  - actions
 status: active

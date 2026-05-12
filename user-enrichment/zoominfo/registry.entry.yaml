@@ -5,12 +5,23 @@ name: zoominfo
 displayName: ZoomInfo
 vendor: ZoomInfo
 category: user-enrichment
-type: config
+type: webhook
 maintainedBy: Community contributors
 description: >-
-  ZoomInfo is a B2B data intelligence platform providing contact, company, and intent data for sales, marketing, and
-  recruiting teams. This integration enriches Ory Network identities after registration with B2B contact and company
-  data from ZoomInfo's database, enabling lead qualification, account-based marketing, and sales-ready data enrichment.
+  Enrich Ory identities post-registration with B2B contact + company data from ZoomInfo (job title, department,
+  company name / size / industry, location). Wired via an async Ory Action on registration.after calling a
+  custom handler that fetches ZoomInfo enrichment and PATCHes metadata_public.zoominfo on the Ory identity.
+useCase: >-
+  A B2B SaaS product running sales-led GTM wants newly registered users pre-qualified with firmographic data
+  so sales can route accounts by company size / industry without asking those questions on the signup form.
+coreFunctionality: |-
+  - Pattern: Ory Action registration.after (async, response.ignore: true) → handler verifies shared secret → handler authenticates against ZoomInfo (OAuth2 client credentials) → handler calls POST https://api.zoominfo.com/enrich/contact → handler PATCHes metadata_public.zoominfo on the identity via @ory/client.
+  - ZoomInfo Enrich API is B2B-focused — personal emails (gmail, outlook) won't resolve; gate calls on a business-email check to avoid wasting credits.
+  - Data quality is highest for US business contacts; EU coverage weaker and subject to GDPR-driven opt-outs.
+  - Licensing is the long pole — Enrich API is a paid add-on requiring a sales conversation.
+  - For intent signals (pricing page visits, whitepaper downloads), pair with ZoomInfo's intent product — separate API, not covered here.
+  - Per-resolved-record billing; configure conservative match thresholds.
+  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
 oryMechanism:
-  - standards
+  - actions
 status: active

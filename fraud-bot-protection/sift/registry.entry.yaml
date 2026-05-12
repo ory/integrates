@@ -2,15 +2,28 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: sift
-displayName: Sift (Digital Trust & Safety)
-vendor: Sift (Digital Trust & Safety)
+displayName: Sift
+vendor: Sift
 category: fraud-bot-protection
-type: config
+type: webhook
 maintainedBy: Community contributors
 description: >-
-  Sift is a digital trust and safety platform that provides real-time fraud detection and account abuse prevention. It
-  uses machine learning to analyze user events and return abuse scores that help you decide whether to allow, review, or
-  block an action.
+  Digital trust & safety via Sift — real-time ML-based fraud and account-abuse scoring. Wired into Ory via
+  two Actions: a sync pre-flow check (registration.before / login.before with can_interrupt) reading the
+  user's current Sift abuse score and blocking when above threshold, plus an async post-event reporter
+  emitting Sift events that feed the model.
+useCase: >-
+  A consumer product (marketplace, fintech, gaming) needs ML-driven account-abuse prevention beyond bot
+  defense — repeat-fraudster detection, payment-fraud signals, network-effect risk — and is willing to feed
+  Sift the event stream needed to build a useful longitudinal model.
+coreFunctionality: |-
+  - Two flows must run for Sift to be useful: pre-flow check (block on fail) AND post-event reporter (signal collection).
+  - Pre-flow: GET https://api.sift.com/v205/users/{user_id}/score; block if score > threshold (start permissive at 80, tighten with data).
+  - Post-event: POST https://api.sift.com/v205/events with reserved event names ($create_account, $login, $transaction) including IP, user agent, session, traits.
+  - Both flows authenticated via a single server-side API Key.
+  - User IDs must be stable across sessions — Sift's model is keyed on user_id.
+  - Sift's value is longitudinal — single events have limited signal; payoff grows over time as the model learns the user base.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

@@ -3,14 +3,25 @@
 
 name: microsoft-dynamics-365
 displayName: Microsoft Dynamics 365
-vendor: Microsoft Dynamics 365
+vendor: Microsoft
 category: crm
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Microsoft Dynamics 365 is a major enterprise CRM and ERP platform. This integration syncs Ory identities to Dynamics
-  365 contact records via the Dataverse Web API (OData v4) using an Ory Actions webhook. When a user registers or
-  updates their profile, the handler creates or upserts the corresponding Dynamics contact.
+  Sync Ory identities to Microsoft Dynamics 365 Contact records via the Dataverse Web API (OData v4) using
+  an Ory Actions webhook. On registration / profile update the handler creates or upserts the corresponding
+  Dynamics Contact keyed by an `ory_identity_id` alternate key.
+useCase: >-
+  An enterprise running their CRM and ERP on Dynamics 365 wants Ory-managed identities to appear as Contacts
+  in Dataverse — automatically, with stable cross-system identifiers — so sales, marketing, and service teams
+  see Ory users in their existing pipeline without separate exports.
+coreFunctionality: |-
+  - Ory Action webhook on registration.after / settings.after upserts a Contact in Dynamics 365 via the Dataverse Web API (OData v4).
+  - Upsert keyed by an `ory_identity_id` alternate key on the Contact entity — must be created in Dataverse before first run.
+  - Dataverse auth via Microsoft Entra ID OAuth2 client credentials (Server-to-Server app registration with delegated/application permission for the Dataverse environment).
+  - Region-aware: the Dataverse endpoint is per-environment (https://<env>.crm.dynamics.com/api/data/v9.2).
+  - Async (response.ignore: true) — handler returns 200 to Ory immediately; Dataverse calls run in the background.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - actions-webhook
+  - actions
 status: active

@@ -8,8 +8,20 @@ category: crm
 type: config
 maintainedBy: Community contributors
 description: >-
-  Create Salesforce Leads or Contacts automatically when users register in Ory. Uses Ory Actions webhooks with OAuth2
-  service-to-service authentication to call the Salesforce REST API.
+  Sync Ory identities to Salesforce as Leads or Contacts via Ory Actions webhooks calling the Salesforce REST
+  API with OAuth2 service-to-service authentication. Distinct from social-sign-in/salesforce (the sign-in
+  provider). No first-party webhook handler ships here — wiring is Ory Action config + Jsonnet body.
+useCase: >-
+  A B2B SaaS product running their sales pipeline on Salesforce wants newly registered users to land as Leads
+  in Salesforce automatically — no separate sync job, no daily exports.
+coreFunctionality: |-
+  - Ory Action on registration.after (and/or settings.after) posts to Salesforce REST API: POST /services/data/vXX.0/sobjects/Lead/ or /Contact/.
+  - Salesforce Connected App with OAuth2 Client Credentials Flow + `api` scope; integration-user Permission Set grants object-create permission.
+  - Best practice: deploy a small token-broker service that handles OAuth2 token refresh and returns short-lived bearer tokens to Ory — pointing Ory directly at Salesforce's token endpoint works but is operationally fragile.
+  - Lead vs Contact: start with Lead; promote to Contact via Salesforce-side automation, not Ory.
+  - Edition matters — Connected Apps + Permission Sets require Salesforce Enterprise edition or higher.
+  - Daily API call limits vary by edition; high-volume signup flows may need batch creation rather than per-event calls.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

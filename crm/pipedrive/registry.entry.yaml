@@ -7,7 +7,20 @@ vendor: Pipedrive
 category: crm
 type: webhook
 maintainedBy: Ory Engineering
-description: This document outlines how to integrate Ory with Pipedrive CRM.
+description: >-
+  Sync Ory identities to Pipedrive persons via Ory Actions webhooks, and log a login activity to each person's
+  timeline on every login so sales has a real-time view of customer engagement. Async-only — Pipedrive
+  availability never blocks user flows.
+useCase: >-
+  A sales-led B2B SaaS product wants newly registered users to appear in Pipedrive as Persons and wants every
+  login surfaced as an activity on the person's timeline so the sales team sees account engagement without
+  asking engineering for data exports.
+coreFunctionality: |-
+  - Two async endpoints: POST /pipedrive/sync-user (registration.after / settings.after — creates or updates Pipedrive person, stores Ory identity id on a custom field); POST /pipedrive/track-login-activity (login.after — looks up Pipedrive person by email, logs a "User Login" activity with device + IP context).
+  - Both async (response.ignore: true) — handler returns 200 to Ory immediately; Pipedrive calls run in the background.
+  - Authenticated via X-Webhook-Secret shared with the Ory hook config.
+  - Pipedrive custom field stores the Ory identity id for stable cross-system linkage.
+  - SDK: native fetch (no Pipedrive SDK); @ory/client not used (handler doesn't read back from Ory).
 oryMechanism:
-  - standards
+  - actions
 status: active
