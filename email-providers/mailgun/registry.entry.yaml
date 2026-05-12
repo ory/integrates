@@ -6,7 +6,7 @@ displayName: Mailgun — Email Provider
 vendor: Mailgun — Email Provider
 category: email-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Mailgun is an email delivery service built for developers, offering both SMTP and REST API interfaces. It provides
   robust email sending, tracking, and analytics capabilities. Mailgun is well-suited for transactional email with strong

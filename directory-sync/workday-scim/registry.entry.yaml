@@ -6,7 +6,7 @@ displayName: Workday SCIM
 vendor: Workday SCIM
 category: directory-sync
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Workday is one of the most widely deployed enterprise HCM systems, and acts as the source of truth for employee data in
   HR-driven access flows. Workday emits SCIM v2.0 to downstream systems, which Ory Network can consume to provision,

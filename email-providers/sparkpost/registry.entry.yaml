@@ -6,7 +6,7 @@ displayName: SparkPost — Email Provider
 vendor: SparkPost — Email Provider
 category: email-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   SparkPost (a MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics
   and deliverability tooling. SparkPost exposes both an SMTP relay and a REST Transmissions API, and can be wired up as

@@ -6,7 +6,7 @@ displayName: SendGrid — Email Provider
 vendor: SendGrid — Email Provider
 category: email-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   SendGrid (a Twilio company) is one of the most widely used email delivery platforms, supporting both transactional and
   marketing email. It offers a robust SMTP relay, a REST API, and extensive analytics. SendGrid is a solid choice for

@@ -6,7 +6,7 @@ displayName: Onfido
 vendor: Onfido
 category: identity-verification
 type: webhook
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
   Onfido identity verification (Document + Face Matching across EU/US/CA regions) integrated with Ory Network via Ory
   Actions webhooks.

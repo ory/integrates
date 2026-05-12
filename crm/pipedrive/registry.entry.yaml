@@ -6,7 +6,7 @@ displayName: Pipedrive
 vendor: Pipedrive
 category: crm
 type: webhook
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: This document outlines how to integrate Ory with Pipedrive CRM.
 oryMechanism:
   - standards

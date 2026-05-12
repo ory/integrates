@@ -6,7 +6,7 @@ displayName: Prove
 vendor: Prove
 category: identity-verification
 type: webhook
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
   Prove (formerly Payfone) is a phone-centric identity verification platform that uses telecom signals and phone
   intelligence to verify identities, detect SIM swaps, and authenticate users via their mobile phone number. This

@@ -6,7 +6,7 @@ displayName: Sinch — SMS Provider
 vendor: Sinch — SMS Provider
 category: sms-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Sinch is an enterprise communications platform offering global SMS delivery and verification services through a
   straightforward REST API. Sinch can be wired up as an Ory Network SMS courier for verification codes, MFA OTPs, and

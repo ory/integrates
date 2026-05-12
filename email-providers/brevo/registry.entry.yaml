@@ -6,7 +6,7 @@ displayName: Brevo (formerly Sendinblue) — Email Provider
 vendor: Brevo (formerly Sendinblue) — Email Provider
 category: email-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Brevo (formerly Sendinblue) is a European email and marketing platform with strong GDPR posture. Brevo exposes both an
   SMTP relay and a REST v3 API for transactional email, and can be wired up as an Ory Network courier for verification,

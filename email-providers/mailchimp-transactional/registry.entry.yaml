@@ -6,7 +6,7 @@ displayName: Mailchimp Transactional (Mandrill) — Email Provider
 vendor: Mailchimp Transactional (Mandrill) — Email Provider
 category: email-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Mailchimp Transactional (formerly Mandrill) is the transactional email service built into the Mailchimp platform. It
   is designed for automated, triggered emails such as verification codes, password resets, and notifications. Mailchimp

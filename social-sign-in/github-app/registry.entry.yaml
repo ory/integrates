@@ -6,7 +6,7 @@ displayName: GitHub App
 vendor: GitHub
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Sign in via a GitHub App (the modern variant of GitHub OAuth Apps) so the same identity flow that authenticates
   the user also pairs with an app installation that can act on their org/repos with fine-grained permissions and

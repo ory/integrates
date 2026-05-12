@@ -6,7 +6,7 @@ displayName: New Relic
 vendor: New Relic
 category: monitoring-observability
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   New Relic is a full-stack observability platform that natively ingests OpenTelemetry data over OTLP/HTTP. Self-hosted
   Ory products (Kratos, Hydra, Keto, Oathkeeper) and Ory Network self-managed deployments emit OpenTelemetry traces,

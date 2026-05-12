@@ -6,7 +6,7 @@ displayName: CyberArk Identity
 vendor: CyberArk Identity
 category: enterprise-sso
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   CyberArk Identity (the SSO and identity portion of the CyberArk platform, distinct from CyberArk's PAM product) exposes
   standard SAML 2.0 and OIDC endpoints for federation. It can be configured as an upstream identity provider in Ory

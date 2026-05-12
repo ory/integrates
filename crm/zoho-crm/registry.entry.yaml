@@ -6,7 +6,7 @@ displayName: Zoho CRM
 vendor: Zoho CRM
 category: crm
 type: webhook
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
   Zoho CRM contact sync from Ory Network via Ory Actions webhooks. OAuth2 with automatic token refresh, HMAC webhook
   verification, multi-region support (IN/US/EU).

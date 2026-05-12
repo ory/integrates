@@ -6,7 +6,7 @@ displayName: IBM Security Verify
 vendor: IBM Security Verify
 category: enterprise-sso
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   IBM Security Verify is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and
   SAML 2.0 endpoints for federation, and can be configured as an upstream identity provider in Ory Network so that

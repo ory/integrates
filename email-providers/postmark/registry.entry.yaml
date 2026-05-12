@@ -6,7 +6,7 @@ displayName: Postmark — Email Provider
 vendor: Postmark — Email Provider
 category: email-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Postmark is a transactional email service known for exceptional deliverability and speed. Unlike general-purpose email
   platforms, Postmark focuses exclusively on transactional email, enforcing strict sending policies that result in

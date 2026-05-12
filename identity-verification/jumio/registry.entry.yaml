@@ -6,7 +6,7 @@ displayName: Jumio
 vendor: Jumio
 category: identity-verification
 type: webhook
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
   Jumio identity verification (Document + Selfie + Face Match) integrated with Ory Network via Ory Actions webhooks.
 oryMechanism:

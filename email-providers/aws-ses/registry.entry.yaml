@@ -6,7 +6,7 @@ displayName: Amazon SES — Email Provider
 vendor: Amazon SES — Email Provider
 category: email-providers
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   Amazon Simple Email Service (SES) is a cloud-based email sending service from AWS designed for transactional and
   marketing email. It offers high deliverability, pay-per-use pricing, and deep integration with the AWS ecosystem. SES

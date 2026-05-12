@@ -1,0 +1,27 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: mailchimp
+displayName: Mailchimp (Marketing)
+vendor: Mailchimp
+category: cdp-analytics
+type: webhook
+maintainedBy: Community contributors
+description: >-
+  Sync new Ory Network users into a Mailchimp audience (subscriber list) via Ory Actions so newly registered
+  users automatically land in the marketing CRM. Distinct from the Mailchimp Transactional (Mandrill) integration
+  under email-providers, which sends transactional emails — this one is for marketing campaigns and audience
+  management.
+useCase: >-
+  A consumer or SaaS product running marketing on Mailchimp wants every newly registered Ory user to appear in
+  the right Mailchimp audience, tagged with traits collected at registration, without writing a separate sync
+  job or relying on manual exports.
+coreFunctionality: |-
+  - Implemented as an Ory Actions webhook on `flows.registration.after.hooks` that calls Mailchimp's Lists/Audiences API.
+  - Jsonnet template maps Ory identity traits (email, name, custom traits) into Mailchimp merge fields and audience tags.
+  - Synchronous or asynchronous webhook execution depending on whether registration should block on the Mailchimp call.
+  - Authentication via Mailchimp Marketing API key (separate from the Mandrill API key used by the transactional integration).
+  - Documented at https://www.ory.com/docs/actions/integrations/mailchimp.
+oryMechanism:
+  - actions
+status: active

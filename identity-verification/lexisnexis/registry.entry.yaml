@@ -6,7 +6,7 @@ displayName: Lexisnexis
 vendor: Lexisnexis
 category: identity-verification
 type: webhook
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
   LexisNexis identity data verification (NAS/NAP/CVI scoring) integrated with Ory Network via Ory Actions webhooks.
 oryMechanism:

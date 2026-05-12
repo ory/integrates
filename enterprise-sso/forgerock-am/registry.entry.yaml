@@ -6,7 +6,7 @@ displayName: ForgeRock Access Management
 vendor: ForgeRock Access Management
 category: enterprise-sso
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
   ForgeRock Access Management (now part of Ping Identity) is a widely deployed enterprise IAM platform that supports
   OIDC, OAuth 2.0, and SAML 2.0. Customers running ForgeRock AM upstream can federate it into Ory Network as either an
