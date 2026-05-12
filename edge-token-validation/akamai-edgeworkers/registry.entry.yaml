@@ -2,12 +2,28 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: akamai-edgeworkers
-displayName: Akamai EdgeWorkers — Ory Token Validation
-vendor: Akamai EdgeWorkers — Ory Token Validation
+displayName: Akamai EdgeWorkers
+vendor: Akamai
 category: edge-token-validation
-type: config
+type: session-validation
 maintainedBy: Community contributors
-description: JavaScript edge function on Akamai EdgeWorkers that validates Ory Network session tokens and JWTs at the edge.
+description: >-
+  Validate Ory Network session tokens and JWTs at the Akamai EdgeWorkers V8-isolate runtime before requests
+  hit origin. Same shape as the canonical edge-token-validation/cloudflare-workers reference, adapted to
+  EdgeWorkers' httpRequest API and EdgeKV caching. No dedicated Ory docs.
+useCase: >-
+  A team running Akamai for CDN + edge security wants Ory session / JWT validation at the edge so origin
+  receives a trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request
+  to origin.
+coreFunctionality: |-
+  - EdgeWorker fires on onClientRequest; reads session cookie or Authorization: Bearer.
+  - Hydra JWT: verify signature against cached Ory JWKS using EdgeWorkers Crypto API.
+  - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via httpRequest (EdgeWorkers doesn't have a fetch global). Cache responses in EdgeKV for 30-60s (fallback: per-isolate Map).
+  - On valid: inject X-User-Id header; on invalid: 401 from the edge.
+  - CPU budget ~50ms wall-clock — JWKS verification fits comfortably; whoami calls eat into this.
+  - Wired via Akamai Property Manager attaching the EdgeWorker to a behavior on the relevant hostname/path.
+  - Reference implementation: edge-token-validation/cloudflare-workers (same pattern, different runtime).
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

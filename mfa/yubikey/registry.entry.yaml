@@ -2,16 +2,28 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: yubikey
-displayName: YubiKey (WebAuthn/FIDO2)
-vendor: YubiKey (WebAuthn/FIDO2)
+displayName: YubiKey (WebAuthn / FIDO2)
+vendor: Yubico
 category: mfa
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  YubiKey is a hardware security key manufactured by Yubico that supports WebAuthn/FIDO2, FIDO U2F, and other
-  authentication protocols. Ory Network natively supports WebAuthn/FIDO2 for multi-factor authentication (MFA), allowing
-  users to register YubiKeys and other FIDO2-compliant authenticators as second factors. This enables phishing-resistant
-  authentication at AAL2 (Authent...
+  YubiKey hardware security keys via WebAuthn / FIDO2 — natively supported by Ory Network with no integration
+  code required. Configure the WebAuthn method in Project Settings and users can register YubiKeys (or other
+  FIDO2 authenticators — TouchID, Windows Hello, etc.) as second factor or first-factor passkey. Documented
+  directly in the Ory MFA docs.
+useCase: >-
+  A consumer or B2B product wants phishing-resistant MFA — WebAuthn binds credentials to origins, so a
+  phishing site at look-alike domain cannot steal a credential registered for the real auth domain. YubiKeys
+  are the hardware reference but the same mechanism backs TouchID / Windows Hello / Android biometrics.
+coreFunctionality: |-
+  - Configured per Ory docs at /kratos/mfa/webauthn-fido-yubikey; Ory Console → Authentication → Multi-factor → enable WebAuthn.
+  - Relying Party (RP) config: id (eTLD+1 the credential is scoped to), origins (full URLs users sign in from), display_name (shown in enrollment prompt).
+  - Covers all FIDO2 authenticators (YubiKey, TouchID, Face ID, Windows Hello, Android biometrics) — "YubiKey" in the doc title is historical.
+  - Phishing-resistant: WebAuthn binds credential to origin, blocking credential theft via look-alike domains.
+  - AAL2 (NIST 800-63) compliance: WebAuthn satisfies AAL2 paired with a password-or-passkey first factor.
+  - Critical operational constraint: RP id cannot change after credentials are issued — registered credentials become unusable.
+  - Passkeys: same mechanism used as primary credential rather than second factor; configure via the passwordless variant.
 oryMechanism:
   - standards
 status: active

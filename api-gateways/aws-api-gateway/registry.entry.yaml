@@ -2,15 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: aws-api-gateway
-displayName: AWS API Gateway + Ory Network
-vendor: AWS API Gateway + Ory Network
+displayName: AWS API Gateway
+vendor: Amazon Web Services
 category: api-gateways
 type: config
 maintainedBy: Community contributors
 description: >-
-  AWS API Gateway is a fully managed service for creating, publishing, and securing APIs at scale. This integration uses
-  a **Lambda authorizer** (formerly "custom authorizer") to validate Ory-issued JWTs at the gateway layer before
-  requests reach your backend services.
+  Validate Ory-issued JWTs at the AWS API Gateway layer using a Lambda authorizer (REST API) or a native JWT
+  authorizer (HTTP API). The Lambda authorizer fetches Ory's JWKS, verifies the token, and returns an IAM
+  policy; API Gateway caches the policy by token for ~300s. No dedicated Ory docs — universal pattern.
+useCase: >-
+  A team running APIs on AWS API Gateway wants Ory-issued OAuth2 access tokens validated at the gateway so
+  backend services don't need to re-validate every request and can read the trusted `sub` from request context.
+coreFunctionality: |-
+  - REST API: Lambda authorizer (Node.js / Python) verifies bearer JWT against https://<project>.projects.oryapis.com/.well-known/jwks.json with kid-based key selection; returns IAM policy + principalId (= JWT sub).
+  - HTTP API: native JWT authorizer pointing directly at the Ory issuer URL — no Lambda required for standard verification.
+  - Caching: REST uses authorizerResultTtlInSeconds (default 300s); HTTP uses resultsCacheTtlInSeconds. Tune for cold-start vs. revocation latency.
+  - Use Lambda authorizer over native JWT when custom claim-based authorization logic is needed beyond signature/issuer/audience checks.
+  - Cold start matters — keep the authorizer minimal; aws-jwt-verify is a lean JWKS library.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

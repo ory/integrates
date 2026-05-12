@@ -5,11 +5,24 @@ name: recurly
 displayName: Recurly
 vendor: Recurly
 category: payment-billing
-type: config
+type: webhook
 maintainedBy: Community contributors
 description: >-
-  Bidirectional integration between Ory Network and Recurly for subscriber management and subscription-aware
-  authentication.
+  Bidirectional sync between Ory Network and Recurly — Ory → Recurly creates accounts at signup; Recurly →
+  Ory surfaces subscription state on the identity so application code can gate features by subscription tier
+  without a separate lookup. Wired via Ory Action on registration.after + Recurly webhook to a
+  customer-implemented handler.
+useCase: >-
+  A subscription SaaS running billing on Recurly wants new Ory signups to land as Recurly accounts
+  automatically, and wants Recurly subscription state (active / churned / past due) visible on the Ory
+  identity so the application can gate features without a separate Recurly call per request.
+coreFunctionality: |-
+  - Outbound: Ory Action on registration.after (async) → handler creates Recurly Account keyed by Ory identity id (set as account_code); PATCHes metadata_public.recurly on identity.
+  - Inbound: Recurly webhook → handler verifies HMAC-SHA256 signature → resolves Ory identity by account_code → PATCHes metadata_public.recurly.subscription_state and .subscription_tier.
+  - account_code is the binding between systems — set to Ory identity id during account creation.
+  - Subscription gating belongs in APPLICATION CODE reading metadata_public.recurly, NOT in the auth flow — Ory shouldn't block sign-in for churned subscribers; app redirects to billing page.
+  - Recurly webhooks are at-least-once; handler must be idempotent (PATCH is naturally idempotent).
+  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
 oryMechanism:
-  - standards
+  - actions
 status: active

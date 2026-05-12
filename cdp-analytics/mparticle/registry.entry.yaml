@@ -8,8 +8,20 @@ category: cdp-analytics
 type: config
 maintainedBy: Community contributors
 description: >-
-  Send identity and authentication events to mParticle when users register via Ory. Uses Ory Actions webhooks to call
-  mParticle's Events API for server-to-server integration.
+  Send Ory identity and authentication events into mParticle (customer data platform) via the Events API for
+  server-to-server integration. Ory Action POSTs directly to mParticle's /v2/events endpoint with HTTP Basic
+  auth (API Key + Secret); mParticle then fans events out to downstream destinations.
+useCase: >-
+  A product team using mParticle as their CDP wants Ory identity events available to all their downstream
+  marketing / analytics / advertising destinations without integrating each one separately — mParticle handles
+  the fanout.
+coreFunctionality: |-
+  - Pattern: Ory Action async POSTs directly to https://s2s.mparticle.com/v2/events with HTTP Basic (API Key:API Secret) — no handler in between.
+  - mParticle Custom Feed input receives events; outputs route to whichever downstream destinations are configured.
+  - user_identities.customer_id = Ory identity id; mParticle's identity-resolution rules can layer on top.
+  - environment field: set to "development" for non-prod Ory projects so events don't pollute prod data.
+  - mParticle's value is the routing layer — for a single destination you might skip mParticle and ingest directly; for multi-destination, integration pays off quickly.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

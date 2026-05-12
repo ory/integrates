@@ -8,9 +8,21 @@ category: agent-identity
 type: config
 maintainedBy: Community contributors
 description: >-
-  Skyfire is an AI agent identity and payment platform that enables "Know Your Agent" (KYA) verification for autonomous
-  AI agents. By integrating with Ory Hydra and Ory Kratos, Skyfire provides OAuth2-based authentication and identity for
-  AI agents, allowing them to authenticate to APIs, manage credentials, and establish trust in multi-agent systems.
+  Pair Skyfire's "Know Your Agent" (KYA) verification with Ory for AI-agent identity — Skyfire issues
+  verifiable credentials per agent; a customer-built provisioning service maps each Skyfire agent to an Ory
+  Kratos identity, and Hydra issues OAuth2 access tokens (client_credentials) for the agent to call APIs.
+useCase: >-
+  A product running autonomous AI agents that need to authenticate to backend APIs wants the agents to have
+  verifiable identity (so the call site can answer "which agent is this and is it KYA-verified") plus
+  per-agent spend controls — patterns that combining Skyfire and Ory makes natural.
+coreFunctionality: |-
+  - Each agent = one Kratos identity (not one user with multiple agents) — keeps audit and revocation clean.
+  - metadata_public.skyfire stores agent_id + kya_status on the Kratos identity.
+  - Ory Hydra issues access tokens via client_credentials; sub = Kratos identity id.
+  - API gateways validate tokens at the edge (see api-gateways/*) and can read metadata_public.skyfire.agent_id for access control.
+  - Skyfire can revoke agents — periodically re-check KYA status before token issuance to respect revocations.
+  - Payment / spend controls stay on the Skyfire side.
+  - Status: community/proposed — emerging space, reference architecture more than turnkey product.
 oryMechanism:
   - standards
 status: active

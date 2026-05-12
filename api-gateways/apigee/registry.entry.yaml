@@ -2,15 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: apigee
-displayName: Google Apigee + Ory Network
-vendor: Google Apigee + Ory Network
+displayName: Google Apigee
+vendor: Google Cloud
 category: api-gateways
 type: config
 maintainedBy: Community contributors
 description: >-
-  Google Apigee is an enterprise API management platform that provides API proxying, security, analytics, and
-  monetization. This integration uses Apigee's **VerifyJWT** and **SharedFlow** policies to validate Ory-issued JWTs at
-  the gateway layer using Ory Network's JWKS endpoint.
+  Validate Ory-issued JWTs at the Google Apigee gateway layer using Apigee's VerifyJWT policy in a SharedFlow,
+  fetching the JWKS from Ory Network's well-known endpoint. No dedicated Ory docs — standard JWT-at-the-edge
+  pattern; Ory side is just JWKS exposure.
+useCase: >-
+  An enterprise API team running Apigee wants OAuth2 access tokens issued by Ory (Hydra) validated at the
+  gateway layer so backend services don't need to re-validate every request.
+coreFunctionality: |-
+  - SharedFlow with VerifyJWT policy: PublicKey JWKS URL points at Ory's https://<project>.projects.oryapis.com/.well-known/jwks.json; Issuer = the Ory project URL; Audience = the API's audience identifier from Ory's OAuth2 client.
+  - Algorithm RS256; Apigee caches the JWKS by URL — tune CacheTTLInSeconds for the freshness/KMS-call trade-off.
+  - Apigee KVM holds per-environment audience values without redeploying the shared flow.
+  - For claim-based authorization (per-scope or per-role checks), add an AssignMessage or JavaScript policy after VerifyJWT to inspect the JWT claims.
+  - SharedFlow attached to the API proxy's PreFlow runs before every request.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

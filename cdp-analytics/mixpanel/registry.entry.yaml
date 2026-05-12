@@ -8,8 +8,20 @@ category: cdp-analytics
 type: config
 maintainedBy: Community contributors
 description: >-
-  Send authentication events to Mixpanel when users register or log in via Ory. Uses Ory Actions webhooks to call
-  Mixpanel's Ingestion API.
+  Send Ory authentication events into Mixpanel (product analytics) via the Ingestion API. Ory Action POSTs
+  directly to Mixpanel's /track endpoint — no webhook handler needed; Project Token (or Service Account)
+  authenticates.
+useCase: >-
+  A consumer product wants identity events (registration / login / verification / MFA) in Mixpanel funnels
+  and retention dashboards alongside in-product events — without standing up a webhook handler.
+coreFunctionality: |-
+  - Pattern: Ory Action async POSTs directly to https://api.mixpanel.com/track?ip=0 (or api-eu.mixpanel.com for EU residency) — no handler in between.
+  - Authentication: Project Token in the event payload (properties.token), OR HTTP Basic with Service Account credentials (preferred for server-to-server).
+  - Stable distinct_id: use Ory's identity id, NOT email — Mixpanel identity merges break if distinct_id changes.
+  - $insert_id for deduplication: set to Ory's flow id so retries don't double-count events.
+  - ip=0 disables Mixpanel's IP geolocation when the request comes from your server, not the user.
+  - User-property updates via /engage endpoint with $set operations for trait-change tracking.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

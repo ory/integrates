@@ -2,15 +2,27 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: sumo-logic
-displayName: Sumo Logic + Ory Network
-vendor: Sumo Logic + Ory Network
+displayName: Sumo Logic
+vendor: Sumo Logic
 category: siem-security-analytics
 type: config
 maintainedBy: Community contributors
 description: >-
-  Sumo Logic is a cloud-native machine data analytics platform that provides log management, security analytics (Cloud
-  SIEM), and observability. This integration ingests Ory Network identity and authentication events into Sumo Logic via
-  an HTTP Source (Hosted Collector), enabling security monitoring, threat detection, and compliance reporting.
+  Ingest Ory Network identity events into Sumo Logic (log management + Cloud SIEM) via an HTTP Source on a
+  Hosted Collector — the simplest ingest path of any SIEM. Ory Action POSTs directly to the tokenized HTTP
+  Source URL; no webhook handler needed. No dedicated Ory docs.
+useCase: >-
+  A security team running Sumo Logic wants Ory identity events in Sumo with the lowest setup friction —
+  Sumo's HTTP Source accepts unauthenticated POSTs to a unique tokenized URL, so the Ory Action can post
+  directly without a handler in between.
+coreFunctionality: |-
+  - Pattern: Ory Action async (response.ignore: true) POSTs JSON body directly to Sumo Logic Hosted Collector's HTTP Source URL — no handler in between.
+  - Sumo HTTP Source URL is the auth — treat as a secret; rotate via Sumo if leaked.
+  - Source Category (e.g. ory/identity-events) drives downstream search and partition rules.
+  - Cloud SIEM: parse events into Sumo's normalized schema via Field Extraction Rule (FER) or parsing job to enable out-of-the-box detection rules (credential stuffing, brute force, impossible travel).
+  - Body Jsonnet on each Ory Action emits the relevant event fields as JSON; Sumo auto-parses.
+  - For high-volume products, set retention + partition rules in Sumo to manage cost.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

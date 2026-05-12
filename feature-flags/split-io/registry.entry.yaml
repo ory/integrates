@@ -3,15 +3,25 @@
 
 name: split-io
 displayName: Split.io
-vendor: Split.io
+vendor: Split (Harness)
 category: feature-flags
-type: config
+type: sdk-client
 maintainedBy: Community contributors
 description: >-
-  Split.io is a feature delivery platform that combines feature flags with data-driven insights to measure the impact of
-  features on key metrics. This integration passes Ory Network identity attributes to Split.io as user properties for
-  targeting rules, enabling identity-aware feature rollouts and experimentation based on user traits, subscription tier,
-  organization, and other...
+  Pass Ory identity attributes (traits, subscription tier, organization, groups) to the Split.io SDK as user
+  attributes so feature rollouts can target by identity. NOT a webhook integration — evaluation happens in
+  application code via the Split SDK. Same pattern as feature-flags/launchdarkly.
+useCase: >-
+  A product team running feature flags on Split.io wants rollouts and experiments to target by Ory identity
+  attributes (org_id for B2B per-account rollout, subscription_tier for paywall features, groups for role-based
+  access) without re-implementing the identity lookup per flag.
+coreFunctionality: |-
+  - sdk-client integration: not a webhook — application code resolves the Ory session, extracts attributes, and passes them to the Split SDK at evaluation time.
+  - Stable key: use identity.id (not email) so bucketing is stable across identity changes.
+  - Common attribute mapping: identity.traits.email → email; metadata_public.org_id → org_id; metadata_public.subscription_tier → tier; metadata_public.groups → groups.
+  - Server-side: Split server SDK; client-side: Split JavaScript SDK with Track API for attributes.
+  - Impact measurement features need event-stream integration too — separate concern; see cdp-analytics/segment.
+  - Status: community/proposed — convention guide, not turnkey code.
 oryMechanism:
   - standards
 status: active

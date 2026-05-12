@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: elastic-siem
-displayName: Elastic SIEM / Elasticsearch + Ory Network
-vendor: Elastic SIEM / Elasticsearch + Ory Network
+displayName: Elastic SIEM
+vendor: Elastic
 category: siem-security-analytics
-type: config
+type: webhook
 maintainedBy: Community contributors
 description: >-
-  Elastic SIEM (part of the Elastic Stack) provides security analytics, threat detection, and incident response
-  capabilities built on Elasticsearch and Kibana. This integration ingests Ory Network identity and authentication
-  events into Elasticsearch, mapping them to the Elastic Common Schema (ECS) for standardized security monitoring and
-  correlation.
+  Ingest Ory Network identity and authentication events into Elastic SIEM (Elasticsearch + Kibana + Detection
+  Engine). Wired via Ory Actions on lifecycle hooks calling a customer-implemented handler that transforms
+  events to Elastic Common Schema (ECS) documents and bulk-ingests them.
+useCase: >-
+  A security team running Elastic SIEM wants Ory identity events in the same SIEM as the rest of their
+  infrastructure — for correlation, detection rules (brute force, impossible travel, credential stuffing),
+  and timeline analysis.
+coreFunctionality: |-
+  - Pattern: Ory Action async (response.ignore: true) on registration / login / logout / verification / MFA / recovery → handler verifies shared secret → handler transforms to ECS document → handler POSTs to Elasticsearch _bulk API.
+  - ECS mapping: event.action / event.category / event.outcome for the auth verb, user.id + user.email for the subject, source.ip + user_agent.original for context, authentication.factor for MFA.
+  - Index pattern: logs-ory-* with an ILM policy for retention + tier transitions per compliance window.
+  - Detection rules: pre-built Elastic Security Detection Engine rules (brute force, impossible travel, credential stuffing) target ECS-mapped events without custom rule authoring.
+  - For Fleet-managed deployments, package as a custom Elastic Integration and ship via the Fleet UI.
+  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
 oryMechanism:
-  - standards
+  - actions
 status: active

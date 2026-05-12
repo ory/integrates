@@ -2,15 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: kong
-displayName: Kong API Gateway + Ory Network
-vendor: Kong API Gateway + Ory Network
+displayName: Kong API Gateway
+vendor: Kong
 category: api-gateways
 type: config
 maintainedBy: Community contributors
 description: >-
-  Kong Gateway is a cloud-native, platform-agnostic API gateway that provides traffic management, authentication, rate
-  limiting, and observability for APIs and microservices. This integration configures Kong to validate Ory-issued tokens
-  and sessions, enabling centralized identity enforcement at the gateway layer.
+  Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's stock
+  `jwt` plugin (or jwt-signer / jwt-keycloak community plugins for JWKS auto-refresh); session validation via
+  request-transformer + pre-function calling /sessions/whoami. No dedicated Ory docs — universal pattern.
+useCase: >-
+  A team running APIs behind Kong wants Ory-issued OAuth2 access tokens (Hydra) or Kratos session cookies
+  validated at the gateway so backend services don't need to re-validate every request.
+coreFunctionality: |-
+  - Path A (Hydra JWTs): Kong jwt plugin with RS256 algorithm, public key from Ory JWKS (prefer jwt-signer or jwt-keycloak community plugins for JWKS auto-fetch over manual key loading). Configure claims_to_verify (typically exp) and key_claim_name.
+  - Path B (Kratos sessions): request-transformer + pre-function plugins (or a small custom plugin) call https://<project>.projects.oryapis.com/sessions/whoami with the session cookie; on 200 inject X-User-Id / X-User-Email headers downstream.
+  - Kong Enterprise's OIDC plugin handles Path A automatically with JWKS auto-discovery.
+  - Caching: cache whoami response per session cookie via Kong's proxy-cache plugin or a Redis-backed custom cache to avoid hammering Ory.
+  - Rate-limit at the gateway keyed by the validated `sub` claim — Kong's rate-limiting plugin is the cleanest pattern.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

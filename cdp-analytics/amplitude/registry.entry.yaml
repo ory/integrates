@@ -8,8 +8,18 @@ category: cdp-analytics
 type: config
 maintainedBy: Community contributors
 description: >-
-  Send authentication events and sync user properties to Amplitude when users log in or register via Ory. Uses Ory
-  Actions webhooks to call Amplitude's HTTP V2 API.
+  Send Ory authentication events and user-property changes into Amplitude (product analytics). Ory Action POSTs
+  directly to Amplitude's HTTP V2 API — no webhook handler needed; Amplitude API key authenticates the request.
+useCase: >-
+  A consumer product wants identity events (registration / login / verification / MFA) in their Amplitude
+  funnels and retention dashboards alongside in-product events — without standing up a webhook handler.
+coreFunctionality: |-
+  - Pattern: Ory Action async (response.ignore: true) POSTs directly to https://api2.amplitude.com/2/httpapi (or https://api.eu.amplitude.com/2/httpapi for EU residency) — no handler in between.
+  - Authentication: Amplitude API key included in the JSON body (api_key field).
+  - Stable user_id: use Ory's identity id (ctx.identity.id), NOT email — Amplitude identity merges break if user_id changes across email updates.
+  - User properties: $set operations track trait changes without overwriting Amplitude-computed dimensions.
+  - Rate limits: 1,000 events per HTTP request; high-volume products should batch in a small handler instead of one-event-per-call.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - standards
+  - actions
 status: active

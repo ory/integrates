@@ -1,367 +1,39 @@
-# Skyfire Integration with Ory Network
+# Skyfire
 
-## Overview
+> **Maintained by:** Community contributors
 
-Skyfire is an AI agent identity and payment platform that enables "Know Your Agent" (KYA) verification for autonomous AI agents. By integrating with Ory Hydra and Ory Kratos, Skyfire provides OAuth2-based authentication and identity for AI agents, allowing them to authenticate to APIs, manage credentials, and establish trust in multi-agent systems.
+[Skyfire](https://skyfire.xyz) is an AI-agent identity and payment platform — "Know Your Agent" (KYA) verification for autonomous agents. Integrate with Ory Hydra (OAuth2 issuance) and Ory Kratos (identity records) so AI agents authenticate to your APIs with verifiable identity and per-agent spend controls.
 
-Key integration capabilities:
-- AI agent identity management via Ory Kratos (agent registration, profile management)
-- OAuth2 client credentials flow for agent-to-service authentication via Ory Hydra
-- KYA (Know Your Agent) token flow for agent identity verification
-- Agent capability scoping and permission management
-- Multi-agent orchestration with identity-aware routing
+**Type:** config (OAuth2 client + identity-mapping pattern — no first-party handler)
+**Docs page:** No dedicated Skyfire page on ory.com/docs.
 
-## Integration Architecture
+## How it works
 
-```
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│              │    │              │    │              │    │              │
-│   AI Agent   │─1─▶│  Skyfire     │─2─▶│  Ory Hydra   │─3─▶│  Ory Kratos  │
-│   (LLM/Bot) │    │  Platform    │    │  (OAuth2)    │    │  (Identity)  │
-│              │◀─5─│              │◀─4─│              │    │              │
-│              │    │              │    │              │    │              │
-└──────┬───────┘    └──────────────┘    └──────────────┘    └──────────────┘
-       │
-       6 (authenticated API call)
-       │
-┌──────▼───────┐
-│  Target API  │
-│  (Your       │
-│  Service)    │
-└──────────────┘
+1. Skyfire issues each AI agent a verifiable credential + a Skyfire-managed identity.
+2. Your application accepts Skyfire-issued credentials, then provisions a corresponding identity in Ory Kratos (one per agent) with `metadata_public.skyfire = { agent_id, kya_status }`.
+3. Ory Hydra issues OAuth2 access tokens to the agent identity using standard `client_credentials` flow; the access token's `sub` is the Kratos identity id.
+4. Backend APIs validate the access token at the gateway (see [`api-gateways/*`](../../api-gateways/)) and read the agent id from `metadata_public.skyfire.agent_id` if access control needs it.
+5. Payment / spend controls stay on the Skyfire side.
 
-Flow:
-1. AI agent requests authentication via Skyfire
-2. Skyfire initiates OAuth2 client credentials flow with Ory Hydra
-3. Ory Hydra validates agent identity against Ory Kratos
-4. Ory Hydra issues access token with agent scopes
-5. Agent receives OAuth2 access token with KYA claims
-6. Agent uses token to authenticate to target APIs
-```
+## Setup outline
 
-## Ory Products
+1. Sign up at Skyfire; create an agent and obtain its credentials.
+2. Build a small provisioning service that:
+   - Accepts Skyfire credentials from the agent.
+   - Creates / looks up a Kratos identity keyed by Skyfire's agent ID.
+   - Creates an Ory Hydra OAuth2 client (or reuses one) scoped to the agent's permissions.
+3. The agent uses standard OAuth2 client-credentials flow against Hydra to obtain access tokens for API calls.
 
-| Product | Role |
-|---------|------|
-| **Ory Kratos** | Agent identity management. Stores agent profiles, capabilities, and owner information. |
-| **Ory Hydra** | OAuth2/OIDC provider. Issues access tokens for agent authentication using client credentials flow. |
-| **Ory Keto** | (Optional) Permission management. Defines agent capabilities and resource access. |
+## Notable
 
-## Prerequisites
+- Agent-identity is an emerging space — patterns are still firming up; this integration is a reference architecture more than a turnkey product.
+- Treat each agent as a distinct Kratos identity (not as a "user with multiple agents") so audit trails and revocation work cleanly.
+- KYA verification status should be re-checked periodically — Skyfire can revoke agents and your code should respect that on token issuance.
 
-- **Ory Network Account**: An active Ory Network project with Hydra enabled
-- **Skyfire Account**: Access to [Skyfire Platform](https://skyfire.xyz/)
-- **Agent Registration**: Agent must be registered in both Skyfire and Ory
+## Status
 
-## Configuration
+Community / proposed — no dedicated Ory documentation.
 
-### Step 1: Create Agent Identity Schema
+## License
 
-Create an identity schema for AI agents in Ory Kratos:
-
-```json
-{
-  "$id": "https://example.com/agent.schema.json",
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "AI Agent",
-  "type": "object",
-  "properties": {
-    "traits": {
-      "type": "object",
-      "properties": {
-        "agent_name": {
-          "type": "string",
-          "title": "Agent Name",
-          "ory.sh/kratos": {
-            "credentials": { "password": { "identifier": true } }
-          }
-        },
-        "agent_type": {
-          "type": "string",
-          "enum": ["llm", "bot", "service", "orchestrator"],
-          "title": "Agent Type"
-        },
-        "owner_email": {
-          "type": "string",
-          "format": "email",
-          "title": "Owner Email"
-        },
-        "capabilities": {
-          "type": "array",
-          "items": { "type": "string" },
-          "title": "Agent Capabilities"
-        },
-        "description": {
-          "type": "string",
-          "title": "Agent Description"
-        }
-      },
-      "required": ["agent_name", "agent_type", "owner_email"]
-    }
-  }
-}
-```
-
-### Step 2: Register Agent Identity
-
-```bash
-# Create agent identity in Ory Kratos
-ory create identity --project <project-id> --format json <<EOF
-{
-  "schema_id": "agent",
-  "traits": {
-    "agent_name": "my-ai-agent",
-    "agent_type": "llm",
-    "owner_email": "developer@example.com",
-    "capabilities": ["read_data", "write_data", "execute_tasks"],
-    "description": "Customer support AI agent"
-  },
-  "metadata_public": {
-    "skyfire": {
-      "agent_id": "skyfire-agent-id-here",
-      "kya_verified": true,
-      "verification_date": "2026-01-15T00:00:00Z"
-    }
-  }
-}
-EOF
-```
-
-### Step 3: Create OAuth2 Client for Agent
-
-```bash
-# Create OAuth2 client for the agent in Ory Hydra
-ory create oauth2-client --project <project-id> \
-  --name "my-ai-agent" \
-  --grant-type client_credentials \
-  --scope "agent:read agent:write agent:execute" \
-  --token-endpoint-auth-method client_secret_post \
-  --metadata '{"agent_identity_id":"<kratos-identity-id>","skyfire_agent_id":"<skyfire-id>"}'
-```
-
-Save the returned `client_id` and `client_secret`.
-
-### Step 4: KYA Token Flow
-
-```javascript
-const axios = require("axios");
-
-class AgentAuthClient {
-  constructor(config) {
-    this.oryHydraUrl = config.oryHydraUrl;
-    this.clientId = config.clientId;
-    this.clientSecret = config.clientSecret;
-    this.skyfireApiKey = config.skyfireApiKey;
-    this.accessToken = null;
-    this.tokenExpiry = 0;
-  }
-
-  /**
-   * Obtain an OAuth2 access token using client credentials.
-   * The token includes KYA (Know Your Agent) claims.
-   */
-  async authenticate() {
-    if (this.accessToken && Date.now() < this.tokenExpiry) {
-      return this.accessToken;
-    }
-
-    const { data } = await axios.post(
-      `${this.oryHydraUrl}/oauth2/token`,
-      new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        scope: "agent:read agent:write agent:execute",
-      }),
-      {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      }
-    );
-
-    this.accessToken = data.access_token;
-    this.tokenExpiry = Date.now() + data.expires_in * 1000 - 60000; // Refresh 1 min early
-
-    return this.accessToken;
-  }
-
-  /**
-   * Make an authenticated API call as the agent.
-   */
-  async callApi(url, options = {}) {
-    const token = await this.authenticate();
-
-    return axios({
-      ...options,
-      url,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-        "X-Agent-Id": this.clientId,
-      },
-    });
-  }
-
-  /**
-   * Register with Skyfire KYA verification.
-   */
-  async registerWithSkyfire() {
-    const token = await this.authenticate();
-
-    const { data } = await axios.post(
-      "https://api.skyfire.xyz/v1/agents/register",
-      {
-        oauth2_token: token,
-        capabilities: ["read_data", "write_data"],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${this.skyfireApiKey}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    return data.kya_token;
-  }
-}
-
-// Usage
-const agent = new AgentAuthClient({
-  oryHydraUrl: "https://<your-project>.projects.oryapis.com",
-  clientId: "<oauth2-client-id>",
-  clientSecret: "<oauth2-client-secret>",
-  skyfireApiKey: "<skyfire-api-key>",
-});
-
-// Authenticate and call an API
-const response = await agent.callApi("https://api.example.com/data", {
-  method: "GET",
-});
-```
-
-### Step 5: Verify Agent Token in Your API
-
-```javascript
-const express = require("express");
-const axios = require("axios");
-
-const app = express();
-
-// Middleware to validate agent tokens
-async function verifyAgentToken(req, res, next) {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token) {
-    return res.status(401).json({ error: "Missing token" });
-  }
-
-  try {
-    // Introspect the token with Ory Hydra
-    const { data } = await axios.post(
-      `${process.env.ORY_HYDRA_ADMIN_URL}/admin/oauth2/introspect`,
-      new URLSearchParams({ token }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Bearer ${process.env.ORY_API_KEY}`,
-        },
-      }
-    );
-
-    if (!data.active) {
-      return res.status(401).json({ error: "Token inactive" });
-    }
-
-    req.agent = {
-      client_id: data.client_id,
-      scope: data.scope,
-      metadata: data.ext,
-    };
-
-    next();
-  } catch (err) {
-    res.status(401).json({ error: "Token validation failed" });
-  }
-}
-
-app.get("/api/data", verifyAgentToken, (req, res) => {
-  // req.agent contains verified agent identity
-  if (!req.agent.scope.includes("agent:read")) {
-    return res.status(403).json({ error: "Insufficient scope" });
-  }
-
-  res.json({ data: "Agent-accessible data", agent: req.agent.client_id });
-});
-
-app.listen(3000);
-```
-
-## KYA Token Flow Architecture
-
-```
-┌─────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
-│  Agent  │   │ Skyfire  │   │ Ory      │   │ Ory      │   │ Target   │
-│  Code   │   │ Platform │   │ Hydra    │   │ Kratos   │   │ API      │
-└────┬────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘
-     │              │              │              │              │
-     │──register───▶│              │              │              │
-     │              │──create id──▶│              │              │
-     │              │              │──store id───▶│              │
-     │              │              │◀─────────────│              │
-     │              │◀─────────────│              │              │
-     │◀──creds──────│              │              │              │
-     │              │              │              │              │
-     │──client_credentials────────▶│              │              │
-     │◀──access_token──────────────│              │              │
-     │              │              │              │              │
-     │──API call with token────────────────────────────────────▶│
-     │              │              │              │              │
-     │              │              │◀──introspect───────────────│
-     │              │              │──valid + claims────────────▶│
-     │◀──response────────────────────────────────────────────────│
-```
-
-## Testing
-
-### 1. Test Client Credentials Flow
-
-```bash
-# Obtain agent token
-curl -s -X POST "$ORY_SDK_URL/oauth2/token" \
-  -d "grant_type=client_credentials" \
-  -d "client_id=<client-id>" \
-  -d "client_secret=<client-secret>" \
-  -d "scope=agent:read agent:write" | jq '.access_token'
-```
-
-### 2. Test Token Introspection
-
-```bash
-curl -s -X POST "$ORY_SDK_URL/admin/oauth2/introspect" \
-  -H "Authorization: Bearer $ORY_API_KEY" \
-  -d "token=<access-token>" | jq '{active: .active, client_id: .client_id, scope: .scope}'
-```
-
-### 3. Verify Agent Identity
-
-```bash
-ory get identity <agent-identity-id> --project <project-id> --format json | \
-  jq '{name: .traits.agent_name, type: .traits.agent_type, capabilities: .traits.capabilities}'
-```
-
-## Troubleshooting
-
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| **Token request fails** | Invalid client credentials | Verify client_id and client_secret |
-| **Insufficient scope** | Scopes not configured on client | Update OAuth2 client with required scopes |
-| **Token introspection returns inactive** | Token expired | Re-authenticate; check `expires_in` value |
-| **Agent identity not found** | Kratos identity not linked | Verify agent identity exists and is linked via client metadata |
-
-## Resources
-
-- [Skyfire Platform](https://skyfire.xyz/)
-- [Ory Hydra OAuth2 Documentation](https://www.ory.sh/docs/hydra)
-- [Ory Hydra Client Credentials](https://www.ory.sh/docs/hydra/guides/oauth2-clients)
-- [Ory Hydra Token Introspection](https://www.ory.sh/docs/hydra/guides/oauth2-token-introspection)
-- [Ory Kratos Identity Management](https://www.ory.sh/docs/kratos/manage-identities/overview)
-- [OAuth 2.0 Client Credentials Grant (RFC 6749)](https://datatracker.ietf.org/doc/html/rfc6749#section-4.4)
+Apache-2.0. (Configuration-only — no source code in this directory.)

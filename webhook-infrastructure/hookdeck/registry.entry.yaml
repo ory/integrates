@@ -2,12 +2,30 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: hookdeck
-displayName: Hookdeck — Webhook Reliability Layer
-vendor: Hookdeck — Webhook Reliability Layer
+displayName: Hookdeck
+vendor: Hookdeck
 category: webhook-infrastructure
 type: config
 maintainedBy: Community contributors
-description: Route Ory Network events through Hookdeck for reliable delivery, automatic retries, rate limiting, and observability.
+description: >-
+  Route Ory Network Action webhooks through Hookdeck for reliable delivery — managed ingestion, automatic
+  retries with persistent storage, event replay from a dashboard, filtering, transformations, and per-delivery
+  observability. Point Ory Action URL at Hookdeck Source; Hookdeck forwards to your handler with backoff /
+  replay / filtering.
+useCase: >-
+  A product team's Ory Action webhook handler has uptime concerns (deploys, regional outages, cold starts) and
+  wants persistent event storage with replay capability — so Ory events never get lost during handler
+  downtime and incident recovery is "click replay" instead of "rebuild state from logs."
+coreFunctionality: |-
+  - Topology: Ory Action → Hookdeck Source → Hookdeck queue/retry → Hookdeck Destination → your handler.
+  - Hookdeck is infrastructure, not an Ory event consumer — handler still does the work; Hookdeck adds reliability layer on top.
+  - Configurable retry policy (typical: exponential backoff up to 24h) with persistent event storage.
+  - Event replay from the dashboard — any historical event can be redelivered to the handler, useful for incident recovery.
+  - Filtering drops events that don't matter (e.g. login.after for service-account identities) before they reach the handler.
+  - Transformations reshape the Ory payload to match handler schema without touching either side.
+  - Must pass through X-Webhook-Secret header so handler signature verification still works.
+  - Compare with webhook-infrastructure/svix — similar product, different positioning (Svix is outbound webhooks; Hookdeck is inbound reliability).
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

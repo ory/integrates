@@ -2,14 +2,27 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: fastly-compute
-displayName: Fastly Compute@Edge — Ory Token Validation
-vendor: Fastly Compute@Edge — Ory Token Validation
+displayName: Fastly Compute@Edge
+vendor: Fastly
 category: edge-token-validation
-type: config
+type: session-validation
 maintainedBy: Community contributors
 description: >-
-  WASM-based edge token validation on Fastly Compute@Edge, validating Ory Network session tokens and JWTs before
-  requests reach your origin.
+  Validate Ory Network session tokens and JWTs at the Fastly Compute@Edge WASM runtime before requests hit
+  origin. Same shape as the canonical edge-token-validation/cloudflare-workers reference, compiled to WASM
+  with Fastly's host backends API and KV Store. No dedicated Ory docs.
+useCase: >-
+  A team running Fastly for CDN + edge compute wants Ory session / JWT validation at the edge so origin
+  receives a trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request.
+coreFunctionality: |-
+  - WASM module (Rust / JS / AssemblyScript / TinyGo) fires on every request; reads session cookie or Authorization: Bearer.
+  - Hydra JWT: verify signature against cached Ory JWKS using language-native JWT library compiled to WASM.
+  - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via a registered Fastly backend. Compute@Edge cannot make ad-hoc outbound calls — the Ory hostname MUST be registered as a named backend in the service config.
+  - Caching: Fastly KV Store keyed by cookie hash for 30-60s; per-execution memory is request-scoped only.
+  - Edge dictionaries for non-secret config (Ory project URL, audience IDs); edge secrets for JWKS pinning / service tokens.
+  - On valid: inject X-User-Id header; on invalid: synthesize 401 at the edge.
+  - Rust is the most performant; JavaScript (via Quick.js) is the easiest path porting from the Cloudflare reference.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active
