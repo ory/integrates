@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T03:35:21Z
+  generated: 2026-05-12T03:54:47Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -207,18 +207,33 @@ integrations:
     oryMechanism:
       - actions-webhook
   - name: aws
-    displayName: AWS Infrastructure
+    displayName: AWS
     category: cloud-infrastructure
     path: cloud-infrastructure/aws
     maintainedBy: Community contributors
     type: config
     description: >-
-      This guide covers deploying and integrating Ory with AWS infrastructure. While Ory Network is a managed cloud
-      service that handles the Ory stack, many organizations need to understand how their AWS-hosted applications connect
-      to Ory Network, and some choose to self-host Ory components on AWS using EKS, RDS, and ElastiCache. This document
-      covers both patterns.
+      Deployment patterns for running with Ory on AWS — both the managed Ory Network case (AWS app reaching out to Ory
+      over HTTPS) and the self-hosted case (Ory on EKS with RDS Postgres and optional ElastiCache). Not a vendor
+      integration in the registry sense; documentation of the AWS-side glue around standard Ory deployment.
     status: active
-    vendor: AWS Infrastructure
+    vendor: Amazon Web Services
+    useCase: >-
+      An AWS-resident product team needs the AWS-specific configuration to either reach Ory Network from inside a VPC, or
+      to self-host the open-source Ory stack on EKS with the typical AWS managed services (RDS, ElastiCache, ALB, ACM,
+      Secrets Manager, Route 53).
+    coreFunctionality: >-
+      - Pattern A (Ory Network from AWS): outbound HTTPS egress to *.oryapis.com; API key in AWS Secrets Manager
+      (IAM-bound, not env vars); Route 53 CNAME to custom.oryapis.com for the custom auth domain.
+
+      - Pattern B (self-hosted on EKS): EKS cluster with --with-oidc, RDS PostgreSQL Multi-AZ for Kratos/Hydra/Keto
+      datastores, optional ElastiCache Redis with at-rest + transit encryption.
+
+      - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
+
+      - AWS Load Balancer Controller (ALB Ingress) for HTTPS termination with an ACM certificate.
+
+      - No AWS-specific Ory docs page; the Ory self-hosted/operations pages cover the cloud-agnostic concerns.
     oryMechanism:
       - standards
   - name: azure
@@ -228,27 +243,60 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Microsoft Azure is a major public cloud and a common deployment target for self-hosted Ory products. Open-source
-      Kratos, Hydra, Keto, and Oathkeeper run cleanly on Azure Kubernetes Service (AKS) or Azure Container Apps with Azure
-      Database for PostgreSQL or Azure Cosmos DB for PostgreSQL as the data store, and integrate with Microsoft Entra ID
-      for enterprise SSO use cases.
+      Deployment patterns for running with Ory on Microsoft Azure — both the managed Ory Network case (Azure app reaching
+      out to Ory over HTTPS) and the self-hosted case (Ory on AKS or Azure Container Apps with Azure Database for
+      PostgreSQL). Not a vendor integration; documentation of the Azure-side glue.
     status: active
-    vendor: Microsoft Azure
+    vendor: Microsoft
+    useCase: >-
+      An Azure-resident product team needs the Azure-specific configuration to either reach Ory Network from inside a
+      VNet, or to self-host the open-source Ory stack on AKS with the typical Azure managed services (PostgreSQL Flexible
+      Server, Key Vault, Workload Identity, Application Gateway Ingress).
+    coreFunctionality: >-
+      - Pattern A (Ory Network from Azure): outbound HTTPS egress to *.oryapis.com (NSG + optional Azure Firewall app
+      rule); API key in Azure Key Vault; Azure DNS CNAME to custom.oryapis.com.
+
+      - Pattern B (self-hosted on AKS): AKS with Workload Identity, Azure Database for PostgreSQL Flexible Server
+      (Zone-Redundant HA in production), optional Azure Cache for Redis.
+
+      - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
+
+      - Application Gateway Ingress Controller (AGIC) for HTTPS termination with a Key Vault-stored certificate.
+
+      - For Microsoft Entra ID identity provider configuration, see social-sign-in/microsoft and
+      enterprise-sso/microsoft-entra-id (separate concerns from cloud deployment).
     oryMechanism:
       - standards
   - name: gcp
-    displayName: GCP Infrastructure
+    displayName: GCP
     category: cloud-infrastructure
     path: cloud-infrastructure/gcp
     maintainedBy: Community contributors
     type: config
     description: >-
-      This guide covers deploying and integrating Ory with Google Cloud Platform infrastructure. While Ory Network is a
-      managed cloud service, organizations hosting applications on GCP need to understand connectivity patterns. This
-      document covers both connecting GCP-hosted applications to Ory Network (managed) and self-hosting Ory on GKE with
-      Cloud SQL.
+      Deployment patterns for running with Ory on Google Cloud — both the managed Ory Network case (GCP app reaching out
+      to Ory over HTTPS) and the self-hosted case (Ory on GKE with Cloud SQL Postgres). Not a vendor integration;
+      documentation of the GCP-side glue.
     status: active
-    vendor: GCP Infrastructure
+    vendor: Google Cloud
+    useCase: >-
+      A GCP-resident product team needs the GCP-specific configuration to either reach Ory Network from inside a VPC, or
+      to self-host the open-source Ory stack on GKE with the typical GCP managed services (Cloud SQL, Secret Manager,
+      Workload Identity, GKE Gateway).
+    coreFunctionality: >-
+      - Pattern A (Ory Network from GCP): outbound HTTPS egress to *.oryapis.com; API key in Secret Manager via Workload
+      Identity; Cloud DNS CNAME to custom.oryapis.com.
+
+      - Pattern B (self-hosted on GKE): GKE Autopilot or Standard with Workload Identity, Cloud SQL for PostgreSQL HA,
+      optional Memorystore Redis. Connect to Cloud SQL via the Cloud SQL Auth Proxy sidecar (preferred) or private IP with
+      VPC peering.
+
+      - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
+
+      - GKE Gateway or Ingress with GCLB for HTTPS termination with a Google-managed certificate.
+
+      - For Google identity provider configuration, see social-sign-in/google and enterprise-sso/google-workspace
+      (separate concerns from cloud deployment).
     oryMechanism:
       - standards
   - name: drata
@@ -350,11 +398,27 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Ory provides official Docker images for all its components (Kratos, Hydra, Keto, Oathkeeper), enabling local
-      development, testing, and containerized deployment. This guide provides docker-compose configurations for running
-      the full Ory stack locally and covers production Docker deployment patterns.
+      Run the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper) using the official oryd/* Docker images. This
+      directory holds a reference docker-compose.yml for local development and CI reproduction; production deployments
+      should use the Helm charts.
     status: active
     vendor: Docker
+    useCase: >-
+      A developer wants to bring up the open-source Ory stack locally — for development, CI reproduction, or trying
+      upgrades before promoting to a real cluster — without standing up Kubernetes.
+    coreFunctionality: >-
+      - Reference docker-compose.yml runs Kratos, Hydra, Keto, Oathkeeper against a local Postgres with mailslurper for
+      email testing.
+
+      - Uses the official oryd/kratos, oryd/hydra, oryd/keto, oryd/oathkeeper images from Docker Hub.
+
+      - Per-product Docker setup is documented in each product's install guide (Kratos, Hydra, Keto, Oathkeeper) on
+      ory.com/docs.
+
+      - Hydra ships a Docker-Compose-based quickstart at /docs/hydra/self-hosted/quickstart.
+
+      - For production, use the Helm charts under iac-devops/helm — docker-compose lacks the probes, rolling updates, and
+      secret handling you'll want.
     oryMechanism:
       - standards
   - name: kubernetes
@@ -364,11 +428,23 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      This guide provides raw Kubernetes manifests for deploying Ory components (Kratos, Hydra, Keto, Oathkeeper) without
-      Helm. This approach is useful for teams that prefer direct manifest management, GitOps workflows (Flux, ArgoCD), or
-      need granular control over Kubernetes resources. For Helm-based deployment, see the official Ory Helm Charts.
+      Raw Kubernetes manifests for deploying the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper) without Helm.
+      Useful for teams running GitOps (Flux, ArgoCD) or that need customizations the Helm chart doesn't expose. For most
+      cases, prefer the official Helm charts under iac-devops/helm.
     status: active
     vendor: Kubernetes
+    useCase: >-
+      A platform team running GitOps wants per-resource visibility into Ory deployments, or needs to customize resources
+      beyond what the Ory Helm charts expose, and is willing to maintain the manifests instead of using Helm.
+    coreFunctionality: >-
+      - Reference manifests for the full stack: Deployments, public/admin Services (type ClusterIP), ConfigMaps, Secrets,
+      optional Ingress.
+
+      - Pattern: each Ory component (Kratos, Hydra, Keto, Oathkeeper) as a separate Deployment with split public/admin
+      Services.
+
+      - For most teams the Helm charts (iac-devops/helm) are the recommended path — choose raw manifests only when GitOps
+      visibility or non-default customization justifies the maintenance burden.
     oryMechanism:
       - standards
   - name: hubspot
@@ -1333,33 +1409,92 @@ integrations:
     displayName: Helm Charts
     category: iac-devops
     path: iac-devops/helm
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
-    description: Official Helm charts for deploying Ory components on Kubernetes.
+    description: >-
+      Officially maintained Helm charts for deploying the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper) on
+      Kubernetes. Source repo at github.com/ory/k8s; chart repo hosted at https://k8s.ory.sh/helm/charts. Documented in
+      the Hydra Helm chart guide on ory.com/docs.
     status: active
-    vendor: Helm Charts
+    vendor: Ory
+    useCase: >-
+      A platform team wants the canonical, version-pinned way to deploy the open-source Ory stack on Kubernetes — with the
+      operational chrome (probes, HPA, PDB, ServiceMonitor, automigration jobs) already wired up.
+    coreFunctionality: >-
+      - One chart per product: ory/kratos, ory/hydra, ory/keto, ory/oathkeeper. Repo: helm repo add ory
+      https://k8s.ory.sh/helm/charts.
+
+      - Charts are marked "incubation" by the Ory team in the repo README — pin versions and review changelogs before
+      upgrade.
+
+      - automigration job runs as a pre-install / pre-upgrade hook for safe DB schema changes.
+
+      - Built-in support for HPA, PodDisruptionBudget, Prometheus ServiceMonitor, and split public/admin ingress.
+
+      - Production: never expose the admin Service publicly; inject secrets via External Secrets Operator from a secret
+      manager rather than committing them; use a managed Postgres (RDS, Cloud SQL, Azure DB), not in-cluster.
     oryMechanism:
       - standards
   - name: pulumi
-    displayName: Pulumi Provider
+    displayName: Pulumi
     category: iac-devops
     path: iac-devops/pulumi
     maintainedBy: Community contributors
     type: config
-    description: Manage your Ory Network configuration as infrastructure-as-code using Pulumi in TypeScript, Go, or Python.
+    description: >-
+      Pulumi-based infrastructure-as-code for Ory Network. There is NO official Ory Pulumi provider; this entry documents
+      the two community paths — bridging the official Terraform provider via pulumi-terraform-bridge, or calling the Ory
+      Network REST API from a Pulumi dynamic resource using the language SDK.
     status: active
-    vendor: Pulumi Provider
+    vendor: Pulumi
+    useCase: >-
+      A platform team standardized on Pulumi (instead of Terraform) wants to manage Ory Network resources from the same
+      codebase and deployment pipeline as the rest of their infrastructure.
+    coreFunctionality: >-
+      - NO official Ory Pulumi provider exists today.
+
+      - Recommended path: bridge the official ory/ory Terraform provider via pulumi-terraform-bridge to generate a
+      Pulumi-callable SDK.
+
+      - Alternative: write a Pulumi `dynamic` provider that calls the Ory Network REST API using @ory/client (TypeScript)
+      or ory-client (Go/Python). State diffing and CRUD logic is the implementer's responsibility.
+
+      - Escape hatch: keep Ory resources in Terraform via the official provider (iac-devops/terraform) and only use Pulumi
+      for the rest.
     oryMechanism:
       - standards
   - name: terraform
     displayName: Terraform Provider
     category: iac-devops
     path: iac-devops/terraform
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
-    description: Manage your Ory Network configuration as infrastructure-as-code using the official Terraform provider.
+    description: >-
+      Officially maintained Terraform provider for managing Ory Network resources as infrastructure-as-code — identity
+      schemas, OAuth2 clients, project configuration, identities, organizations, permissions, and webhooks. Source at
+      github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory`. Targets Ory Network only —
+      does not manage self-hosted Ory deployments.
     status: active
-    vendor: Terraform Provider
+    vendor: Ory
+    useCase: >-
+      A platform team running Ory Network wants their identity and OAuth2 configuration in Git (not the Console) for code
+      review, drift detection, and per-environment (dev/staging/prod) reproducibility.
+    coreFunctionality: >-
+      - Registry source: ory/ory. Authentication via the `api_key` provider attribute or ORY_API_KEY env var; project via
+      `project` or ORY_PROJECT/ORY_SDK_URL.
+
+      - Resources cover identity schemas (ory_identity_schema), OAuth2 clients (ory_oauth2_client), project config
+      (ory_project_config), identities, organizations, permissions, and webhooks (ory_webhook).
+
+      - Many ory_project_config attributes were renamed to match OpenAPI spec; old names still work but emit deprecation
+      warnings. The provider repo ships a migrate-deprecated-attrs.sh script for bulk rewrites.
+
+      - Two API key types in Ory — Workspace keys (manage projects) vs Project keys (manage in-project resources); pick
+      the right scope.
+
+      - Existing resources can be adopted via `terraform import ory_<resource>.<name> <id>`.
+
+      - Provider is for Ory Network only — does NOT manage self-hosted Kratos/Hydra/Keto/Oathkeeper.
     oryMechanism:
       - standards
   - name: equifax
@@ -1576,16 +1711,32 @@ integrations:
     oryMechanism:
       - standards
   - name: datadog
-    displayName: DataDog
+    displayName: Datadog
     category: monitoring-observability
     path: monitoring-observability/datadog
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Monitor Ory Network authentication metrics in DataDog using OpenTelemetry (OTLP) export and Prometheus-format
-      metrics scraping. Includes dashboard concepts and alert rules for critical authentication metrics.
+      Monitor Ory in Datadog. Self-hosted Ory products natively support Datadog as a tracing backend (listed alongside
+      OpenTelemetry/Jaeger/etc. in the Ory tracing docs). Ory Network customers ingest via OpenTelemetry (OTLP) — either
+      to the Datadog Agent's OTLP receiver or directly to Datadog's OTLP intake.
     status: active
-    vendor: DataDog
+    vendor: Datadog
+    useCase: >-
+      An Ory customer running on Datadog wants identity-flow traces and metrics in the same pane of glass as the rest of
+      their app — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate identity events
+      with downstream service calls.
+    coreFunctionality: >-
+      - Self-hosted: native Datadog tracing backend on each Ory product (set tracing provider to `datadog`, point at the
+      agent's APM endpoint, typically localhost:8126). No OTLP collector needed.
+
+      - Ory Network: OTLP export, ingested either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports
+      4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
+
+      - Prometheus metrics on /metrics/prometheus (each Ory service); ingest via the Datadog Agent's OpenMetrics check.
+
+      - Documented in /self-hosted/operations/tracing (Datadog explicitly listed as a supported backend) and
+      /self-hosted/operations/observability.
     oryMechanism:
       - standards
   - name: new-relic
@@ -1595,38 +1746,86 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      New Relic is a full-stack observability platform that natively ingests OpenTelemetry data over OTLP/HTTP.
-      Self-hosted Ory products (Kratos, Hydra, Keto, Oathkeeper) and Ory Network self-managed deployments emit
-      OpenTelemetry traces, metrics, and logs that New Relic can consume directly, giving customers a single pane of glass
-      for identity-flow performance, error rates, and downstream impact.
+      Send Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard OpenTelemetry exporter. No
+      dedicated New Relic page on ory.com/docs; configures via the same OpenTelemetry path Ory documents for self-hosted
+      tracing.
     status: active
     vendor: New Relic
+    useCase: >-
+      An Ory customer running New Relic wants identity-flow traces and metrics alongside the rest of their app's
+      observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate identity
+      events with downstream service calls.
+    coreFunctionality: >-
+      - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). OTLP/gRPC also supported.
+
+      - Auth via header `api-key: <NEW_RELIC_LICENSE_KEY>` — use Account/Ingest-scope license keys, NEVER full user keys.
+
+      - Self-hosted Ory: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT,
+      OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME).
+
+      - Ory Network: OTLP endpoint configured in Project Settings → Telemetry.
+
+      - For production, prefer an OpenTelemetry Collector in front for batching/retries/sampling.
+
+      - New Relic enforces attribute count/size limits — identity.id fine, identity.traits as flat blob not. Sample at
+      SDK/collector level, not backend side, to preserve head-of-trace context.
     oryMechanism:
       - standards
   - name: opentelemetry
     displayName: OpenTelemetry
     category: monitoring-observability
     path: monitoring-observability/opentelemetry
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Configure Ory Network's native OpenTelemetry (OTLP) export for traces, metrics, and logs. Includes OpenTelemetry
-      Collector configuration, pipeline setup, and downstream backend integration.
+      Ory natively supports OpenTelemetry across all products — listed as the first/recommended tracing backend in the Ory
+      observability docs. Self-hosted products ship OTLP via standard OTEL_EXPORTER_OTLP_* env vars; Ory Network exports
+      OTLP from the managed control plane via Project Settings → Telemetry.
     status: active
     vendor: OpenTelemetry
+    useCase: >-
+      An Ory customer wants traces, metrics, and (optionally) logs in their own observability backend without being locked
+      into a single vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
+    coreFunctionality: >-
+      - Self-hosted: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME,
+      OTEL_RESOURCE_ATTRIBUTES) on each Ory product.
+
+      - Ory Network: Console UI under Project Settings → Telemetry — set OTLP endpoint, pick grpc (4317) or http/protobuf
+      (4318), add auth headers.
+
+      - Recommended pipeline: run an OpenTelemetry Collector in front of the final backend for batching, retries,
+      sampling, and PII redaction in one place; swap backends (Tempo, Datadog, New Relic, Honeycomb, etc.) without
+      touching Ory config.
+
+      - Sampling at the SDK / collector level (not backend-side) preserves head-of-trace context.
     oryMechanism:
       - standards
   - name: prometheus-grafana
     displayName: Prometheus + Grafana
     category: monitoring-observability
     path: monitoring-observability/prometheus-grafana
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Monitor Ory Network authentication metrics using Prometheus for collection and Grafana for visualization. Includes
-      scrape configuration, PromQL queries, alert rules, and a Grafana dashboard structure.
+      Every Ory service exposes a Prometheus-compatible metrics endpoint at /metrics/prometheus. Documented in the Ory
+      self-hosted observability docs as the recommended metrics path; Grafana dashboards are not officially published —
+      build your own around Ory's HTTP request metrics plus standard Go runtime metrics.
     status: active
-    vendor: Prometheus + Grafana
+    vendor: Prometheus / Grafana
+    useCase: >-
+      An Ory customer running Prometheus + Grafana wants identity service metrics in the same dashboards as the rest of
+      their stack — request rate / latency / error rate per Ory endpoint, plus runtime health (Go GC, memory, goroutines).
+    coreFunctionality: >-
+      - Each Ory service exposes /metrics/prometheus; ports differ per product (Kratos admin 4434, Hydra admin 4445, Keto
+      4468, Oathkeeper 9000).
+
+      - Ory Network: scrape https://<project>.projects.oryapis.com/metrics/prometheus.
+
+      - No officially published Grafana dashboard JSON; build around Ory HTTP request metrics + standard Go runtime
+      metrics.
+
+      - For richer signals (traces, distributed correlation), pair with monitoring-observability/opentelemetry feeding
+      into Tempo/Jaeger.
     oryMechanism:
       - standards
   - name: recurly
