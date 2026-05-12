@@ -2,12 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: microsoft-scim
-displayName: Microsoft Entra ID (Azure AD) SCIM Directory Sync
-vendor: Microsoft Entra ID (Azure AD) SCIM Directory Sync
+displayName: Microsoft Entra ID SCIM
+vendor: Microsoft
 category: directory-sync
 type: config
 maintainedBy: Ory Engineering
-description: Automatic user provisioning and deprovisioning from Microsoft Entra ID to Ory Network using SCIM v2.0.
+description: >-
+  Automatic user provisioning and deprovisioning from Microsoft Entra ID (formerly Azure AD) into Ory Network /
+  Ory Polis via SCIM 2.0. Documented directly in /kratos/manage-identities/scim/ms-entra (Ory Network) and
+  /polis/directory-sync/providers/azure (Ory Polis self-hosted).
+useCase: >-
+  An Ory customer running enterprise SSO from Microsoft Entra ID wants user lifecycle events (create / update /
+  disable) to flow into Ory automatically — no manual user management, no stale identities after offboarding.
+coreFunctionality: |-
+  - Configured in Microsoft Entra Admin Center → Enterprise applications → app → Provisioning → Automatic; paste Tenant URL + Secret token from Ory's directory-sync setup-link.
+  - Default mappings for User and Group attributes are usually fine; customize if identity schema needs extra fields.
+  - Entra ID syncs on a 40-minute cycle by default; "Provision on demand" forces one user through immediately for troubleshooting.
+  - Provisioning Mode defaults to Manual (does nothing) — must be explicitly switched to Automatic.
+  - Scope via "Sync only assigned users and groups" setting to limit which directory entries are pushed.
+  - Pair with enterprise-sso/microsoft-entra-id for the federated sign-in side.
 oryMechanism:
   - directory-sync
 status: active

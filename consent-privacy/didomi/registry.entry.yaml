@@ -8,10 +8,20 @@ category: consent-privacy
 type: config
 maintainedBy: Community contributors
 description: >-
-  Didomi is a consent management platform (CMP) that enables organizations to collect, store, and manage user consent
-  for data processing activities in compliance with GDPR, CCPA, ePrivacy, and other privacy regulations. This
-  integration connects Didomi to Ory Network to synchronize consent preferences with Ory identity metadata and handle
-  data subject requests through Ory's a...
+  Sync user consent state from Didomi (consent management platform — GDPR/CCPA/ePrivacy) into Ory Network
+  identity metadata via a custom webhook + admin API client. Also handles DSAR fulfillment (GDPR Art. 15/17)
+  via the same handler against Ory's admin API. No first-party connector or Ory docs page exists; integration
+  is customer-implemented.
+useCase: >-
+  A regulated B2C product using Didomi for cookie/consent banners wants the consent decisions visible alongside
+  Ory identity records so downstream services can respect consent decisions without separate Didomi lookups.
+coreFunctionality: |-
+  - Didomi → webhook → Ory admin API pattern. No first-party connector or Ory docs page.
+  - Didomi webhook configured under Consent Notice → Webhooks; fires on consent events with HMAC-signed payloads.
+  - Handler verifies HMAC, resolves the Ory identity by Didomi user_id (matched to an identity trait or metadata_public.didomi_user_id), PATCHes metadata_public.consent.didomi with the consent record.
+  - DSAR fulfillment (GDPR Article 15 access / 17 erasure): GET /admin/identities/{id} for access; DELETE /admin/identities/{id} for erasure. 30-day statutory window — design for reliable processing.
+  - Consent strings (TCF v2 + Didomi-specific) stored in metadata_public only — not credentials.
+  - Status: community/proposed — implementation lives in the customer's webhook handler.
 oryMechanism:
   - standards
 status: active

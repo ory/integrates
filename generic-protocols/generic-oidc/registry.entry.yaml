@@ -3,15 +3,24 @@
 
 name: generic-oidc
 displayName: Generic OIDC Provider
-vendor: Generic OIDC Provider
+vendor: Ory
 category: generic-protocols
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Ory Network supports integration with any OpenID Connect (OIDC) compliant Identity Provider (IdP) as a social sign-in
-  or enterprise SSO provider. This guide covers configuring a generic OIDC provider with Ory Kratos, applicable to any
-  IdP that implements the OpenID Connect Core specification (e.g., Keycloak, Okta, Auth0, PingFederate, ForgeRock,
-  Authentik, or custom OIDC ser...
+  Configure any OpenID Connect-compliant Identity Provider with Ory. OIDC shows up in two product surfaces:
+  Ory Kratos (consumer / federated sign-in — Kratos is the RP) and Ory Polis (B2B enterprise SSO with
+  per-organization isolation — Polis is the RP). Same source content mirrored under enterprise-sso/generic-oidc.
+useCase: >-
+  An Ory customer needs to integrate an OIDC IdP that isn't on a vendor-specific docs list — open-source IdPs
+  (Keycloak, Authentik, Zitadel), in-house implementations, or any custom OIDC server. Same reference works
+  whether the use case is consumer sign-in (Kratos) or B2B enterprise SSO (Polis).
+coreFunctionality: |-
+  - Two product surfaces: Kratos social sign-in (docs/kratos/social-signin/generic — for consumer/user-facing flows) and Polis (docs/polis/sso-providers/generic-oidc — for B2B enterprise SSO).
+  - Discovery via /.well-known/openid-configuration on the issuer URL — Ory fetches and caches automatically.
+  - Required from the IdP: issuer URL, client id, client secret, plus the Ory callback URL configured as redirect URI.
+  - Standard scopes: openid (required), profile, email; groups when claim mapping needs them.
+  - Same content mirrored at enterprise-sso/generic-oidc — categorization choice; either entry resolves to the same authoritative Ory docs.
 oryMechanism:
   - standards
 status: active

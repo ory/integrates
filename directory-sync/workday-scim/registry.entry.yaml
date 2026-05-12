@@ -3,15 +3,26 @@
 
 name: workday-scim
 displayName: Workday SCIM
-vendor: Workday SCIM
+vendor: Workday
 category: directory-sync
 type: config
 maintainedBy: Community contributors
 description: >-
-  Workday is one of the most widely deployed enterprise HCM systems, and acts as the source of truth for employee data in
-  HR-driven access flows. Workday emits SCIM v2.0 to downstream systems, which Ory Network can consume to provision,
-  update, and deprovision identities automatically as employees are hired, change roles, or leave. This pattern keeps
-  Ory's identity store in lock-step with HR ground truth without bespoke integration code.
+  Provision identities from Workday into Ory Network via SCIM 2.0. Workday is the most widely deployed
+  enterprise HCM and the source of truth for employee data in many enterprises; wiring Workday → Ory keeps
+  Ory's identity store in lock-step with HR ground truth. No dedicated Ory docs page — Workday's SCIM
+  connector is not turnkey.
+useCase: >-
+  A large enterprise where Workday is the system of record for employee lifecycle wants Ory identities to be
+  created / updated / disabled in response to HR events (hire, promotion, termination) automatically — without
+  the workforce IdP (Okta / Entra ID) being on the critical path.
+coreFunctionality: |-
+  - No turnkey Workday → SCIM connector ships with Workday; integration requires one of three patterns.
+  - Pattern A (canonical): Workday Studio / Integration System maps Workday data sources (Worker, Position, etc.) into SCIM 2.0 calls against Ory's directory-sync endpoint. Requires Workday Studio licensing and developer hours.
+  - Pattern B: deploy a mid-tier connector (Tools4ever HelloID, Saviynt, or a custom service) that pulls Workday REST/SOAP and pushes to Ory's SCIM endpoint.
+  - Pattern C (most common in practice): provision Workday → Okta/Entra via the IdP's native Workday connector, then Okta/Entra → Ory via the existing SCIM integration. Avoids touching Workday directly.
+  - Ory side is a standard SCIM 2.0 endpoint with bearer-token auth, accepting Users and Groups; endpoint URL and token come from the directory-sync setup-link.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
-  - scim
+  - directory-sync
 status: active

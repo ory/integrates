@@ -2,12 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: google-workspace-scim
-displayName: Google Workspace Directory Sync
-vendor: Google Workspace Directory Sync
+displayName: Google Workspace SCIM
+vendor: Google
 category: directory-sync
 type: config
 maintainedBy: Ory Engineering
-description: Automatic user provisioning and deprovisioning from Google Workspace to Ory Network.
+description: >-
+  Automatic user provisioning and deprovisioning from Google Workspace into Ory Network via SCIM 2.0.
+  Documented directly in /kratos/manage-identities/scim/google-workspace (Ory Network managed) and
+  /polis/directory-sync/providers/google (Ory Polis self-hosted).
+useCase: >-
+  An Ory Network customer running enterprise SSO from Google Workspace wants user lifecycle events (create /
+  update / disable) in Workspace to flow into Ory automatically — no manual user management, no stale
+  identities after offboarding.
+coreFunctionality: |-
+  - Configured in Google Workspace Admin Console → Apps → Web and mobile apps → app → Auto-provisioning. Pastes SCIM endpoint URL + access token from Ory's setup-link.
+  - Attribute mapping: primary email → userName; given/family name → name.givenName / name.familyName; groups → groups.
+  - Workspace pushes lifecycle events on its own schedule (typically within a few minutes of directory change) — no manual "push now".
+  - Deactivation in Workspace becomes a deactivate in Ory (preserves identity record) — not a hard delete.
+  - SCIM provisioning is a separate concern from SSO — pair with enterprise-sso/google-workspace for the federated sign-in side.
 oryMechanism:
   - directory-sync
 status: active

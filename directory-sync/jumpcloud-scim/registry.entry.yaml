@@ -2,12 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: jumpcloud-scim
-displayName: JumpCloud SCIM Directory Sync
-vendor: JumpCloud SCIM Directory Sync
+displayName: JumpCloud SCIM
+vendor: JumpCloud
 category: directory-sync
 type: config
-maintainedBy: Community contributors
-description: Automatic user provisioning and deprovisioning from JumpCloud to Ory Network using SCIM v2.0.
+maintainedBy: Ory Engineering
+description: >-
+  Automatic user provisioning and deprovisioning from JumpCloud into Ory Network / Ory Polis via SCIM 2.0.
+  Documented directly in /polis/directory-sync/providers/jumpcloud. Pair with enterprise-sso/jumpcloud for
+  the federated sign-in side.
+useCase: >-
+  An Ory customer running enterprise SSO from JumpCloud wants user lifecycle events (create / update /
+  disable) in JumpCloud to flow into Ory automatically — no manual user management, no stale identities
+  after offboarding.
+coreFunctionality: |-
+  - Configured in JumpCloud Admin Console → SSO Applications → app → Identity Management tab. Pastes SCIM Base URL + API key from Ory's directory-sync setup-link.
+  - Attribute mapping: email → userName; given/family name → name.givenName / name.familyName; group membership → groups.
+  - SCIM provisioning is tied to a SAML application — cannot run SCIM without also having the corresponding SAML app configured.
+  - JumpCloud pushes only members of assigned user groups; manage scope via group assignment, not user assignment.
+  - Pushes lifecycle events on its own schedule; no manual sync button.
 oryMechanism:
   - directory-sync
 status: active

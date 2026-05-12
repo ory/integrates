@@ -2,12 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: onelogin-scim
-displayName: OneLogin SCIM Directory Sync
-vendor: OneLogin SCIM Directory Sync
+displayName: OneLogin SCIM
+vendor: One Identity (OneLogin)
 category: directory-sync
 type: config
-maintainedBy: Community contributors
-description: Automatic user provisioning and deprovisioning from OneLogin to Ory Network using SCIM v2.0.
+maintainedBy: Ory Engineering
+description: >-
+  Automatic user provisioning and deprovisioning from OneLogin (One Identity) into Ory Network / Ory Polis via
+  SCIM 2.0. Documented directly in /polis/directory-sync/providers/onelogin. Pair with enterprise-sso/onelogin
+  for the federated sign-in side.
+useCase: >-
+  An Ory customer running enterprise SSO from OneLogin wants user lifecycle events (create / update / disable)
+  to flow into Ory automatically — no manual user management, no stale identities after offboarding.
+coreFunctionality: |-
+  - Configured in OneLogin Admin Portal → Applications → app → Configuration tab; paste SCIM Base URL + API Bearer Token from Ory's directory-sync setup-link.
+  - Provisioning tab: enable provisioning and select which events trigger automatic vs manual approval (Create User, Delete User, Update User).
+  - Parameters mappings: OneLogin attributes → SCIM userName / name.givenName / name.familyName / emails[].value / groups[].
+  - SCIM connector requires a matching SAML/OIDC application — directory sync is tied to an SSO app, not standalone.
+  - Now branded as One Identity OneLogin following the Quest Software / One Identity acquisition.
 oryMechanism:
   - directory-sync
 status: active

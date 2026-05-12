@@ -2,15 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: generic-saml
-displayName: Generic SAML 2.0 SP
-vendor: Generic SAML 2.0 SP
+displayName: Generic SAML 2.0
+vendor: Ory
 category: generic-protocols
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Ory Network supports SAML 2.0 Service Provider (SP) integration via Ory Polis, enabling enterprise SSO with any SAML
-  2.0 compliant Identity Provider (IdP). This guide covers configuring Ory as a SAML SP for any IdP, including ADFS,
-  Shibboleth, SimpleSAMLphp, PingFederate, OneLogin, or custom SAML implementations.
+  Configure any SAML 2.0-compliant Identity Provider with Ory. SAML support is provided by Ory Polis (formerly
+  SAML Jackson) acting as the SAML Service Provider — Kratos does not natively speak SAML. Same source content
+  mirrored under enterprise-sso/generic-saml.
+useCase: >-
+  An Ory Polis customer needs to integrate a SAML IdP that isn't on the supported-vendor list (CyberArk,
+  ForgeRock, IBM Security Verify, in-house Shibboleth or SimpleSAMLphp, custom SAML), or wants the protocol
+  mechanics documented for debugging or non-default configuration.
+coreFunctionality: |-
+  - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-saml; Polis acts as the SAML SP, IdP as the IdP.
+  - From the IdP: metadata XML (preferred — Polis can consume URL or upload), or manual entity-id / SSO URL / signing certificate paste.
+  - To the IdP: Polis SP metadata XML from the Ory organization's setup-link, or manual ACS URL / entity-id / certificate.
+  - Attribute mapping defined IdP-side; Polis maps the released attributes to Ory identity traits.
+  - SP-initiated only — Polis does not consume IdP-initiated SAML responses.
+  - Same content mirrored at enterprise-sso/generic-saml — categorization choice; either entry resolves to the same authoritative Ory Polis page.
 oryMechanism:
   - standards
 status: active

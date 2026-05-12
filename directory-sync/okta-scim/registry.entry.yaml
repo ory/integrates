@@ -2,12 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: okta-scim
-displayName: Okta SCIM Directory Sync
-vendor: Okta SCIM Directory Sync
+displayName: Okta SCIM
+vendor: Okta
 category: directory-sync
 type: config
 maintainedBy: Ory Engineering
-description: Automatic user provisioning and deprovisioning from Okta to Ory Network using SCIM v2.0.
+description: >-
+  Automatic user provisioning and deprovisioning from Okta into Ory Network / Ory Polis via SCIM 2.0.
+  Documented directly in /kratos/manage-identities/scim/okta (Ory Network) and
+  /polis/directory-sync/providers/okta (Ory Polis self-hosted).
+useCase: >-
+  An Ory customer running enterprise SSO from Okta wants user lifecycle events (create / update / disable) to
+  flow into Ory automatically — no manual user management, no stale identities after offboarding.
+coreFunctionality: |-
+  - Configured in Okta Admin Console → Applications → app → Provisioning → Integration → Configure API Integration; paste Base URL + API Token from Ory's directory-sync setup-link.
+  - Enable Provisioning → To App: Create Users, Update User Attributes, Deactivate Users.
+  - Okta pushes lifecycle events in near-real-time (typically within seconds) — faster than Entra ID's 40-minute cycle.
+  - Deactivation in Okta becomes a deactivate in Ory (preserves identity record); only deactivate-then-delete in Okta will hard-remove.
+  - SCIM provisioning requires the Okta app to have been created from an SCIM-capable template — older custom apps may not have the Provisioning tab.
+  - Pair with enterprise-sso/okta for the federated sign-in side.
 oryMechanism:
   - directory-sync
 status: active
