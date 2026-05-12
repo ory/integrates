@@ -23,4 +23,7 @@ coreFunctionality: |-
   - SDK: native fetch (no Zoho SDK); @ory/client not used (handler doesn't read back from Ory).
 oryMechanism:
   - actions
+protocol:
+  - rest-api
+  - oauth2
 status: active

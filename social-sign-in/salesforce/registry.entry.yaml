@@ -20,4 +20,6 @@ coreFunctionality: |-
   - Default Jsonnet returns email gated on email_verified; maps `nickname` → `username`.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

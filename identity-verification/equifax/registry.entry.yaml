@@ -23,5 +23,8 @@ coreFunctionality: |-
   - Returns decision/outcome, trust_score, and reference_id to Ory so the post-flow Action can apply policy.
   - 502 on Equifax errors / outages so the verdict is never silently a pass.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
+  - oauth2
 status: active

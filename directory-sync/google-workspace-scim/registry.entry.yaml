@@ -23,4 +23,6 @@ coreFunctionality: |-
   - SCIM provisioning is a separate concern from SSO — pair with enterprise-sso/google-workspace for the federated sign-in side.
 oryMechanism:
   - directory-sync
+protocol:
+  - scim2
 status: active

@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Tokens are workspace-scoped — a user in two Slack workspaces will have two different (sub, team_id) tuples even with the same email.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

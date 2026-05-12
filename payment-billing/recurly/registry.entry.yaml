@@ -25,4 +25,7 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
+  - http-webhook
 status: active

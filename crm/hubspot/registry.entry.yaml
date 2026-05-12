@@ -21,5 +21,8 @@ coreFunctionality: |-
   - On 409 Existing ID: parses the existing contact ID out of HubSpot's error message and PATCHes onto it for idempotent upsert.
   - 502 on HubSpot errors so the failure surfaces in Ory instead of being silently dropped.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
+  - http-webhook
 status: active

@@ -24,4 +24,7 @@ coreFunctionality: |-
   - Defaults to UAT (platform.uat.proveapis.com); override PROVE_SERVER_URL for production.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
+  - oauth2
 status: active

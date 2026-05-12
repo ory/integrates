@@ -22,5 +22,7 @@ coreFunctionality: |-
   - Fire-and-forget: HEC errors and timeouts are logged but dropped so Splunk outages never affect Ory.
   - Authentication method inference from flow.type (oidc / totp / webauthn / lookup_secret / fallback password).
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: active

@@ -32,4 +32,6 @@ coreFunctionality: |-
   - 503 on Ory outages so Traefik surfaces a clear gateway error instead of treating an outage as "unauthorized".
 oryMechanism:
   - session-validation
+protocol:
+  - rest-api
 status: active

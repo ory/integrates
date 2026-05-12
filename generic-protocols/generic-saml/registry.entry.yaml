@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Same content mirrored at enterprise-sso/generic-saml — categorization choice; either entry resolves to the same authoritative Ory Polis page.
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

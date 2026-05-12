@@ -22,5 +22,7 @@ coreFunctionality: |-
   - Returns { result: allow | deny | waiting, mfa_passed } so the post-flow Action can gate the session.
   - 502 on Duo errors so a Duo outage never silently grants MFA.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: active

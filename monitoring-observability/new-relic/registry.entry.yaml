@@ -24,4 +24,6 @@ coreFunctionality: |-
   - New Relic enforces attribute count/size limits — identity.id fine, identity.traits as flat blob not. Sample at SDK/collector level, not backend side, to preserve head-of-trace context.
 oryMechanism:
   - standards
+protocol:
+  - otlp
 status: active

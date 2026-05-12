@@ -22,4 +22,7 @@ coreFunctionality: |-
   - Stored templates available via the API if SparkPost-side template management is preferred over Kratos-side rendering (not recommended — Ory renders templates by default).
 oryMechanism:
   - courier-spi
+protocol:
+  - smtp
+  - rest-api
 status: active

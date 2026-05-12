@@ -22,4 +22,6 @@ coreFunctionality: |-
   - For richer signals (traces, distributed correlation), pair with monitoring-observability/opentelemetry feeding into Tempo/Jaeger.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

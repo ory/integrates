@@ -23,5 +23,7 @@ coreFunctionality: |-
   - Fetches the identity via the Ory Admin API, merges the projection into metadata_admin.clearbit, and PUTs the identity back.
   - Silently no-ops when Clearbit returns 404/422 (free email providers, missing data).
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: deprecated

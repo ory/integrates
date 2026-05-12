@@ -22,4 +22,6 @@ coreFunctionality: |-
   - For OIDC sign-in (consumer/social), use social-sign-in/google instead — Polis SAML is for enterprise B2B SSO with per-organization isolation.
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

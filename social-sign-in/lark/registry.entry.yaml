@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Application-side approval may be required for org-scoped scopes per Lark's tenant administration model.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

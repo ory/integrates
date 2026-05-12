@@ -23,4 +23,7 @@ coreFunctionality: |-
   - For SCIM provisioning of Okta users into Ory, see directory-sync/okta-scim (separate concern).
 oryMechanism:
   - standards
+protocol:
+  - saml2
+  - oidc
 status: active

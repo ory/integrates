@@ -29,4 +29,6 @@ coreFunctionality: |-
   - Ships as an importable library (peer-depends on @launchdarkly/node-server-sdk ^9) — not a deployed HTTP service.
 oryMechanism:
   - sdk-client
+protocol:
+  - rest-api
 status: active

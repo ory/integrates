@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Documented at https://www.ory.com/docs/actions/integrations/mailchimp.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
 status: active

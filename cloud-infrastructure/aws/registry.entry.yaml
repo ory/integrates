@@ -23,4 +23,6 @@ coreFunctionality: |-
   - No AWS-specific Ory docs page; the Ory self-hosted/operations pages cover the cloud-agnostic concerns.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

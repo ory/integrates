@@ -23,4 +23,6 @@ coreFunctionality: |-
   - First-call cold-path latency can be 5-10s; handler caps at 15s.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
 status: active

@@ -22,5 +22,7 @@ coreFunctionality: |-
   - Standardized event type names (ory.identity.registered, .logged_in, .updated, .recovery_initiated, .verified) so consumer endpoints filter cleanly.
   - Fire-and-forget: Svix outages and 5xx responses are logged but never propagate to Ory.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - http-webhook
 status: active

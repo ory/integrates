@@ -23,4 +23,6 @@ coreFunctionality: |-
   - SDK: native fetch (no Pipedrive SDK); @ory/client not used (handler doesn't read back from Ory).
 oryMechanism:
   - actions
+protocol:
+  - rest-api
 status: active

@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Pair with enterprise-sso/microsoft-entra-id for the federated sign-in side.
 oryMechanism:
   - directory-sync
+protocol:
+  - scim2
 status: active

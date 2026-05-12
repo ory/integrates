@@ -5,15 +5,23 @@ name: <integration-slug>
 displayName: <Display Name>
 vendor: <Vendor>
 category: <category>
-type: http-event
+type: http-event                   # config | webhook | http-event | session-validation | sdk-client
 maintainedBy: Community contributors
 description: >-
   One-paragraph description of what this integration does. Mention the events it
   consumes (IdentityCreated, LoginSucceeded, etc.) and the third-party system
   it forwards to.
-oryMechanism:
-  - live-event-http
-subscribedEvents:                 # http-event integrations should declare which events they consume
+useCase: >-
+  Two to three sentences describing who this is for and why they would reach for this integration.
+coreFunctionality: |-
+  - Events subscribed and what the handler does with each.
+  - Auth mechanism and the third-party API surface the handler calls.
+  - Idempotency / retry behavior — http-event delivery is at-least-once.
+oryMechanism:                      # how Ory dispatches this integration (Ory-side mechanism)
+  - live-event-http                # standards | actions | courier-spi | directory-sync | session-validation | sdk-client | oauth2-token-hook | live-event-http
+protocol:                          # wire protocol(s) the integration speaks with the vendor — multi-value
+  - rest-api                       # oidc | oauth2 | saml2 | openid-2.0 | webauthn | scim2 | smtp | rest-api | http-webhook | jwt | otlp | custom
+subscribedEvents:                  # http-event integrations should declare which events they consume
   - IdentityCreated
   - LoginSucceeded
 status: active

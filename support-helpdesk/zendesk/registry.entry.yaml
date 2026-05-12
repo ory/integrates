@@ -22,5 +22,7 @@ coreFunctionality: |-
   - Sidebar response includes state, MFA enrollment, active session count, last login, and metadata_public for inline agent-side rendering.
   - Distinguishes ory_lookup_failed (502) from no-match (404) so the sidebar can render "no Ory identity found" without false alarms.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: active

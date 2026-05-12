@@ -22,4 +22,8 @@ coreFunctionality: |-
   - SDK: @ory/client for Kratos admin API; native fetch for Jumio API.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
+  - oauth2
+  - http-webhook
 status: active

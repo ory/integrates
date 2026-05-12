@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Refresh tokens are supported; access tokens are short-lived (~60 days).
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

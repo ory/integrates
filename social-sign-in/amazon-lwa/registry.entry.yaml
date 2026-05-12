@@ -20,4 +20,6 @@ coreFunctionality: |-
   - Configured via Amazon Security Profile (Login with Amazon → Create a New Security Profile); the Allowed Return URLs in Web Settings must include the Ory redirect URI.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

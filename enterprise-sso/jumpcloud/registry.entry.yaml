@@ -22,4 +22,6 @@ coreFunctionality: |-
   - For SCIM provisioning of JumpCloud users into Ory, see directory-sync/jumpcloud-scim (separate concern from SSO).
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

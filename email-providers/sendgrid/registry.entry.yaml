@@ -23,4 +23,7 @@ coreFunctionality: |-
   - Don't use SendGrid dynamic templates — Ory renders templates before sending; SendGrid should receive final content.
 oryMechanism:
   - courier-spi
+protocol:
+  - smtp
+  - rest-api
 status: active

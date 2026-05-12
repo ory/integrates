@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Configured via the NetID Developer Zone (developerzone.netid.dev); Service + Client model maps to vendor-side / app-side credentials.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

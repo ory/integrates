@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Status: community/proposed — convention guide, not turnkey code.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

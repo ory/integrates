@@ -24,5 +24,7 @@ coreFunctionality: |-
   - Returns 400 + a flow-level error message ("CAPTCHA verification failed") to interrupt the flow, or 200 + empty body to let it proceed.
   - Fails closed on a siteverify outage so a Google-API hiccup doesn't silently disable bot protection.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: active

@@ -28,4 +28,6 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
+protocol:
+  - http-webhook
 status: active

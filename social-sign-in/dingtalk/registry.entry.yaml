@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Configured via the DingTalk Open Platform — corporation-scoped apps require organization-side enablement.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

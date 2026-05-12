@@ -25,4 +25,6 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC provider path.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

@@ -22,4 +22,6 @@ coreFunctionality: |-
   - MFA enforcement sits at the Auth0 IdP layer; Ory consumes the resulting authenticated assertion.
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

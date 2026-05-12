@@ -21,4 +21,6 @@ coreFunctionality: |-
   - No native account-linking; relies on standard Kratos linking by verified email.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

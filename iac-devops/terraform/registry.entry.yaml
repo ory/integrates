@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Provider is for Ory Network only — does NOT manage self-hosted Kratos/Hydra/Keto/Oathkeeper.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

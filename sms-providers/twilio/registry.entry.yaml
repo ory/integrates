@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Twilio Test Credentials (separate SID/Token) simulate sends without delivery or charges — useful for CI.
 oryMechanism:
   - courier-spi
+protocol:
+  - rest-api
 status: active

@@ -28,4 +28,7 @@ coreFunctionality: |-
   - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to login with return_to.
 oryMechanism:
   - session-validation
+protocol:
+  - jwt
+  - rest-api
 status: active

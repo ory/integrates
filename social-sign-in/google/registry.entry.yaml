@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Native-SDK flow: id_token from Google's SDK can be exchanged at Ory via updateRegistration/LoginFlow with additional_id_token_audiences.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

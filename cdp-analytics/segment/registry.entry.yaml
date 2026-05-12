@@ -24,5 +24,7 @@ coreFunctionality: |-
   - HTTP Basic auth to Segment (write key as username, empty password); IP and User-Agent passed through Segment's context for server-side / client-side correlation.
   - Fire-and-forget: Segment outages and 5xx responses are logged but never propagate to Ory.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: active

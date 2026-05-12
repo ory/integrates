@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Easy DKIM (three CNAME records) is the standard deliverability setup; bounce/complaint notifications via SNS feed back into reputation.
 oryMechanism:
   - courier-spi
+protocol:
+  - smtp
 status: active

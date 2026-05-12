@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page; implementation lives in Vanta's custom-integration layer.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Free Twitter Developer tier suffices — no paid subscription required for social sign-in.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Delivery status: configure a Sinch delivery-report webhook to your own service; Kratos does not consume reports directly.
 oryMechanism:
   - courier-spi
+protocol:
+  - rest-api
 status: active

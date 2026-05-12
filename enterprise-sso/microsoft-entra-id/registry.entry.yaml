@@ -24,4 +24,6 @@ coreFunctionality: |-
   - For SCIM provisioning into Ory, see directory-sync/microsoft-scim (separate concern).
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

@@ -26,4 +26,6 @@ coreFunctionality: |-
   - Passkeys: same mechanism used as primary credential rather than second factor; configure via the passwordless variant.
 oryMechanism:
   - standards
+protocol:
+  - webauthn
 status: active

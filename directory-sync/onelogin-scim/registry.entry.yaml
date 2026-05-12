@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Now branded as One Identity OneLogin following the Quest Software / One Identity acquisition.
 oryMechanism:
   - directory-sync
+protocol:
+  - scim2
 status: active

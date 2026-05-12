@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Common migration pattern: run Auth0 + Ory side-by-side with Auth0 as the upstream IdP, then disable the Auth0 provider once enough users have been transparently linked to native Ory identities.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

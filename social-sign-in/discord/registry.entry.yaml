@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Refresh tokens supported by default — the access token has limited TTL.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

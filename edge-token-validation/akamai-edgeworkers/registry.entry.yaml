@@ -26,4 +26,7 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
+protocol:
+  - jwt
+  - rest-api
 status: active

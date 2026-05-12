@@ -22,4 +22,7 @@ coreFunctionality: |-
   - Documented in /self-hosted/operations/tracing (Datadog explicitly listed as a supported backend) and /self-hosted/operations/observability.
 oryMechanism:
   - standards
+protocol:
+  - otlp
+  - rest-api
 status: active

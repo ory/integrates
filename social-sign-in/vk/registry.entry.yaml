@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Optional VK scopes for friends list, photos, etc. — enable per app needs.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

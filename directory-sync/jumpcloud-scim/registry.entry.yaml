@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Pushes lifecycle events on its own schedule; no manual sync button.
 oryMechanism:
   - directory-sync
+protocol:
+  - scim2
 status: active

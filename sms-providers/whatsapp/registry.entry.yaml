@@ -29,4 +29,6 @@ coreFunctionality: |-
   - 422 otp_extract_failed when the message body doesn't yield a digit run — explicit instead of silently sending an empty template.
 oryMechanism:
   - courier-spi
+protocol:
+  - rest-api
 status: active

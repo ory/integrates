@@ -24,4 +24,7 @@ coreFunctionality: |-
   - Status: community/proposed — implementation lives in the customer's webhook handler.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
+  - http-webhook
 status: active

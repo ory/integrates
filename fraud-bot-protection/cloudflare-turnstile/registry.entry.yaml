@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page; same pattern as hCaptcha / reCAPTCHA / Arkose.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
 status: active

@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Newer Messages API (api.nexmo.com/v1/messages) available with JWT/header auth; the REST SMS API above is simpler for SMS-only use.
 oryMechanism:
   - courier-spi
+protocol:
+  - rest-api
 status: active

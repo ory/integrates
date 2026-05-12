@@ -25,4 +25,6 @@ coreFunctionality: |-
   - Use the regular `github` provider instead if only user login is needed; choose this variant when the product also needs to act on installations.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

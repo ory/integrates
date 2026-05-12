@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Configured via the Yandex OAuth client portal (yandex.com/dev/id/doc/en/register-client).
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

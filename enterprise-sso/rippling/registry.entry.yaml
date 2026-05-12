@@ -23,4 +23,6 @@ coreFunctionality: |-
   - SCIM provisioning into Ory available as a separate Rippling add-on; configure pointing at Ory Network's SCIM endpoint.
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

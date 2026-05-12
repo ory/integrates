@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Optional pairing with LINE Messaging API enables push notifications to authenticated users.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

@@ -23,4 +23,6 @@ coreFunctionality: |-
   - For Google identity provider configuration, see social-sign-in/google and enterprise-sso/google-workspace (separate concerns from cloud deployment).
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

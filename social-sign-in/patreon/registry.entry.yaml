@@ -20,4 +20,6 @@ coreFunctionality: |-
   - Configured via Patreon's OAuth client portal; consent screen is Patreon-managed.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

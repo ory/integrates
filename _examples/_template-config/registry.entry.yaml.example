@@ -3,12 +3,21 @@
 
 name: <integration-slug>           # lowercase, hyphenated; matches the directory name
 displayName: <Display Name>        # human-friendly name shown on docs and marketing pages
-vendor: <Vendor>
+vendor: <Vendor>                   # third-party vendor name (often same as displayName)
 category: <category>               # must match a top-level category directory
-type: config
+type: config                       # config | webhook | http-event | session-validation | sdk-client
 maintainedBy: Community contributors   # or "Ory Engineering" or your handle
 description: >-
   One-paragraph description of what this integration does and the problem it solves.
-oryMechanism:
-  - standards                      # or specific mechanism: oauth2-token-hook, courier-spi, etc.
-status: active
+useCase: >-
+  Two to three sentences describing who this is for and why they would reach for this integration.
+  Concrete enough that a reader can self-identify whether it applies to them.
+coreFunctionality: |-
+  - Bullet list of what the integration actually does — endpoints, mechanisms, lifecycle hooks, etc.
+  - 3-6 bullets. Include the non-obvious operational facts (gotchas, prerequisites, rate limits).
+  - Avoid restating the description; this is the "what readers need to know to implement it" section.
+oryMechanism:                      # how Ory dispatches this integration (Ory-side mechanism)
+  - standards                      # standards | actions | courier-spi | directory-sync | session-validation | sdk-client | oauth2-token-hook | live-event-http
+protocol:                          # wire protocol(s) the integration speaks with the vendor — multi-value
+  - oidc                           # oidc | oauth2 | saml2 | openid-2.0 | webauthn | scim2 | smtp | rest-api | http-webhook | jwt | otlp | custom
+status: active                     # active | scaffold | stub | deprecated | archived

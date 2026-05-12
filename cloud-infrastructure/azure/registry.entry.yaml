@@ -23,4 +23,6 @@ coreFunctionality: |-
   - For Microsoft Entra ID identity provider configuration, see social-sign-in/microsoft and enterprise-sso/microsoft-entra-id (separate concerns from cloud deployment).
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

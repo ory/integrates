@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Status: community/proposed — Aadhaar is not natively supported and integration is fundamentally outsourced.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
 status: active

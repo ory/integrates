@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Sampling at the SDK / collector level (not backend-side) preserves head-of-trace context.
 oryMechanism:
   - standards
+protocol:
+  - otlp
 status: active

@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Hide My Email: Apple returns a relay address (privaterelay.appleid.com) instead of the user's real address; persist this verbatim in traits.email.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

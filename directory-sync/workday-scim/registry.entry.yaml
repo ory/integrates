@@ -25,4 +25,7 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - directory-sync
+protocol:
+  - scim2
+  - rest-api
 status: active

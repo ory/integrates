@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Optional reportUrl in the body enables real-time delivery callbacks.
 oryMechanism:
   - courier-spi
+protocol:
+  - rest-api
 status: active

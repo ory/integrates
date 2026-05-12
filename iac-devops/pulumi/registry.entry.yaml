@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Escape hatch: keep Ory resources in Terraform via the official provider (iac-devops/terraform) and only use Pulumi for the rest.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

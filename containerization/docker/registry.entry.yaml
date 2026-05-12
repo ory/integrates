@@ -22,4 +22,6 @@ coreFunctionality: |-
   - For production, use the Helm charts under iac-devops/helm — docker-compose lacks the probes, rolling updates, and secret handling you'll want.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

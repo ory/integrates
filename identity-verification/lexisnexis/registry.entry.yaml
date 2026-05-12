@@ -23,4 +23,6 @@ coreFunctionality: |-
   - SDK: @ory/client for Kratos admin API; native fetch for LexisNexis API.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
 status: active

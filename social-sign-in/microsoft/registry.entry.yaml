@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Tenant ID is mandatory in the Ory Console form to scope the token validation to the right Entra tenant or to the common multitenant endpoint.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

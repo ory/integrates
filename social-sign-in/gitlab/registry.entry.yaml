@@ -22,4 +22,6 @@ coreFunctionality: >-
   - Refresh tokens supported when the GitLab application is configured with `read_api`-level access.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

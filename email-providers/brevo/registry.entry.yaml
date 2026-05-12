@@ -22,4 +22,7 @@ coreFunctionality: |-
   - DKIM and Return-Path must be aligned with the From domain for Gmail/Microsoft deliverability.
 oryMechanism:
   - courier-spi
+protocol:
+  - smtp
+  - rest-api
 status: active

@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Same content mirrored at generic-protocols/generic-oidc — categorization choice; either entry resolves to the same Polis page.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

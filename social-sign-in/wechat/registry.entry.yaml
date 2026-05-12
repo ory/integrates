@@ -25,4 +25,7 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
+  - custom
 status: active

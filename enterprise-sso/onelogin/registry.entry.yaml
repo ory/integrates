@@ -22,4 +22,6 @@ coreFunctionality: |-
   - For SCIM provisioning of OneLogin users into Ory, see directory-sync/onelogin-scim (separate concern).
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

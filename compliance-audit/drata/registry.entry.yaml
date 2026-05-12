@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Status: community/proposed — no dedicated ory/docs page; implementation lives in Drata's custom-connector layer.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

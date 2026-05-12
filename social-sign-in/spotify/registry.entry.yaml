@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Refresh tokens supported by default.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

@@ -21,4 +21,6 @@ coreFunctionality: |-
   - For most teams the Helm charts (iac-devops/helm) are the recommended path — choose raw manifests only when GitOps visibility or non-default customization justifies the maintenance burden.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

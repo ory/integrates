@@ -21,4 +21,6 @@ coreFunctionality: |-
   - GitHub doesn't issue refresh tokens by default; flag-pinned settings live on the GitHub OAuth app side, not in Ory.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
 status: active

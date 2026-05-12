@@ -24,4 +24,6 @@ coreFunctionality: |-
   - For the marketing-audience use case (adding registered users to a Mailchimp list), use cdp-analytics/mailchimp instead.
 oryMechanism:
   - courier-spi
+protocol:
+  - smtp
 status: active

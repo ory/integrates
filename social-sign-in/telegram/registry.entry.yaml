@@ -22,5 +22,7 @@ coreFunctionality: |-
   - Configurable TELEGRAM_AUTH_MAX_AGE_SECONDS for replay window (default 24h per Telegram's recommendation; tighten for stricter session creation).
   - Stateless and read-only — does not touch Ory directly; the application owns the upsert and session-bootstrap.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - custom
 status: active

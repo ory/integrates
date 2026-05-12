@@ -21,4 +21,6 @@ coreFunctionality: |-
   - Supports both web and mobile authentication flows; mobile-app handoff to the UAE PASS app is documented on the partner portal.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

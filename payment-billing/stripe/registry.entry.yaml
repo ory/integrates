@@ -23,5 +23,8 @@ coreFunctionality: |-
   - Both hooks fail open: a Stripe outage returns 200 with no metadata changes so authentication never breaks.
   - Stripe API version pinned via STRIPE_API_VERSION env; bumps are explicit decisions, not silent updates.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
+  - http-webhook
 status: active

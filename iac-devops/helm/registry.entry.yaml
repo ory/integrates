@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Production: never expose the admin Service publicly; inject secrets via External Secrets Operator from a secret manager rather than committing them; use a managed Postgres (RDS, Cloud SQL, Azure DB), not in-cluster.
 oryMechanism:
   - standards
+protocol:
+  - rest-api
 status: active

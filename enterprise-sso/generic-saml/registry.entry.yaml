@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Same content mirrored at generic-protocols/generic-saml — categorization choice; either entry resolves to the same Polis page.
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

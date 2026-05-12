@@ -23,5 +23,8 @@ coreFunctionality: |-
   - Distinct shared secrets for the two surfaces so a leak of one credential can't be used to call the other.
   - Skips unmapped consent categories silently so partial Purpose ID configuration doesn't break registration.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
+  - http-webhook
 status: active

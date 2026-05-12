@@ -22,4 +22,7 @@ coreFunctionality: |-
   - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
 oryMechanism:
   - actions
+protocol:
+  - rest-api
+  - http-webhook
 status: active

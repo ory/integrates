@@ -23,4 +23,6 @@ coreFunctionality: |-
   - Same content mirrored at enterprise-sso/generic-oidc — categorization choice; either entry resolves to the same authoritative Ory docs.
 oryMechanism:
   - standards
+protocol:
+  - oidc
 status: active

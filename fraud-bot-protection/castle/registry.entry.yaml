@@ -22,5 +22,7 @@ coreFunctionality: |-
   - Records the risk assessment in identity metadata for downstream auditing and policy decisions.
   - Fails open on Castle outages so authentication never breaks because of Castle availability.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: active

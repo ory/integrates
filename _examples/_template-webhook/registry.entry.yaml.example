@@ -5,10 +5,21 @@ name: <integration-slug>           # lowercase, hyphenated; matches the director
 displayName: <Display Name>        # human-friendly name shown on docs and marketing pages
 vendor: <Vendor>                   # third-party vendor name (often same as displayName)
 category: <category>               # must match a top-level category directory
-type: webhook
+type: webhook                      # config | webhook | http-event | session-validation | sdk-client
 maintainedBy: Community contributors   # or "Ory Engineering" or your handle
 description: >-
   One-paragraph description of what this integration does and the problem it solves.
-oryMechanism:
-  - actions-webhook
+useCase: >-
+  Two to three sentences describing who this is for and why they would reach for this integration.
+  Concrete enough that a reader can self-identify whether it applies to them.
+coreFunctionality: |-
+  - Endpoints exposed (sync vs async, can_interrupt, etc.) and what each one does.
+  - Auth mechanism (X-Webhook-Secret, HMAC for vendor callbacks).
+  - Identity-side state shape (metadata_public / metadata_admin keys).
+  - Non-obvious operational facts (rate limits, idempotency, retry behavior).
+oryMechanism:                      # how Ory dispatches this integration (Ory-side mechanism)
+  - actions                        # standards | actions | courier-spi | directory-sync | session-validation | sdk-client | oauth2-token-hook | live-event-http
+protocol:                          # wire protocol(s) the integration speaks with the vendor — multi-value
+  - rest-api                       # oidc | oauth2 | saml2 | openid-2.0 | webauthn | scim2 | smtp | rest-api | http-webhook | jwt | otlp | custom
+  - http-webhook                   # include http-webhook if the vendor calls back into your handler
 status: active                     # active | scaffold | stub | deprecated | archived

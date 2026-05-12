@@ -23,4 +23,7 @@ coreFunctionality: |-
   - SDK: @ory/client for Kratos admin API; native fetch for Persona API.
 oryMechanism:
   - actions
+protocol:
+  - rest-api
+  - http-webhook
 status: active

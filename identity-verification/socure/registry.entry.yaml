@@ -24,4 +24,7 @@ coreFunctionality: |-
   - Authenticated via shared ORY_WEBHOOK_SECRET (sync) and SOCURE_CALLBACK_SECRET (async HMAC).
 oryMechanism:
   - actions
+protocol:
+  - rest-api
+  - http-webhook
 status: active

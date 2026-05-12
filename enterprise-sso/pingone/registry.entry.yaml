@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Following the 2023 ForgeRock acquisition, Ping Identity owns both products — see enterprise-sso/forgerock-am for the legacy on-prem product.
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active

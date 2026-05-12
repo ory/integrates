@@ -24,4 +24,6 @@ coreFunctionality: |-
   - Postmark auto-deactivates hard-bouncing addresses to protect reputation.
 oryMechanism:
   - courier-spi
+protocol:
+  - smtp
 status: active

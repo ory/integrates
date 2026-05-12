@@ -22,5 +22,7 @@ coreFunctionality: |-
   - Returns { employed: false } on no match so Ory can branch on member-vs-non-member traffic instead of erroring.
   - BambooHR Basic auth: API key as username, literal "x" as password — documented in code so it doesn't look like a typo.
 oryMechanism:
-  - actions-webhook
+  - actions
+protocol:
+  - rest-api
 status: active

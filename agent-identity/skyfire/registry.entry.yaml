@@ -25,4 +25,7 @@ coreFunctionality: |-
   - Status: community/proposed — emerging space, reference architecture more than turnkey product.
 oryMechanism:
   - standards
+protocol:
+  - oauth2
+  - rest-api
 status: active

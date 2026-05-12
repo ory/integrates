@@ -22,4 +22,6 @@ coreFunctionality: |-
   - Mailgun auto-manages bounce/complaint/unsubscribe suppression lists.
 oryMechanism:
   - courier-spi
+protocol:
+  - smtp
 status: active

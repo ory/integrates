@@ -23,4 +23,6 @@ coreFunctionality: |-
   - WS-Federation NOT supported — Polis only consumes SAML 2.0.
 oryMechanism:
   - standards
+protocol:
+  - saml2
 status: active
