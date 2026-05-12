@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T13:46:44Z
+  generated: 2026-05-12T14:48:55Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -17,54 +17,131 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Skyfire is an AI agent identity and payment platform that enables "Know Your Agent" (KYA) verification for
-      autonomous AI agents. By integrating with Ory Hydra and Ory Kratos, Skyfire provides OAuth2-based authentication and
-      identity for AI agents, allowing them to authenticate to APIs, manage credentials, and establish trust in
-      multi-agent systems.
+      Pair Skyfire's "Know Your Agent" (KYA) verification with Ory for AI-agent identity — Skyfire issues verifiable
+      credentials per agent; a customer-built provisioning service maps each Skyfire agent to an Ory Kratos identity, and
+      Hydra issues OAuth2 access tokens (client_credentials) for the agent to call APIs.
     status: active
     vendor: Skyfire
+    useCase: >-
+      A product running autonomous AI agents that need to authenticate to backend APIs wants the agents to have verifiable
+      identity (so the call site can answer "which agent is this and is it KYA-verified") plus per-agent spend controls —
+      patterns that combining Skyfire and Ory makes natural.
+    coreFunctionality: >-
+      - Each agent = one Kratos identity (not one user with multiple agents) — keeps audit and revocation clean.
+
+      - metadata_public.skyfire stores agent_id + kya_status on the Kratos identity.
+
+      - Ory Hydra issues access tokens via client_credentials; sub = Kratos identity id.
+
+      - API gateways validate tokens at the edge (see api-gateways/*) and can read metadata_public.skyfire.agent_id for
+      access control.
+
+      - Skyfire can revoke agents — periodically re-check KYA status before token issuance to respect revocations.
+
+      - Payment / spend controls stay on the Skyfire side.
+
+      - Status: community/proposed — emerging space, reference architecture more than turnkey product.
     oryMechanism:
       - standards
   - name: apigee
-    displayName: Google Apigee + Ory Network
+    displayName: Google Apigee
     category: api-gateways
     path: api-gateways/apigee
     maintainedBy: Community contributors
     type: config
     description: >-
-      Google Apigee is an enterprise API management platform that provides API proxying, security, analytics, and
-      monetization. This integration uses Apigee's **VerifyJWT** and **SharedFlow** policies to validate Ory-issued JWTs
-      at the gateway layer using Ory Network's JWKS endpoint.
+      Validate Ory-issued JWTs at the Google Apigee gateway layer using Apigee's VerifyJWT policy in a SharedFlow,
+      fetching the JWKS from Ory Network's well-known endpoint. No dedicated Ory docs — standard JWT-at-the-edge pattern;
+      Ory side is just JWKS exposure.
     status: active
-    vendor: Google Apigee + Ory Network
+    vendor: Google Cloud
+    useCase: >-
+      An enterprise API team running Apigee wants OAuth2 access tokens issued by Ory (Hydra) validated at the gateway
+      layer so backend services don't need to re-validate every request.
+    coreFunctionality: >-
+      - SharedFlow with VerifyJWT policy: PublicKey JWKS URL points at Ory's
+      https://<project>.projects.oryapis.com/.well-known/jwks.json; Issuer = the Ory project URL; Audience = the API's
+      audience identifier from Ory's OAuth2 client.
+
+      - Algorithm RS256; Apigee caches the JWKS by URL — tune CacheTTLInSeconds for the freshness/KMS-call trade-off.
+
+      - Apigee KVM holds per-environment audience values without redeploying the shared flow.
+
+      - For claim-based authorization (per-scope or per-role checks), add an AssignMessage or JavaScript policy after
+      VerifyJWT to inspect the JWT claims.
+
+      - SharedFlow attached to the API proxy's PreFlow runs before every request.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: aws-api-gateway
-    displayName: AWS API Gateway + Ory Network
+    displayName: AWS API Gateway
     category: api-gateways
     path: api-gateways/aws-api-gateway
     maintainedBy: Community contributors
     type: config
     description: >-
-      AWS API Gateway is a fully managed service for creating, publishing, and securing APIs at scale. This integration
-      uses a **Lambda authorizer** (formerly "custom authorizer") to validate Ory-issued JWTs at the gateway layer before
-      requests reach your backend services.
+      Validate Ory-issued JWTs at the AWS API Gateway layer using a Lambda authorizer (REST API) or a native JWT
+      authorizer (HTTP API). The Lambda authorizer fetches Ory's JWKS, verifies the token, and returns an IAM policy; API
+      Gateway caches the policy by token for ~300s. No dedicated Ory docs — universal pattern.
     status: active
-    vendor: AWS API Gateway + Ory Network
+    vendor: Amazon Web Services
+    useCase: >-
+      A team running APIs on AWS API Gateway wants Ory-issued OAuth2 access tokens validated at the gateway so backend
+      services don't need to re-validate every request and can read the trusted `sub` from request context.
+    coreFunctionality: >-
+      - REST API: Lambda authorizer (Node.js / Python) verifies bearer JWT against
+      https://<project>.projects.oryapis.com/.well-known/jwks.json with kid-based key selection; returns IAM policy +
+      principalId (= JWT sub).
+
+      - HTTP API: native JWT authorizer pointing directly at the Ory issuer URL — no Lambda required for standard
+      verification.
+
+      - Caching: REST uses authorizerResultTtlInSeconds (default 300s); HTTP uses resultsCacheTtlInSeconds. Tune for
+      cold-start vs. revocation latency.
+
+      - Use Lambda authorizer over native JWT when custom claim-based authorization logic is needed beyond
+      signature/issuer/audience checks.
+
+      - Cold start matters — keep the authorizer minimal; aws-jwt-verify is a lean JWKS library.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: kong
-    displayName: Kong API Gateway + Ory Network
+    displayName: Kong API Gateway
     category: api-gateways
     path: api-gateways/kong
     maintainedBy: Community contributors
     type: config
     description: >-
-      Kong Gateway is a cloud-native, platform-agnostic API gateway that provides traffic management, authentication, rate
-      limiting, and observability for APIs and microservices. This integration configures Kong to validate Ory-issued
-      tokens and sessions, enabling centralized identity enforcement at the gateway layer.
+      Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's stock `jwt` plugin
+      (or jwt-signer / jwt-keycloak community plugins for JWKS auto-refresh); session validation via request-transformer +
+      pre-function calling /sessions/whoami. No dedicated Ory docs — universal pattern.
     status: active
-    vendor: Kong API Gateway + Ory Network
+    vendor: Kong
+    useCase: >-
+      A team running APIs behind Kong wants Ory-issued OAuth2 access tokens (Hydra) or Kratos session cookies validated at
+      the gateway so backend services don't need to re-validate every request.
+    coreFunctionality: >-
+      - Path A (Hydra JWTs): Kong jwt plugin with RS256 algorithm, public key from Ory JWKS (prefer jwt-signer or
+      jwt-keycloak community plugins for JWKS auto-fetch over manual key loading). Configure claims_to_verify (typically
+      exp) and key_claim_name.
+
+      - Path B (Kratos sessions): request-transformer + pre-function plugins (or a small custom plugin) call
+      https://<project>.projects.oryapis.com/sessions/whoami with the session cookie; on 200 inject X-User-Id /
+      X-User-Email headers downstream.
+
+      - Kong Enterprise's OIDC plugin handles Path A automatically with JWKS auto-discovery.
+
+      - Caching: cache whoami response per session cookie via Kong's proxy-cache plugin or a Redis-backed custom cache to
+      avoid hammering Ory.
+
+      - Rate-limit at the gateway keyed by the validated `sub` claim — Kong's rate-limiting plugin is the cleanest
+      pattern.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: traefik
@@ -109,12 +186,30 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Send authentication events and sync user properties to Amplitude when users log in or register via Ory. Uses Ory
-      Actions webhooks to call Amplitude's HTTP V2 API.
+      Send Ory authentication events and user-property changes into Amplitude (product analytics). Ory Action POSTs
+      directly to Amplitude's HTTP V2 API — no webhook handler needed; Amplitude API key authenticates the request.
     status: active
     vendor: Amplitude
+    useCase: >-
+      A consumer product wants identity events (registration / login / verification / MFA) in their Amplitude funnels and
+      retention dashboards alongside in-product events — without standing up a webhook handler.
+    coreFunctionality: >-
+      - Pattern: Ory Action async (response.ignore: true) POSTs directly to https://api2.amplitude.com/2/httpapi (or
+      https://api.eu.amplitude.com/2/httpapi for EU residency) — no handler in between.
+
+      - Authentication: Amplitude API key included in the JSON body (api_key field).
+
+      - Stable user_id: use Ory's identity id (ctx.identity.id), NOT email — Amplitude identity merges break if user_id
+      changes across email updates.
+
+      - User properties: $set operations track trait changes without overwriting Amplitude-computed dimensions.
+
+      - Rate limits: 1,000 events per HTTP request; high-volume products should batch in a small handler instead of
+      one-event-per-call.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: mailchimp
     displayName: Mailchimp (Marketing)
     category: cdp-analytics
@@ -154,12 +249,31 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Send authentication events to Mixpanel when users register or log in via Ory. Uses Ory Actions webhooks to call
-      Mixpanel's Ingestion API.
+      Send Ory authentication events into Mixpanel (product analytics) via the Ingestion API. Ory Action POSTs directly to
+      Mixpanel's /track endpoint — no webhook handler needed; Project Token (or Service Account) authenticates.
     status: active
     vendor: Mixpanel
+    useCase: >-
+      A consumer product wants identity events (registration / login / verification / MFA) in Mixpanel funnels and
+      retention dashboards alongside in-product events — without standing up a webhook handler.
+    coreFunctionality: >-
+      - Pattern: Ory Action async POSTs directly to https://api.mixpanel.com/track?ip=0 (or api-eu.mixpanel.com for EU
+      residency) — no handler in between.
+
+      - Authentication: Project Token in the event payload (properties.token), OR HTTP Basic with Service Account
+      credentials (preferred for server-to-server).
+
+      - Stable distinct_id: use Ory's identity id, NOT email — Mixpanel identity merges break if distinct_id changes.
+
+      - $insert_id for deduplication: set to Ory's flow id so retries don't double-count events.
+
+      - ip=0 disables Mixpanel's IP geolocation when the request comes from your server, not the user.
+
+      - User-property updates via /engage endpoint with $set operations for trait-change tracking.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: mparticle
     displayName: mParticle
     category: cdp-analytics
@@ -167,12 +281,30 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Send identity and authentication events to mParticle when users register via Ory. Uses Ory Actions webhooks to call
-      mParticle's Events API for server-to-server integration.
+      Send Ory identity and authentication events into mParticle (customer data platform) via the Events API for
+      server-to-server integration. Ory Action POSTs directly to mParticle's /v2/events endpoint with HTTP Basic auth (API
+      Key + Secret); mParticle then fans events out to downstream destinations.
     status: active
     vendor: mParticle
+    useCase: >-
+      A product team using mParticle as their CDP wants Ory identity events available to all their downstream marketing /
+      analytics / advertising destinations without integrating each one separately — mParticle handles the fanout.
+    coreFunctionality: >-
+      - Pattern: Ory Action async POSTs directly to https://s2s.mparticle.com/v2/events with HTTP Basic (API Key:API
+      Secret) — no handler in between.
+
+      - mParticle Custom Feed input receives events; outputs route to whichever downstream destinations are configured.
+
+      - user_identities.customer_id = Ory identity id; mParticle's identity-resolution rules can layer on top.
+
+      - environment field: set to "development" for non-prod Ory projects so events don't pollute prod data.
+
+      - mParticle's value is the routing layer — for a single destination you might skip mParticle and ingest directly;
+      for multi-destination, integration pays off quickly.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: segment
     displayName: Segment
     category: cdp-analytics
@@ -684,12 +816,31 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      CockroachDB is a distributed SQL database that provides horizontal scalability, strong consistency, and multi-region
-      survivability while maintaining PostgreSQL wire protocol compatibility. Ory components (Kratos, Hydra, Keto) use
-      PostgreSQL as their primary database, making CockroachDB a viable backend for deployments requiring geographic
-      distribution, high availability, and...
+      Use CockroachDB as the primary datastore for self-hosted Ory components (Kratos, Hydra, Keto, Oathkeeper) via its
+      PostgreSQL wire-protocol compatibility. Right choice for deployments needing geographic distribution or HA beyond a
+      single Postgres node. No dedicated Ory docs — same DSN format Ory uses for Postgres works for Cockroach with
+      Cockroach-aware tuning.
     status: active
-    vendor: CockroachDB
+    vendor: Cockroach Labs
+    useCase: >-
+      A self-hosted Ory deployment needs multi-region survivability, horizontal scalability beyond a single Postgres node,
+      or strong consistency under geographic distribution — and is willing to tune for Cockroach's distributed-transaction
+      model.
+    coreFunctionality: >-
+      - Cockroach speaks Postgres wire protocol — Ory product DSN format unchanged:
+      postgres://user:password@cockroach-host:26257/<db>?sslmode=verify-full&options=--cluster%3D<cluster-id>.
+
+      - Migrations run with `kratos migrate sql` (etc.) against Cockroach without changes.
+
+      - FK-heavy schema: expect some 40001 retry errors under high concurrency; clients should retry transactions per
+      Cockroach's standard pattern.
+
+      - UUID PKs (good — distribute across nodes) vs SERIAL (would hot-shard) — verify no Ory product version uses SERIAL.
+
+      - Serverless tier has request-per-second limits unsuitable for production identity workloads; use Self-hosted
+      (Dedicated) tier.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: bamboohr
@@ -914,14 +1065,37 @@ integrations:
     oryMechanism:
       - directory-sync
   - name: akamai-edgeworkers
-    displayName: Akamai EdgeWorkers — Ory Token Validation
+    displayName: Akamai EdgeWorkers
     category: edge-token-validation
     path: edge-token-validation/akamai-edgeworkers
     maintainedBy: Community contributors
-    type: config
-    description: JavaScript edge function on Akamai EdgeWorkers that validates Ory Network session tokens and JWTs at the edge.
+    type: session-validation
+    description: >-
+      Validate Ory Network session tokens and JWTs at the Akamai EdgeWorkers V8-isolate runtime before requests hit
+      origin. Same shape as the canonical edge-token-validation/cloudflare-workers reference, adapted to EdgeWorkers'
+      httpRequest API and EdgeKV caching. No dedicated Ory docs.
     status: active
-    vendor: Akamai EdgeWorkers — Ory Token Validation
+    vendor: Akamai
+    useCase: >-
+      A team running Akamai for CDN + edge security wants Ory session / JWT validation at the edge so origin receives a
+      trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request to origin.
+    coreFunctionality: >-
+      - EdgeWorker fires on onClientRequest; reads session cookie or Authorization: Bearer.
+
+      - Hydra JWT: verify signature against cached Ory JWKS using EdgeWorkers Crypto API.
+
+      - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via httpRequest (EdgeWorkers doesn't
+      have a fetch global). Cache responses in EdgeKV for 30-60s (fallback: per-isolate Map).
+
+      - On valid: inject X-User-Id header; on invalid: 401 from the edge.
+
+      - CPU budget ~50ms wall-clock — JWKS verification fits comfortably; whoami calls eat into this.
+
+      - Wired via Akamai Property Manager attaching the EdgeWorker to a behavior on the relevant hostname/path.
+
+      - Reference implementation: edge-token-validation/cloudflare-workers (same pattern, different runtime).
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: cloudflare-workers
@@ -956,16 +1130,40 @@ integrations:
     oryMechanism:
       - session-validation
   - name: fastly-compute
-    displayName: Fastly Compute@Edge — Ory Token Validation
+    displayName: Fastly Compute@Edge
     category: edge-token-validation
     path: edge-token-validation/fastly-compute
     maintainedBy: Community contributors
-    type: config
+    type: session-validation
     description: >-
-      WASM-based edge token validation on Fastly Compute@Edge, validating Ory Network session tokens and JWTs before
-      requests reach your origin.
+      Validate Ory Network session tokens and JWTs at the Fastly Compute@Edge WASM runtime before requests hit origin.
+      Same shape as the canonical edge-token-validation/cloudflare-workers reference, compiled to WASM with Fastly's host
+      backends API and KV Store. No dedicated Ory docs.
     status: active
-    vendor: Fastly Compute@Edge — Ory Token Validation
+    vendor: Fastly
+    useCase: >-
+      A team running Fastly for CDN + edge compute wants Ory session / JWT validation at the edge so origin receives a
+      trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request.
+    coreFunctionality: >-
+      - WASM module (Rust / JS / AssemblyScript / TinyGo) fires on every request; reads session cookie or Authorization:
+      Bearer.
+
+      - Hydra JWT: verify signature against cached Ory JWKS using language-native JWT library compiled to WASM.
+
+      - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via a registered Fastly backend.
+      Compute@Edge cannot make ad-hoc outbound calls — the Ory hostname MUST be registered as a named backend in the
+      service config.
+
+      - Caching: Fastly KV Store keyed by cookie hash for 30-60s; per-execution memory is request-scoped only.
+
+      - Edge dictionaries for non-secret config (Ory project URL, audience IDs); edge secrets for JWKS pinning / service
+      tokens.
+
+      - On valid: inject X-User-Id header; on invalid: synthesize 401 at the edge.
+
+      - Rust is the most performant; JavaScript (via Quick.js) is the easiest path porting from the Cloudflare reference.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: aws-ses
@@ -1723,14 +1921,31 @@ integrations:
     category: feature-flags
     path: feature-flags/split-io
     maintainedBy: Community contributors
-    type: config
+    type: sdk-client
     description: >-
-      Split.io is a feature delivery platform that combines feature flags with data-driven insights to measure the impact
-      of features on key metrics. This integration passes Ory Network identity attributes to Split.io as user properties
-      for targeting rules, enabling identity-aware feature rollouts and experimentation based on user traits, subscription
-      tier, organization, and other...
+      Pass Ory identity attributes (traits, subscription tier, organization, groups) to the Split.io SDK as user
+      attributes so feature rollouts can target by identity. NOT a webhook integration — evaluation happens in application
+      code via the Split SDK. Same pattern as feature-flags/launchdarkly.
     status: active
-    vendor: Split.io
+    vendor: Split (Harness)
+    useCase: >-
+      A product team running feature flags on Split.io wants rollouts and experiments to target by Ory identity attributes
+      (org_id for B2B per-account rollout, subscription_tier for paywall features, groups for role-based access) without
+      re-implementing the identity lookup per flag.
+    coreFunctionality: >-
+      - sdk-client integration: not a webhook — application code resolves the Ory session, extracts attributes, and passes
+      them to the Split SDK at evaluation time.
+
+      - Stable key: use identity.id (not email) so bucketing is stable across identity changes.
+
+      - Common attribute mapping: identity.traits.email → email; metadata_public.org_id → org_id;
+      metadata_public.subscription_tier → tier; metadata_public.groups → groups.
+
+      - Server-side: Split server SDK; client-side: Split JavaScript SDK with Track API for attributes.
+
+      - Impact measurement features need event-stream integration too — separate concern; see cdp-analytics/segment.
+
+      - Status: community/proposed — convention guide, not turnkey code.
     oryMechanism:
       - standards
   - name: arkose-labs
@@ -2560,18 +2775,41 @@ integrations:
     oryMechanism:
       - actions-webhook
   - name: yubikey
-    displayName: YubiKey (WebAuthn/FIDO2)
+    displayName: YubiKey (WebAuthn / FIDO2)
     category: mfa
     path: mfa/yubikey
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      YubiKey is a hardware security key manufactured by Yubico that supports WebAuthn/FIDO2, FIDO U2F, and other
-      authentication protocols. Ory Network natively supports WebAuthn/FIDO2 for multi-factor authentication (MFA),
-      allowing users to register YubiKeys and other FIDO2-compliant authenticators as second factors. This enables
-      phishing-resistant authentication at AAL2 (Authent...
+      YubiKey hardware security keys via WebAuthn / FIDO2 — natively supported by Ory Network with no integration code
+      required. Configure the WebAuthn method in Project Settings and users can register YubiKeys (or other FIDO2
+      authenticators — TouchID, Windows Hello, etc.) as second factor or first-factor passkey. Documented directly in the
+      Ory MFA docs.
     status: active
-    vendor: YubiKey (WebAuthn/FIDO2)
+    vendor: Yubico
+    useCase: >-
+      A consumer or B2B product wants phishing-resistant MFA — WebAuthn binds credentials to origins, so a phishing site
+      at look-alike domain cannot steal a credential registered for the real auth domain. YubiKeys are the hardware
+      reference but the same mechanism backs TouchID / Windows Hello / Android biometrics.
+    coreFunctionality: >-
+      - Configured per Ory docs at /kratos/mfa/webauthn-fido-yubikey; Ory Console → Authentication → Multi-factor → enable
+      WebAuthn.
+
+      - Relying Party (RP) config: id (eTLD+1 the credential is scoped to), origins (full URLs users sign in from),
+      display_name (shown in enrollment prompt).
+
+      - Covers all FIDO2 authenticators (YubiKey, TouchID, Face ID, Windows Hello, Android biometrics) — "YubiKey" in the
+      doc title is historical.
+
+      - Phishing-resistant: WebAuthn binds credential to origin, blocking credential theft via look-alike domains.
+
+      - AAL2 (NIST 800-63) compliance: WebAuthn satisfies AAL2 paired with a password-or-passkey first factor.
+
+      - Critical operational constraint: RP id cannot change after credentials are issued — registered credentials become
+      unusable.
+
+      - Passkeys: same mechanism used as primary credential rather than second factor; configure via the passwordless
+      variant.
     oryMechanism:
       - standards
   - name: datadog
@@ -2697,14 +2935,34 @@ integrations:
     category: payment-billing
     path: payment-billing/recurly
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      Bidirectional integration between Ory Network and Recurly for subscriber management and subscription-aware
-      authentication.
+      Bidirectional sync between Ory Network and Recurly — Ory → Recurly creates accounts at signup; Recurly → Ory
+      surfaces subscription state on the identity so application code can gate features by subscription tier without a
+      separate lookup. Wired via Ory Action on registration.after + Recurly webhook to a customer-implemented handler.
     status: active
     vendor: Recurly
+    useCase: >-
+      A subscription SaaS running billing on Recurly wants new Ory signups to land as Recurly accounts automatically, and
+      wants Recurly subscription state (active / churned / past due) visible on the Ory identity so the application can
+      gate features without a separate Recurly call per request.
+    coreFunctionality: >-
+      - Outbound: Ory Action on registration.after (async) → handler creates Recurly Account keyed by Ory identity id (set
+      as account_code); PATCHes metadata_public.recurly on identity.
+
+      - Inbound: Recurly webhook → handler verifies HMAC-SHA256 signature → resolves Ory identity by account_code →
+      PATCHes metadata_public.recurly.subscription_state and .subscription_tier.
+
+      - account_code is the binding between systems — set to Ory identity id during account creation.
+
+      - Subscription gating belongs in APPLICATION CODE reading metadata_public.recurly, NOT in the auth flow — Ory
+      shouldn't block sign-in for churned subscribers; app redirects to billing page.
+
+      - Recurly webhooks are at-least-once; handler must be idempotent (PATCH is naturally idempotent).
+
+      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
-      - standards
+      - actions
   - name: stripe
     displayName: Stripe
     category: payment-billing
@@ -2738,35 +2996,71 @@ integrations:
     oryMechanism:
       - actions-webhook
   - name: elastic-siem
-    displayName: Elastic SIEM / Elasticsearch + Ory Network
+    displayName: Elastic SIEM
     category: siem-security-analytics
     path: siem-security-analytics/elastic-siem
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      Elastic SIEM (part of the Elastic Stack) provides security analytics, threat detection, and incident response
-      capabilities built on Elasticsearch and Kibana. This integration ingests Ory Network identity and authentication
-      events into Elasticsearch, mapping them to the Elastic Common Schema (ECS) for standardized security monitoring and
-      correlation.
+      Ingest Ory Network identity and authentication events into Elastic SIEM (Elasticsearch + Kibana + Detection Engine).
+      Wired via Ory Actions on lifecycle hooks calling a customer-implemented handler that transforms events to Elastic
+      Common Schema (ECS) documents and bulk-ingests them.
     status: active
-    vendor: Elastic SIEM / Elasticsearch + Ory Network
+    vendor: Elastic
+    useCase: >-
+      A security team running Elastic SIEM wants Ory identity events in the same SIEM as the rest of their infrastructure
+      — for correlation, detection rules (brute force, impossible travel, credential stuffing), and timeline analysis.
+    coreFunctionality: >-
+      - Pattern: Ory Action async (response.ignore: true) on registration / login / logout / verification / MFA / recovery
+      → handler verifies shared secret → handler transforms to ECS document → handler POSTs to Elasticsearch _bulk API.
+
+      - ECS mapping: event.action / event.category / event.outcome for the auth verb, user.id + user.email for the
+      subject, source.ip + user_agent.original for context, authentication.factor for MFA.
+
+      - Index pattern: logs-ory-* with an ILM policy for retention + tier transitions per compliance window.
+
+      - Detection rules: pre-built Elastic Security Detection Engine rules (brute force, impossible travel, credential
+      stuffing) target ECS-mapped events without custom rule authoring.
+
+      - For Fleet-managed deployments, package as a custom Elastic Integration and ship via the Fleet UI.
+
+      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
-      - standards
+      - actions
   - name: microsoft-sentinel
-    displayName: Microsoft Sentinel + Ory Network
+    displayName: Microsoft Sentinel
     category: siem-security-analytics
     path: siem-security-analytics/microsoft-sentinel
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      Microsoft Sentinel is a cloud-native SIEM and SOAR platform built on Azure. It provides intelligent security
-      analytics, threat detection, and automated response across the enterprise. This integration ingests Ory Network
-      identity and authentication events into Sentinel via the Azure Log Analytics Data Collector API, enabling security
-      monitoring with KQL queries and automated...
+      Ingest Ory Network identity events into Microsoft Sentinel (cloud SIEM + SOAR on Azure) via the Azure Log Analytics
+      Data Collector API (or the newer Logs Ingestion API for new deployments). Wired via Ory Actions on lifecycle hooks
+      calling a customer-implemented handler that signs and posts events to Log Analytics.
     status: active
-    vendor: Microsoft Sentinel + Ory Network
+    vendor: Microsoft
+    useCase: >-
+      A security team running Microsoft Sentinel wants Ory identity events in Sentinel for KQL hunts, analytics rules, and
+      Logic Apps playbook automation — correlating identity events with the rest of the Azure security surface.
+    coreFunctionality: >-
+      - Pattern: Ory Action async on lifecycle hooks → handler verifies shared secret → handler signs request with Azure
+      HMAC-SHA256 scheme using Log Analytics workspace Primary Key → POST to
+      https://<workspace-id>.ods.opinsights.azure.com/api/logs?api-version=2016-04-01 under custom log type OryEvents_CL.
+
+      - Sentinel auto-creates the OryEvents_CL table on first ingest; the _CL suffix is added automatically by Log
+      Analytics.
+
+      - KQL analytics rules in Sentinel query OryEvents_CL for detection logic; Logic Apps playbooks automate response.
+
+      - Data Collector API is being deprecated in favor of the Logs Ingestion API + DCRs (Data Collection Rules) — new
+      deployments should target the newer API; watch the deprecation timeline.
+
+      - Alternative: use Logic Apps as the intermediary — single Logic App receives the Ory Action webhook and posts to
+      Sentinel, removing the need for custom handler code.
+
+      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
-      - standards
+      - actions
   - name: splunk
     displayName: Splunk
     category: siem-security-analytics
@@ -2799,19 +3093,39 @@ integrations:
     oryMechanism:
       - actions-webhook
   - name: sumo-logic
-    displayName: Sumo Logic + Ory Network
+    displayName: Sumo Logic
     category: siem-security-analytics
     path: siem-security-analytics/sumo-logic
     maintainedBy: Community contributors
     type: config
     description: >-
-      Sumo Logic is a cloud-native machine data analytics platform that provides log management, security analytics (Cloud
-      SIEM), and observability. This integration ingests Ory Network identity and authentication events into Sumo Logic
-      via an HTTP Source (Hosted Collector), enabling security monitoring, threat detection, and compliance reporting.
+      Ingest Ory Network identity events into Sumo Logic (log management + Cloud SIEM) via an HTTP Source on a Hosted
+      Collector — the simplest ingest path of any SIEM. Ory Action POSTs directly to the tokenized HTTP Source URL; no
+      webhook handler needed. No dedicated Ory docs.
     status: active
-    vendor: Sumo Logic + Ory Network
+    vendor: Sumo Logic
+    useCase: >-
+      A security team running Sumo Logic wants Ory identity events in Sumo with the lowest setup friction — Sumo's HTTP
+      Source accepts unauthenticated POSTs to a unique tokenized URL, so the Ory Action can post directly without a
+      handler in between.
+    coreFunctionality: >-
+      - Pattern: Ory Action async (response.ignore: true) POSTs JSON body directly to Sumo Logic Hosted Collector's HTTP
+      Source URL — no handler in between.
+
+      - Sumo HTTP Source URL is the auth — treat as a secret; rotate via Sumo if leaked.
+
+      - Source Category (e.g. ory/identity-events) drives downstream search and partition rules.
+
+      - Cloud SIEM: parse events into Sumo's normalized schema via Field Extraction Rule (FER) or parsing job to enable
+      out-of-the-box detection rules (credential stuffing, brute force, impossible travel).
+
+      - Body Jsonnet on each Ory Action emits the relevant event fields as JSON; Sumo auto-parses.
+
+      - For high-volume products, set retention + partition rules in Sumo to manage cost.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: messagebird
     displayName: MessageBird (Bird)
     category: sms-providers
@@ -4099,16 +4413,43 @@ integrations:
     oryMechanism:
       - actions
   - name: hookdeck
-    displayName: Hookdeck — Webhook Reliability Layer
+    displayName: Hookdeck
     category: webhook-infrastructure
     path: webhook-infrastructure/hookdeck
     maintainedBy: Community contributors
     type: config
     description: >-
-      Route Ory Network events through Hookdeck for reliable delivery, automatic retries, rate limiting, and
-      observability.
+      Route Ory Network Action webhooks through Hookdeck for reliable delivery — managed ingestion, automatic retries with
+      persistent storage, event replay from a dashboard, filtering, transformations, and per-delivery observability. Point
+      Ory Action URL at Hookdeck Source; Hookdeck forwards to your handler with backoff / replay / filtering.
     status: active
-    vendor: Hookdeck — Webhook Reliability Layer
+    vendor: Hookdeck
+    useCase: >-
+      A product team's Ory Action webhook handler has uptime concerns (deploys, regional outages, cold starts) and wants
+      persistent event storage with replay capability — so Ory events never get lost during handler downtime and incident
+      recovery is "click replay" instead of "rebuild state from logs."
+    coreFunctionality: >-
+      - Topology: Ory Action → Hookdeck Source → Hookdeck queue/retry → Hookdeck Destination → your handler.
+
+      - Hookdeck is infrastructure, not an Ory event consumer — handler still does the work; Hookdeck adds reliability
+      layer on top.
+
+      - Configurable retry policy (typical: exponential backoff up to 24h) with persistent event storage.
+
+      - Event replay from the dashboard — any historical event can be redelivered to the handler, useful for incident
+      recovery.
+
+      - Filtering drops events that don't matter (e.g. login.after for service-account identities) before they reach the
+      handler.
+
+      - Transformations reshape the Ory payload to match handler schema without touching either side.
+
+      - Must pass through X-Webhook-Secret header so handler signature verification still works.
+
+      - Compare with webhook-infrastructure/svix — similar product, different positioning (Svix is outbound webhooks;
+      Hookdeck is inbound reliability).
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: svix
