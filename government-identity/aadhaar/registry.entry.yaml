@@ -3,15 +3,24 @@
 
 name: aadhaar
 displayName: Aadhaar
-vendor: Aadhaar
+vendor: UIDAI (Government of India)
 category: government-identity
 type: config
 maintainedBy: Community contributors
 description: >-
-  Aadhaar is India's biometric identity system administered by the Unique Identification Authority of India (UIDAI). It
-  provides a 12-digit unique identity number to over 1.3 billion Indian residents, backed by biometric (fingerprint,
-  iris) and demographic data. Integrating Aadhaar with Ory Network requires a licensed Authentication Service Agency
-  (ASA) and Authentication User...
+  Aadhaar (India's UIDAI-administered biometric identity for 1.3B+ residents) is NOT natively supported by Ory —
+  UIDAI restricts direct API access to licensed ASA/AUA entities. This integration documents the pattern: an
+  Ory Actions webhook to a licensed eKYC provider (Signzy, Digio, Karza, IDfy) that brokers UIDAI access.
+useCase: >-
+  An India-targeted regulated product (fintech, telecom, banking, government services) needs Aadhaar-based
+  identity verification at signup and is willing to integrate via a licensed eKYC provider.
+coreFunctionality: |-
+  - Architecture: Ory Kratos webhook → your verification service → licensed ASA/AUA provider → UIDAI CIDR.
+  - Common licensed providers: Signzy, Digio, Karza Technologies, IDfy. Direct UIDAI API access is prohibited.
+  - OTP-based eKYC flow is the typical path; biometric flow is also possible but requires registered devices.
+  - Compliance non-negotiables: NEVER store the full Aadhaar number (mask / last 4 only); explicit `consent: "Y"` per call; data localization (Aadhaar-derived data must stay in India — keep full eKYC in India-hosted infra, only store masked/verified-status in Ory metadata which is global); 5-year audit trail.
+  - Aadhaar Act 2016 §28/§29/§33 restrict sharing, storing, and disclosure of core biometric data.
+  - Status: community/proposed — Aadhaar is not natively supported and integration is fundamentally outsourced.
 oryMechanism:
-  - standards
+  - actions
 status: active

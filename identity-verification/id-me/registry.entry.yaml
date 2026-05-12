@@ -8,10 +8,21 @@ category: identity-verification
 type: config
 maintainedBy: Community contributors
 description: >-
-  ID.me is a US-government-trusted identity verification provider that delivers IAL2 / AAL2 assurance through standard
-  OIDC. Configuring ID.me as a federated provider in Ory Network gives customers a low-touch path to verified identity
-  for healthcare, government, retail, and other use cases that require proof of who the user actually is rather than just
-  who they claim to be.
+  Configure ID.me as a federated OIDC provider in Ory Network to deliver IAL2 / AAL2 assurance — the
+  US-government-trusted identity verification standard required for healthcare, government, retail discount,
+  and similar use cases that need proof of who the user actually is. ID.me also provides verified group claims
+  (Military, Nurse, Teacher, Student, Government Employee, etc.) for verified-discount and access-gating.
+useCase: >-
+  A US-targeted product needs verified-identity sign-in for healthcare, government, retail discount, or other
+  use cases requiring NIST 800-63 IAL2 — and wants to lean on ID.me's existing user base of verified
+  consumers rather than running its own document-verification flow.
+coreFunctionality: |-
+  - Configured as a generic OIDC provider in Ory Kratos (id-me does NOT have a dedicated kratos provider key); standard OIDC discovery applies.
+  - Endpoints: authorization https://api.id.me/oauth/authorize; token https://api.id.me/oauth/token; userinfo https://api.id.me/api/public/v3/userinfo.
+  - Scopes drive what's verified — `openid` for identity, plus scopes like `military`, `nurse`, `teacher` for verified group claims (require ID.me application review per scope).
+  - Redirect URI: https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback/id-me.
+  - Kratos Jsonnet maps standard OIDC claims plus ID.me-specific group/verification claims to identity traits / metadata.
+  - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC provider path.
 oryMechanism:
   - standards
 status: active

@@ -1,53 +1,49 @@
-# Onfido Identity Verification
+# Onfido
 
-> **Maintained by:** Community contributors
-> **Status:** Reference implementation — needs review against the integration spec.
+> **Maintained by:** Ory Engineering
 
-Onfido identity verification integrated with Ory Network via Ory Actions webhooks.
+[Onfido](https://onfido.com) is a global identity-verification platform — document, biometric, motion, and database checks composed via configurable workflows. This integration creates an Onfido applicant + workflow run from Ory Actions during registration, consumes Onfido's HMAC-signed callback when the workflow finishes, and gates login on the stored verification status.
 
-**Pattern:** Layer 1 — the webhook handler calls the **Ory Admin API** directly using `@ory/client` to read and patch identity metadata.
+**Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
+**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
 
-**Type:** webhook
-**Docs page:** [ory.com/docs/integrations/onfido](https://ory.com/docs/integrations/) *(to be written)*
+## Endpoints
 
-## How it works
-
-1. User submits an identity-verification request in the Ory-powered application.
-2. Ory triggers a webhook to this handler.
-3. The handler authenticates the request with `Authorization: Bearer ${WEBHOOK_SECRET}`.
-4. The handler calls the Onfido API to start a verification workflow.
-5. The handler verifies Onfido's signed callback using HMAC and updates the identity's metadata in Ory.
+| Path | Trigger | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST /onfido/initiate` | sync `registration.after` | `X-Webhook-Secret` | Creates an Onfido applicant + workflow run with `custom_data.kratos_identity_id`; returns the SDK token to the client; writes the Onfido IDs to `metadata_public`. |
+| `POST /onfido/callback` | async, FROM Onfido | `X-SHA2-Signature` (HMAC-SHA256 of raw body) | Resolves the Kratos identity via `custom_data.kratos_identity_id`; PATCHes status (`approved` / `review` / `declined`) onto the identity. |
+| `POST /onfido/validate` | sync `login.after`, `can_interrupt: true` | `X-Webhook-Secret` | Blocks login when `metadata_public.onfido.status == "declined"`. |
 
 ## Required env vars
 
 ```
-KRATOS_ADMIN_URL          # Ory Network admin URL
-ORY_API_KEY               # Ory admin API token
-ONFIDO_API_TOKEN
-ONFIDO_REGION             # EU | US | CA
-ONFIDO_WORKFLOW_ID
-ONFIDO_WEBHOOK_TOKEN      # Onfido HMAC secret for callback verification
-WEBHOOK_SECRET            # Bearer token Ory sends in Authorization header
-PORT                      # default 3000
+ORY_WEBHOOK_SECRET        Bearer / X-Webhook-Secret value Ory sends
+KRATOS_ADMIN_URL          Ory Network admin URL (or self-hosted Kratos admin)
+ORY_API_KEY               Ory admin API token (identities:write)
+ONFIDO_API_TOKEN          Onfido API token
+ONFIDO_REGION             EU | US | CA  (selects API base host)
+ONFIDO_WORKFLOW_ID        Workflow id (defines what checks run)
+ONFIDO_WEBHOOK_TOKEN      HMAC secret for /onfido/callback
+PORT                      default: 3000
 ```
 
-## Run locally
+## Run
 
 ```bash
+cd webhook/
+cp .env.example .env
 npm install
-node --loader ts-node/esm index.ts
+npm start              # runs `tsx server.ts`
 ```
 
-## Code
+## Configure Ory
 
-Main entry point: [`index.ts`](index.ts).
+1. Use [`ory-actions.yaml`](./ory-actions.yaml) as the snippet for `selfservice.flows.{registration,login}.after.hooks`.
+2. The body templates are in [`jsonnet/`](./jsonnet/).
+3. The `/onfido/callback` URL must be publicly reachable; configure it under **Onfido Dashboard → Webhooks** with the matching `ONFIDO_WEBHOOK_TOKEN`.
+4. The Onfido SDK token returned by `/onfido/initiate` is short-lived — use it to render the verification UI immediately.
 
-## TODO (phase 3 review)
+## License
 
-- [ ] Detailed step-by-step Console setup
-- [ ] Onfido workflow configuration walkthrough
-- [ ] `.env.example` file
-- [ ] `package.json` license → Apache-2.0
-- [ ] Jsonnet body templates extracted to `config/jsonnet/`
-- [ ] `ory-actions.yaml` snippet
-- [ ] Tests
+Apache-2.0. SPDX header in each source file.

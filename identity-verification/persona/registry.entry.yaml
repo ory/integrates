@@ -8,8 +8,19 @@ category: identity-verification
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Persona identity verification with configurable templates (document capture, biometric, liveness). Integrates with Ory
-  Network via Ory Actions webhooks.
+  Run Persona identity verification (configurable templates — document capture, selfie + liveness, database
+  checks, watchlist screening) from Ory Actions during registration; consume Persona's HMAC-signed callback
+  when the inquiry completes and gate login on the stored verification status.
+useCase: >-
+  A regulated B2C product needs identity verification at signup tailored to product risk — Persona's templates
+  let the same handler back KYC-light onboarding (document + selfie) and high-trust flows (with database
+  verification + watchlist) without changing code.
+coreFunctionality: |-
+  - Three endpoints: POST /persona/initiate (sync registration.after; creates Inquiry with reference-id = Kratos identity id; returns hosted URL); POST /persona/callback (async from Persona; HMAC-SHA256 via X-Persona-Signature; PATCHes verdict to identity metadata); POST /persona/validate (sync login.after with can_interrupt: true; blocks login when status == declined).
+  - Identity-side state stored in metadata_admin via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+  - Reference-id is the binding between Persona Inquiry and Kratos identity — set on initiate, consumed on callback.
+  - Configured via Ory Actions on registration.after (sync) + login.after (sync, can_interrupt) — no Kratos schema changes required.
+  - SDK: @ory/client for Kratos admin API; native fetch for Persona API.
 oryMechanism:
-  - standards
+  - actions
 status: active

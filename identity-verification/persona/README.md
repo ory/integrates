@@ -1,53 +1,50 @@
-# Persona Identity Verification
+# Persona
 
-> **Maintained by:** Community contributors
-> **Status:** Reference implementation — needs review against the integration spec.
+> **Maintained by:** Ory Engineering
 
-Persona identity verification with configurable templates (document capture, biometric, liveness). Integrated with Ory Network via Ory Actions webhooks.
+[Persona](https://withpersona.com) is an identity verification platform with configurable templates (document capture, selfie + liveness, database checks, watchlist screening). This integration runs a Persona Inquiry from Ory Actions during registration, consumes Persona's HMAC-signed callback when the inquiry completes, and gates login on the stored verification status.
 
-**Pattern:** Layer 1 — the webhook handler calls the **Ory Admin API** directly using `@ory/client` to read and patch identity metadata.
+**Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
+**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
 
-**Type:** webhook
-**Docs page:** [ory.com/docs/integrations/persona](https://ory.com/docs/integrations/) *(to be written)*
+## Endpoints
 
-## How it works
-
-1. User submits an identity-verification request in the Ory-powered application.
-2. Ory triggers a webhook to this handler.
-3. The handler authenticates the request with `Authorization: Bearer ${WEBHOOK_SECRET}`.
-4. The handler creates a Persona Inquiry using the configured template.
-5. The handler verifies Persona's signed callback using HMAC and updates the identity's metadata in Ory.
+| Path | Trigger | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST /persona/initiate` | sync `registration.after` | `X-Webhook-Secret` | Creates a Persona Inquiry with `reference-id = <Kratos identity id>`; writes the inquiry id + hosted URL to `metadata_admin`; returns the hosted URL to the client. |
+| `POST /persona/callback` | async, FROM Persona | `X-Persona-Signature` (HMAC-SHA256 of raw body) | Resolves the Kratos identity via the inquiry's `reference-id`; PATCHes the verification status (`approved` / `declined` / `marked-for-review`) onto the identity. |
+| `POST /persona/validate` | sync `login.after`, `can_interrupt: true` | `X-Webhook-Secret` | Blocks login when `metadata_admin.persona.status == "declined"`. |
 
 ## Required env vars
 
 ```
-KRATOS_ADMIN_URL          # Ory Network admin URL
-ORY_API_KEY               # Ory admin API token
-PERSONA_API_KEY
-PERSONA_TEMPLATE_ID
-PERSONA_INQUIRY_TYPE      # default: hosted-embedded
-PERSONA_WEBHOOK_SECRET    # Persona HMAC secret for callback verification
-WEBHOOK_SECRET            # Bearer token Ory sends in Authorization header
-PORT                      # default 3000
+ORY_WEBHOOK_SECRET        Bearer / X-Webhook-Secret value Ory sends
+KRATOS_ADMIN_URL          Ory Network admin URL (or self-hosted Kratos admin)
+ORY_API_KEY               Ory admin API token (identities:write)
+PERSONA_API_KEY           Persona API key
+PERSONA_TEMPLATE_ID       Persona template (configures which checks run)
+PERSONA_WEBHOOK_SECRET    HMAC secret for /persona/callback
+PERSONA_INQUIRY_TYPE      default: hosted-embedded
+PERSONA_API_BASE          default: https://api.withpersona.com/api/v1
+PORT                      default: 3000
 ```
 
-## Run locally
+## Run
 
 ```bash
+cd webhook/
+cp .env.example .env   # if present; otherwise set the vars above
 npm install
-node --loader ts-node/esm index.ts
+npm start              # runs `tsx server.ts`
 ```
 
-## Code
+## Configure Ory
 
-Main entry point: [`index.ts`](index.ts).
+1. Use [`ory-actions.yaml`](./ory-actions.yaml) as the snippet for `selfservice.flows.{registration,login}.after.hooks`.
+2. The body templates are in [`jsonnet/`](./jsonnet/).
+3. Set `ORY_WEBHOOK_SECRET` (handler) to match the `X-Webhook-Secret` value declared in the action config.
+4. The `/persona/callback` URL must be publicly reachable; configure it as the webhook target in **Persona → Webhooks** with the same shared secret as `PERSONA_WEBHOOK_SECRET`.
 
-## TODO (phase 3 review)
+## License
 
-- [ ] Detailed step-by-step Console setup
-- [ ] Persona template configuration walkthrough
-- [ ] `.env.example` file
-- [ ] `package.json` license → Apache-2.0
-- [ ] Jsonnet body templates extracted to `config/jsonnet/`
-- [ ] `ory-actions.yaml` snippet
-- [ ] Tests
+Apache-2.0. SPDX header in each source file.

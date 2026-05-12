@@ -3,15 +3,24 @@
 
 name: eidas
 displayName: eIDAS
-vendor: eIDAS
+vendor: European Commission (eIDAS regulation)
 category: government-identity
 type: config
 maintainedBy: Community contributors
 description: >-
-  eIDAS (electronic IDentification, Authentication and trust Services) is a European Union regulation that establishes a
-  framework for cross-border electronic identification and trust services. Through eIDAS, citizens of EU member states
-  can use their national electronic identity (eID) to access services in other member states. This integration connects
-  Ory Network to eIDAS-co...
+  eIDAS — the EU regulation enabling cross-border use of national electronic IDs (German Personalausweis,
+  Italian SPID, Belgian eID, French FranceConnect, Spanish DNI, etc.). Direct eIDAS node access requires
+  government approval; integration goes through a commercial broker (Signicat, Criipto, IDnow, yes.com)
+  that exposes eIDAS as standard OIDC and is consumable by Kratos's generic OIDC provider.
+useCase: >-
+  An EU-targeted product needs cross-border identity verification — a French citizen authenticating to a
+  German service, etc. — using their national eID rather than re-running document verification per country.
+coreFunctionality: |-
+  - Configured as a generic OIDC provider in Kratos pointing at the broker's issuer; broker handles per-country eIDAS node integration.
+  - Common brokers: Signicat (pan-EU), Criipto (Nordic + EU), IDnow, yes.com (DE).
+  - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token; Jsonnet maps to identity metadata for downstream policy. Substantial roughly maps to Ory aal1; High to aal2.
+  - Per-country eID schemes vary in user experience (card reader for DE Personalausweis, mobile app for FR FranceConnect, etc.) — the broker abstracts this.
+  - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
 oryMechanism:
   - standards
 status: active

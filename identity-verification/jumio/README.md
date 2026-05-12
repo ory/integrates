@@ -1,53 +1,49 @@
-# Jumio Identity Verification
+# Jumio
 
-> **Maintained by:** Community contributors
-> **Status:** Reference implementation — needs review against the integration spec.
+> **Maintained by:** Ory Engineering
 
-Jumio identity verification (Document + Selfie + Face Match) integrated with Ory Network via Ory Actions webhooks.
+[Jumio](https://www.jumio.com) is a high-assurance identity-verification platform — Document + Selfie + Face Match — common in regulated industries (financial services, healthcare, gambling, crypto). This integration starts a Jumio workflow from Ory Actions during registration, consumes Jumio's HMAC-signed callback when the workflow finishes, and gates login on the stored verification status.
 
-**Pattern:** Layer 1 — the webhook handler calls the **Ory Admin API** directly using `@ory/client` to read and patch identity metadata. (Layer 2 webhooks return identity changes in the response body; this integration predates that pattern.)
+**Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
+**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
 
-**Type:** webhook
-**Docs page:** [ory.com/docs/integrations/jumio](https://ory.com/docs/integrations/) *(to be written)*
+## Endpoints
 
-## How it works
-
-1. User submits an identity-verification request in the Ory-powered application.
-2. Ory triggers a webhook to this handler.
-3. The handler authenticates the request with `Authorization: Bearer ${WEBHOOK_SECRET}`.
-4. The handler calls the Jumio API to start a verification workflow.
-5. On completion (via Jumio's callback), the handler patches the identity's metadata in Ory using `@ory/client`.
+| Path | Trigger | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST /jumio/initiate` | sync `registration.after` | `X-Webhook-Secret` | Starts a Jumio workflow with `customerInternalReference = <Kratos identity id>`; writes the Jumio account/workflow IDs to `metadata_public`. |
+| `POST /jumio/callback` | async, FROM Jumio | HMAC-SHA256 over raw body | Resolves the Kratos identity via `customerInternalReference`; PATCHes verdict (`PASSED` / `WARNING` / `FAILED`) onto the identity. |
+| `POST /jumio/validate` | sync `login.after`, `can_interrupt: true` | `X-Webhook-Secret` | Blocks login when `metadata_public.jumio.status == "rejected"`. |
 
 ## Required env vars
 
 ```
-KRATOS_ADMIN_URL          # Ory Network admin URL
-ORY_API_KEY               # Ory admin API token
-JUMIO_CLIENT_ID
-JUMIO_CLIENT_SECRET
-JUMIO_AUTH_URL
-JUMIO_API_BASE_URL
-WEBHOOK_SECRET            # Bearer token Ory sends in Authorization header
-PORT                      # default 3000
+ORY_WEBHOOK_SECRET        Bearer / X-Webhook-Secret value Ory sends
+KRATOS_ADMIN_URL          Ory Network admin URL (or self-hosted Kratos admin)
+ORY_API_KEY               Ory admin API token (identities:write)
+JUMIO_AUTH_URL            Jumio OAuth token endpoint
+JUMIO_API_BASE_URL        Jumio API base URL (region-specific)
+JUMIO_CLIENT_ID           Jumio API client id
+JUMIO_CLIENT_SECRET       Jumio API client secret
+JUMIO_CALLBACK_SECRET     HMAC secret for /jumio/callback
+PORT                      default: 3000
 ```
 
-## Run locally
+## Run
 
 ```bash
+cd webhook/
+cp .env.example .env
 npm install
-node --loader ts-node/esm index.ts   # or compile + run with tsx / ts-node
+npm start              # runs `tsx server.ts`
 ```
 
-## Code
+## Configure Ory
 
-Main entry point: [`index.ts`](index.ts).
+1. Use [`ory-actions.yaml`](./ory-actions.yaml) as the snippet for `selfservice.flows.{registration,login}.after.hooks`.
+2. The body templates are in [`jsonnet/`](./jsonnet/).
+3. The `/jumio/callback` URL must be publicly reachable; configure it as the workflow callback in **Jumio Customer Portal → Workflow Definition** with the matching `JUMIO_CALLBACK_SECRET`.
 
-## TODO (phase 3 review)
+## License
 
-- [ ] Detailed step-by-step Console setup
-- [ ] Jumio template configuration walkthrough
-- [ ] `.env.example` file
-- [ ] `package.json` license → Apache-2.0
-- [ ] Jsonnet body templates extracted to `config/jsonnet/`
-- [ ] `ory-actions.yaml` snippet
-- [ ] Tests
+Apache-2.0. SPDX header in each source file.

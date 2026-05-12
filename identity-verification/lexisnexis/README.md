@@ -1,57 +1,52 @@
 # LexisNexis InstantID
 
-> **Maintained by:** Community contributors
-> **Status:** Reference implementation — needs review against the integration spec.
+> **Maintained by:** Ory Engineering
 
-LexisNexis InstantID identity verification (NAS / NAP / CVI scoring) integrated with Ory Network via Ory Actions webhooks.
+[LexisNexis Risk Solutions](https://risk.lexisnexis.com) provides InstantID — a database-backed identity-verification API that scores name/address/SSN/DOB matches and returns NAS / NAP / CVI scores. Common in US financial-services and insurance flows where document scans are too high-friction. This integration runs InstantID synchronously from Ory Actions during registration and gates login on the stored verification status.
 
-**Pattern:** Layer 1 — the webhook handler calls the **Ory Admin API** directly using `@ory/client` to read and patch identity metadata.
+**Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
+**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
 
-**Type:** webhook
-**Docs page:** [ory.com/docs/integrations/lexisnexis](https://ory.com/docs/integrations/) *(to be written)*
+## Endpoints
 
-## How it works
+| Path | Trigger | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST /lexisnexis/verify` | sync `registration.after`, `can_interrupt: true` | `X-Webhook-Secret` | Calls LexisNexis InstantID with the identity's PII; evaluates NAS/NAP/CVI against thresholds; PATCHes verdict (`passed` / `failed`) onto the identity; returns `{ status: "ok" }` or surfaces an error to fail the registration flow. |
+| `POST /lexisnexis/validate` | sync `login.after`, `can_interrupt: true` | `X-Webhook-Secret` | Blocks login when `metadata_public.lexisnexis.verification_status == "failed"`. |
 
-1. User submits an identity-verification request in the Ory-powered application.
-2. Ory triggers a webhook to this handler.
-3. The handler authenticates the request with `Authorization: Bearer ${WEBHOOK_SECRET}`.
-4. The handler calls the LexisNexis InstantID API and evaluates NAS / NAP / CVI scores against configured thresholds.
-5. The handler patches the identity's metadata in Ory with the verification result.
+## NAS / NAP / CVI
+
+LexisNexis returns three scores per inquiry; defaults below are 50 (calibrated for low-risk consumer flows; tune up for higher-risk products):
+
+- **NAS** — Name + Address Score: how well the supplied name + address match LexisNexis records.
+- **NAP** — Name + Phone Score: name + phone match.
+- **CVI** — Comprehensive Verification Index: roll-up score across all signals.
 
 ## Required env vars
 
 ```
-KRATOS_ADMIN_URL              # Ory Network admin URL
-ORY_API_KEY                   # Ory admin API token
-LEXISNEXIS_USERNAME
-LEXISNEXIS_PASSWORD
-LEXISNEXIS_API_URL
-LEXISNEXIS_ORG_ID
-INSTANTID_NAS_THRESHOLD       # default 50
-INSTANTID_NAP_THRESHOLD       # default 50
-INSTANTID_CVI_THRESHOLD       # default 50
-WEBHOOK_SECRET                # Bearer token Ory sends in Authorization header
-PORT                          # default 3000
+ORY_WEBHOOK_SECRET            Bearer / X-Webhook-Secret value Ory sends
+KRATOS_ADMIN_URL              Ory Network admin URL (or self-hosted Kratos admin)
+ORY_API_KEY                   Ory admin API token (identities:write)
+LEXISNEXIS_USERNAME           InstantID username
+LEXISNEXIS_PASSWORD           InstantID password
+LEXISNEXIS_API_URL            InstantID API URL
+LEXISNEXIS_ORG_ID             InstantID organization id
+INSTANTID_NAS_THRESHOLD       default: 50
+INSTANTID_NAP_THRESHOLD       default: 50
+INSTANTID_CVI_THRESHOLD       default: 50
+PORT                          default: 3000
 ```
 
-## Run locally
+## Run
 
 ```bash
+cd webhook/
+cp .env.example .env
 npm install
-node --loader ts-node/esm index.ts
+npm start              # runs `tsx server.ts`
 ```
 
-## Code
+## License
 
-Main entry point: [`index.ts`](index.ts).
-
-## TODO (phase 3 review)
-
-- [ ] Detailed step-by-step Console setup
-- [ ] InstantID account / org configuration walkthrough
-- [ ] Threshold tuning guidance
-- [ ] `.env.example` file
-- [ ] `package.json` license → Apache-2.0
-- [ ] Jsonnet body templates extracted to `config/jsonnet/`
-- [ ] `ory-actions.yaml` snippet
-- [ ] Tests
+Apache-2.0. SPDX header in each source file.

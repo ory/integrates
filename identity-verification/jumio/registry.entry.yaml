@@ -8,7 +8,18 @@ category: identity-verification
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Jumio identity verification (Document + Selfie + Face Match) integrated with Ory Network via Ory Actions webhooks.
+  Run Jumio identity verification (Document + Selfie + Face Match) from Ory Actions during registration; consume
+  Jumio's HMAC-signed callback when the workflow finishes and gate login on the stored verification status.
+  Common in regulated industries (financial services, healthcare, gambling, crypto) for high-assurance KYC.
+useCase: >-
+  A regulated B2C product (fintech, crypto, online gambling, regulated healthcare) needs document + biometric
+  KYC at signup with a vendor that's already on most regulators' approved lists.
+coreFunctionality: |-
+  - Three endpoints: POST /jumio/initiate (sync registration.after; starts workflow with customerInternalReference = Kratos identity id); POST /jumio/callback (async from Jumio; HMAC-SHA256 verified; PATCHes verdict to identity metadata); POST /jumio/validate (sync login.after with can_interrupt: true; blocks rejected identities).
+  - customerInternalReference is the binding between Jumio workflow and Kratos identity — set on initiate, consumed on callback.
+  - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+  - Configured via Ory Actions on registration.after (sync) + login.after (sync, can_interrupt) — no Kratos schema changes required.
+  - SDK: @ory/client for Kratos admin API; native fetch for Jumio API.
 oryMechanism:
-  - standards
+  - actions
 status: active

@@ -3,15 +3,27 @@
 
 name: bankid
 displayName: BankID
-vendor: BankID
+vendor: BankID (Sweden / Norway)
 category: government-identity
 type: config
 maintainedBy: Community contributors
 description: >-
-  BankID is a high-assurance electronic identification system used in Sweden and Norway for online authentication and
-  digital signing. It is issued by banks and provides a government-recognized identity verification level suitable for
-  financial services, healthcare, and public sector applications. Integrating BankID with Ory Network requires a
-  licensed broker intermediary (suc...
+  BankID — the high-assurance electronic identity used in Sweden and Norway for banking, public services, and
+  healthcare. Direct BankID API access is restricted to licensed providers; integration goes through an OIDC
+  broker (Criipto, Signicat, Nets) that exposes BankID as standard OIDC and is consumable by Kratos's generic
+  OIDC provider.
+useCase: >-
+  A consumer or B2B product targeting Swedish or Norwegian users needs the de-facto national authentication
+  method — required by users in those markets and trusted for high-assurance flows like banking, healthcare,
+  and government services.
+coreFunctionality: |-
+  - Configured as a generic OIDC provider (id=bankid, provider=generic) pointing at a broker's OIDC issuer.
+  - Common brokers: Criipto (cleanest OIDC wrapping), Signicat, Nets.
+  - Scopes typically include openid, profile, and a personal-number scope (name varies per broker — e.g. ssn).
+  - Jsonnet mapper extracts personal number (Swedish personnummer / Norwegian fødselsnummer), name, and country (broker reports identityscheme like sebankid / nobankid).
+  - PSD2 Strong Customer Authentication (SCA) satisfied; eIDAS Substantial (NO mobile) or High (SE, NO hardware).
+  - Personal numbers are sensitive PII — prefer metadata_admin over metadata_public.
+  - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
 oryMechanism:
   - standards
 status: active

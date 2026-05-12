@@ -2,13 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: lexisnexis
-displayName: Lexisnexis
-vendor: Lexisnexis
+displayName: LexisNexis InstantID
+vendor: LexisNexis Risk Solutions
 category: identity-verification
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  LexisNexis identity data verification (NAS/NAP/CVI scoring) integrated with Ory Network via Ory Actions webhooks.
+  Run LexisNexis Risk Solutions InstantID identity verification from Ory Actions during registration. Database-
+  backed scoring (NAS / NAP / CVI) of name/address/phone/SSN/DOB matches — common in US financial services
+  and insurance where document scans are too high-friction. Gates login on the stored verification status.
+useCase: >-
+  A US-focused regulated product (financial services, insurance, healthcare) wants identity verification at
+  signup without document upload, scoring against authoritative US data — and wants the threshold per check
+  configurable per product risk profile.
+coreFunctionality: |-
+  - Two endpoints: POST /lexisnexis/verify (sync registration.after with can_interrupt; calls InstantID, evaluates NAS/NAP/CVI vs thresholds, PATCHes verdict to identity); POST /lexisnexis/validate (sync login.after with can_interrupt; blocks identities with failed status).
+  - NAS / NAP / CVI scores returned per inquiry — defaults 50 (calibrated for low-risk consumer flows; tune up for higher risk).
+  - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+  - Synchronous-only — no async callback path (InstantID returns its decision in the API response).
+  - SDK: @ory/client for Kratos admin API; native fetch for LexisNexis API.
 oryMechanism:
-  - standards
+  - actions
 status: active

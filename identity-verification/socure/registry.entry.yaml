@@ -8,10 +8,20 @@ category: identity-verification
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Socure is an ML-based identity verification platform with strong fraud detection and KYC coverage. This integration
-  calls Socure ID+ from an Ory Actions webhook during registration; results are written back to the Ory identity. Socure
-  also supports an asynchronous webhook back to the handler for long-running verifications, which this integration
-  optionally consumes.
+  Run Socure ID+ (ML-based identity verification with strong fraud signals — device fingerprint, email
+  reputation, network risk, KYC, phone risk) from an Ory Action webhook during registration. Supports both the
+  sync path (Socure returns a verdict immediately) and the async path (Socure POSTs the final verdict back to
+  /socure/results-callback when long-running checks complete).
+useCase: >-
+  A regulated B2C product needs ML-driven identity verification at signup with strong fraud signals beyond
+  document checks — device, email, network, phone risk — and wants a single deployment that handles both
+  fast and slow Socure verdict paths.
+coreFunctionality: |-
+  - Sync path: POST /socure/verify-identity (Ory Action target on registration.after); calls Socure ID+ POST /api/3.0/EmailAuthScore with configured SOCURE_MODULES; returns reference_id / decision (kyc.fieldValidations) / fraud_score for the response-parse Jsonnet to apply policy.
+  - Async path: POST /socure/results-callback (FROM Socure when async checks complete); HMAC-SHA256 over raw body via X-Socure-Signature; when ORY_SDK_URL + ORY_ADMIN_API_KEY are set, PATCHes the final decision to metadata_public.socure_decision on the matching identity.
+  - SOCURE_MODULES configures which signals run (commonly kyc, fraud, phonerisk).
+  - Single deployment, single binary handles both paths — async config is optional.
+  - Authenticated via shared ORY_WEBHOOK_SECRET (sync) and SOCURE_CALLBACK_SECRET (async HMAC).
 oryMechanism:
-  - actions-webhook
+  - actions
 status: active

@@ -3,15 +3,25 @@
 
 name: prove
 displayName: Prove
-vendor: Prove
+vendor: Prove (formerly Payfone)
 category: identity-verification
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Prove (formerly Payfone) is a phone-centric identity verification platform that uses telecom signals and phone
-  intelligence to verify identities, detect SIM swaps, and authenticate users via their mobile phone number. This
-  integration adds pre-registration or post-registration identity verification to Ory Network flows, enabling
-  phone-based identity proofing and fraud detect...
+  Phone-anchored identity verification — telecom signals, SIM-swap detection, identity prefill, and continuous
+  phone-ownership verification — across three Ory Actions lifecycle points: pre-registration lookup (prefill),
+  post-registration enrollment, and per-login validation.
+useCase: >-
+  A US-focused product wants signup friction reduced (Prove prefill cuts forms by autofilling name/address from
+  the phone number) AND wants ongoing phone-ownership verification so a SIM-swapped phone can't be used to
+  resume an existing account.
+coreFunctionality: |-
+  - Three sync endpoints: POST /prove/lookup (registration.before with can_interrupt — prefill or block on SIM swap), POST /prove/enroll (registration.after — enroll phone with Prove Identity Manager, store prove_identity_id), POST /prove/validate (login.after with can_interrupt — confirm continuous phone ownership, block on a fail).
+  - All sync — Prove's APIs return decisions in the response, no async callbacks.
+  - Phone collection is a prerequisite — identity schema must capture E.164 phone number before /prove/lookup fires.
+  - Identity-side state stored in metadata_admin via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+  - Uses Prove's official SDK (@prove-identity/prove-api) for the API surface.
+  - Defaults to UAT (platform.uat.proveapis.com); override PROVE_SERVER_URL for production.
 oryMechanism:
-  - standards
+  - actions
 status: active
