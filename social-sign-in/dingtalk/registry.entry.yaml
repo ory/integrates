@@ -2,16 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: dingtalk
-displayName: DingTalk Social Sign-In - Ory Network
-vendor: DingTalk Social Sign-In - Ory Network
+displayName: DingTalk
+vendor: Alibaba
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  DingTalk (by Alibaba Group) is a leading enterprise collaboration platform widely used in China with over 600 million
-  users. Integrating DingTalk with Ory Network enables B2B applications targeting the Chinese market to authenticate
-  users with their DingTalk corporate accounts. This is essential for enterprise applications, SaaS platforms, and
-  internal tools serving organiza...
+  DingTalk (钉钉) by Alibaba Group as a social sign-in provider in Ory Network. Enterprise communication platform
+  widely used in mainland China; common for B2B and APAC enterprise products that want sign-in via the workplace
+  identity their users already have.
+useCase: >-
+  A B2B SaaS or internal tool serving organizations in mainland China wants single-sign-on via the corporate
+  collaboration platform that ~600M users are signed into during the workday.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: dingtalk`); CLI-only configuration today (no Ory Console wizard).
+  - Supported scopes: `openid` (basic identity) or `openid corpid` (also returns the corporate identifier).
+  - Default Jsonnet maps email when present; DingTalk doesn't surface verified-email semantics, so default mapping is conservative.
+  - Configured via the DingTalk Open Platform — corporation-scoped apps require organization-side enablement.
 oryMechanism:
   - standards
 status: active

@@ -2,16 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: yandex
-displayName: Yandex Login - Ory Network
-vendor: Yandex Login - Ory Network
+displayName: Yandex
+vendor: Yandex
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Yandex is Russia's largest technology company and internet services provider, with services spanning search, email,
-  maps, ride-hailing, and more. Yandex ID provides OAuth 2.0 authentication with access to Yandex user profiles.
-  Integrating Yandex with Ory Network is important for applications targeting the Russian market, where Yandex services
-  are widely used.
+  Yandex as a social sign-in provider in Ory Network. Yandex is the dominant Russian search-and-services portal;
+  Yandex ID provides OAuth 2.0 authentication with access to Yandex user profiles. Useful for products serving
+  Russian-language consumers and CIS markets.
+useCase: >-
+  A consumer product targeting Russian-speaking users (Russia, Belarus, Kazakhstan, the broader CIS) wants sign-in via
+  the OAuth provider its users already use for search, mail, maps, and ride-hailing.
+coreFunctionality: |-
+  - First-party Kratos OAuth2 provider (`provider: yandex`); CLI-only configuration.
+  - Yandex returns an access_token only (no id_token); Ory calls Yandex's user-info API and surfaces the result as claims.
+  - Default Jsonnet maps email when present (Yandex doesn't expose an email_verified claim, so the default is conservative).
+  - Configured via the Yandex OAuth client portal (yandex.com/dev/id/doc/en/register-client).
 oryMechanism:
   - standards
 status: active

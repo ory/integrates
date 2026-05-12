@@ -2,15 +2,22 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: patreon
-displayName: Patreon Social Sign-In - Ory Network
-vendor: Patreon Social Sign-In - Ory Network
+displayName: Patreon
+vendor: Patreon
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Patreon is the leading membership and subscription platform for creators, with millions of patrons supporting content
-  creators. Integrating Patreon with Ory Network enables applications to authenticate users via their Patreon accounts
-  and verify membership/subscription tiers, making it ideal for gated content, community platforms, and creator tools.
+  Patreon as a social sign-in provider in Ory Network. Patreon's OAuth response includes the user's identity plus
+  their pledge / membership data, which downstream code can use to gate access on tier or campaign membership.
+useCase: >-
+  A creator-economy product or member-only platform wants sign-in via the OAuth provider its patrons already use.
+  Application code can read the Patreon membership API after sign-in to gate content on pledge tier.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: patreon`); CLI-only configuration.
+  - Supported claims: Subject, Email, Name, GivenName, FamilyName, LastName, Picture.
+  - Default Jsonnet maps email; downstream apps typically call Patreon's membership API with the access_token to gate access on tier.
+  - Configured via Patreon's OAuth client portal; consent screen is Patreon-managed.
 oryMechanism:
   - standards
 status: active

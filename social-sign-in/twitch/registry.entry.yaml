@@ -2,15 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: twitch
-displayName: Log in with Twitch - Ory Network
-vendor: Log in with Twitch - Ory Network
+displayName: Twitch
+vendor: Twitch
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Twitch is the world's leading live streaming platform with over 140 million monthly active users, primarily focused on
-  gaming, esports, and creative content. Integrating Twitch with Ory Network enables gaming platforms, streaming tools,
-  community applications, and esports platforms to authenticate users with their Twitch accounts.
+  Twitch as a social sign-in provider in Ory Network. Common in gaming, streaming, and creator-tooling products. Twitch
+  publishes an OIDC discovery URL but doesn't return an id_token — Ory calls Twitch's /me API and surfaces the user
+  info as claims for Jsonnet mapping.
+useCase: >-
+  A gaming, streaming, or creator-tooling product wants sign-in via the OAuth provider its viewers and streamers
+  already use. Optional Twitch scopes (channel info, follows, subscriptions) enable feature gating on creator tier.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: twitch`); CLI-only configuration.
+  - Twitch publishes /.well-known/openid-configuration but the `openid` claim isn't returned in the access_token; Ory hits Twitch's /me API to populate the claims envelope.
+  - Default Jsonnet returns email gated on email_verified.
+  - Configured via the Twitch Developer Portal; scopes follow the Twitch Helix scope catalog.
 oryMechanism:
   - standards
 status: active

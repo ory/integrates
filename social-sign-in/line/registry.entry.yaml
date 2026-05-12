@@ -2,15 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: line
-displayName: LINE Login - Ory Network
-vendor: LINE Login - Ory Network
+displayName: LINE
+vendor: LINE
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  LINE is the dominant messaging platform in Japan, Thailand, Taiwan, and Indonesia with over 200 million monthly active
-  users. LINE Login provides OIDC-compliant authentication, making it essential for consumer applications targeting
-  these markets. LINE Login can also provide access to the LINE Messaging API for sending notifications.
+  LINE Login as a social sign-in provider in Ory Network. LINE is the dominant messaging platform in Japan, Taiwan,
+  and Thailand; LINE Login is OIDC-compliant and the natural sign-in option for consumer products targeting users in
+  those markets.
+useCase: >-
+  A consumer app targeting Japan, Taiwan, Thailand, or Indonesia wants sign-in via the messaging platform that ~200M
+  users have on their phone. LINE Login can also be paired with the LINE Messaging API to send notifications.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: line`); both Console wizard and CLI configurations supported.
+  - LINE channel must enable `PROFILE`, `OPENID_CONNECT`, and `OC_EMAIL` permissions on the LINE Developer Console.
+  - Default Jsonnet maps email + name → first_name; add scopes for richer profile or messaging access as needed.
+  - Optional pairing with LINE Messaging API enables push notifications to authenticated users.
 oryMechanism:
   - standards
 status: active

@@ -2,16 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: netid
-displayName: NetID Social Sign-In - Ory Network
-vendor: NetID Social Sign-In - Ory Network
+displayName: NetID
+vendor: European netID Foundation
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  NetID is a European single sign-on standard backed by the European netID Foundation. It provides a privacy-focused,
-  GDPR-compliant identity solution primarily used in Germany and Europe. NetID partners include major media companies,
-  e-commerce platforms, and telecom providers. Integrating NetID with Ory Network enables European applications to offer
-  a trusted, privacy-respec...
+  NetID as a social sign-in provider in Ory Network. NetID is the European single-sign-in alliance backed by Mediahuis,
+  RTL, and ProSiebenSat.1; OIDC-compliant and positioned as a privacy-respecting, GDPR-aligned alternative to US-based
+  social sign-in providers.
+useCase: >-
+  A consumer media or e-commerce product targeting Germany and the EU wants a privacy-aligned sign-in option backed by
+  trusted regional brands rather than the dominant US-based providers.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: netid`); both Console wizard and CLI configurations supported.
+  - Required scopes: openid, email. Default Jsonnet only returns the email when `email_verified` is true (NetID enforces verification).
+  - Sandbox vs live: NetID Clients start in sandbox mode and require explicit test users; promote the Service to enable real users.
+  - Configured via the NetID Developer Zone (developerzone.netid.dev); Service + Client model maps to vendor-side / app-side credentials.
 oryMechanism:
   - standards
 status: active

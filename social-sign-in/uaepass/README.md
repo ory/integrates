@@ -1,100 +1,22 @@
-# Sign in with UAEPass — Ory Network Integration
+# UAE PASS
 
 > **Maintained by:** Ory Engineering
 
-## Overview
+Add UAE PASS as a social sign-in provider in Ory Network. UAE PASS is the United Arab Emirates' official digital identity platform — required for products serving UAE residents and the natural choice for any consumer app operating in the UAE.
 
-UAEPass is the United Arab Emirates' national digital identity. It is required to access most UAE government services and many licensed private-sector services in the country. UAEPass exposes a standard OAuth 2.0 / OIDC interface and can be configured as a federated identity provider in Ory Kratos for any application that targets UAE users or needs regional compliance.
+**Type:** config (Ory Console / CLI — no webhook code)
+**Docs page:** [ory.com/docs/kratos/social-signin/uaepass](https://www.ory.com/docs/kratos/social-signin/uaepass)
 
-## How it works
+## Setup
 
-```
-User → Ory Login UI → Ory Kratos (OIDC, "uaepass" provider)
-                          ↓
-                    UAEPass Authorization
-                    (https://id.uaepass.ae/idshub/authorize)
-                          ↓
-                    User authenticates with UAE national ID, biometrics, or PIN
-                          ↓
-                    UAEPass Token Endpoint
-                    (https://id.uaepass.ae/idshub/token)
-                          ↓
-                    UAEPass Userinfo
-                    (https://id.uaepass.ae/idshub/userinfo)
-                          ↓
-                    Ory Kratos creates / updates identity
-```
+The full walkthrough (with screenshots and the Ory CLI alternative) lives in the [Ory docs page above](https://www.ory.com/docs/kratos/social-signin/uaepass). Short version:
 
-## Prerequisites
+1. Register your application on the [UAE PASS partner portal](https://uaepass.ae/) and obtain a Client ID and Client Secret. UAE PASS onboarding is gated and requires partner approval.
+2. In the Ory Console, enable **OpenID Connect** under Social Sign-In, click **Add new OpenID Connect provider**, choose UAE PASS, and copy the Redirect URI.
+3. Paste Client ID, Client Secret, and the **Issuer URL** (`https://id.uaepass.ae` for production, `https://stg-id.uaepass.ae` for staging) into the Ory Console form.
+4. Add the Jsonnet data-mapping snippet from the docs page (default maps `sub` → `subject`, `email` → `email`, `fullnameEN` → `name`).
+5. Paste the Ory redirect URI into UAE PASS's allowed redirect URIs in the partner portal.
 
-1. **Ory Network account.**
-2. **UAEPass partner / service-provider account.** UAEPass onboarding is gated — you apply at [docs.uaepass.ae](https://docs.uaepass.ae/) and are issued staging and production credentials after legal review. There is no self-service signup.
-3. **Approved redirect URI** — provided to UAEPass during onboarding:
-   ```
-   https://{your-project-slug}.projects.oryapis.com/self-service/methods/oidc/callback/uaepass
-   ```
+## License
 
-## Configuration
-
-Save a Jsonnet claims mapper as `uaepass-mapper.jsonnet`:
-
-```jsonnet
-local claims = std.extVar('claims');
-
-{
-  identity: {
-    traits: {
-      [if 'email' in claims then 'email' else null]: claims.email,
-      name: {
-        [if 'firstnameEN' in claims then 'first' else null]: claims.firstnameEN,
-        [if 'lastnameEN' in claims then 'last' else null]: claims.lastnameEN,
-      },
-      [if 'idn' in claims then 'national_id' else null]: claims.idn,
-      [if 'mobile' in claims then 'phone' else null]: claims.mobile,
-    },
-  },
-}
-```
-
-Add UAEPass via the Ory CLI:
-
-```bash
-ory patch identity-config \
-  --project <your-project-id> \
-  --workspace <your-workspace-id> \
-  --add '/selfservice/methods/oidc/config/providers/-={
-    "id": "uaepass",
-    "provider": "generic",
-    "issuer_url": "https://id.uaepass.ae/idshub",
-    "auth_url": "https://id.uaepass.ae/idshub/authorize",
-    "token_url": "https://id.uaepass.ae/idshub/token",
-    "client_id": "<uaepass-client-id>",
-    "client_secret": "<uaepass-client-secret>",
-    "scope": ["openid", "profile", "urn:uae:digitalid:profile:general"],
-    "mapper_url": "base64://'"$(base64 < uaepass-mapper.jsonnet)"'"
-  }'
-```
-
-## Technical details
-
-| Field | Value |
-|---|---|
-| Authorization URL | `https://id.uaepass.ae/idshub/authorize` |
-| Token URL | `https://id.uaepass.ae/idshub/token` |
-| Userinfo URL | `https://id.uaepass.ae/idshub/userinfo` |
-| Issuer | `https://id.uaepass.ae/idshub` |
-| Common scopes | `openid`, `profile`, `urn:uae:digitalid:profile:general` |
-
-UAEPass operates separate **staging** (`https://stg-id.uaepass.ae/...`) and **production** environments — credentials and redirect URIs are not shared between them.
-
-## Notes
-
-- UAEPass returns Arabic and English variants of name fields (`firstnameAR` / `firstnameEN`). Pick the variant your app needs in the mapper.
-- Some claims (Emirates ID `idn`, `mobile`, address) require explicit consent screens UAEPass renders — do not assume they will be present.
-- UAEPass requires sign-out coordination through their `idshub/logout` endpoint when ending Ory sessions, if your contract requires it.
-
-## Resources
-
-- [UAEPass Developer Docs](https://docs.uaepass.ae/)
-- [UAEPass OIDC integration guide](https://docs.uaepass.ae/feature-guides/authentication/web-application)
-- [Ory generic OIDC provider docs](https://www.ory.com/docs/kratos/social-signin/generic)
+Apache-2.0. (Configuration-only — no source code in this directory.)

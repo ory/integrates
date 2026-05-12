@@ -2,16 +2,22 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: amazon-lwa
-displayName: Login with Amazon (LWA) - Ory Network
-vendor: Login with Amazon (LWA) - Ory Network
+displayName: Login with Amazon
+vendor: Amazon
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Login with Amazon (LWA) allows users to authenticate using their Amazon account credentials. Integrating LWA with Ory
-  Network provides a seamless sign-in experience for consumer-facing applications, particularly those in the e-commerce
-  space. Amazon has hundreds of millions of active customer accounts, making it a valuable authentication option for
-  retail, marketplace, and c...
+  Login with Amazon (LWA) as a social sign-in provider in Ory Network. OAuth2 flow against the Amazon Developer
+  platform; Ory calls Amazon's customer-profile API to populate the claims envelope and maps to the identity schema.
+useCase: >-
+  A consumer product targeting the Amazon ecosystem (Alexa skills, FireOS apps, retail-adjacent flows) wants sign-in
+  via the OAuth provider hundreds of millions of users already have an account with.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: amazon`); registered as an "OpenID Connect provider" in the Ory Console wizard.
+  - Standard scope `profile` (also `postal_code` if needed). Amazon doesn't issue an id_token, so Ory calls the LWA customer-profile API and exposes name / email as claims.
+  - Default Jsonnet maps email to traits.email; email may be empty if the user denied the email permission on the consent screen.
+  - Configured via Amazon Security Profile (Login with Amazon → Create a New Security Profile); the Allowed Return URLs in Web Settings must include the Ory redirect URI.
 oryMechanism:
   - standards
 status: active
