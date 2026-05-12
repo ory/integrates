@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T03:54:47Z
+  generated: 2026-05-12T04:20:53Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -1352,14 +1352,30 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Aadhaar is India's biometric identity system administered by the Unique Identification Authority of India (UIDAI).
-      It provides a 12-digit unique identity number to over 1.3 billion Indian residents, backed by biometric
-      (fingerprint, iris) and demographic data. Integrating Aadhaar with Ory Network requires a licensed Authentication
-      Service Agency (ASA) and Authentication User...
+      Aadhaar (India's UIDAI-administered biometric identity for 1.3B+ residents) is NOT natively supported by Ory — UIDAI
+      restricts direct API access to licensed ASA/AUA entities. This integration documents the pattern: an Ory Actions
+      webhook to a licensed eKYC provider (Signzy, Digio, Karza, IDfy) that brokers UIDAI access.
     status: active
-    vendor: Aadhaar
+    vendor: UIDAI (Government of India)
+    useCase: >-
+      An India-targeted regulated product (fintech, telecom, banking, government services) needs Aadhaar-based identity
+      verification at signup and is willing to integrate via a licensed eKYC provider.
+    coreFunctionality: >-
+      - Architecture: Ory Kratos webhook → your verification service → licensed ASA/AUA provider → UIDAI CIDR.
+
+      - Common licensed providers: Signzy, Digio, Karza Technologies, IDfy. Direct UIDAI API access is prohibited.
+
+      - OTP-based eKYC flow is the typical path; biometric flow is also possible but requires registered devices.
+
+      - Compliance non-negotiables: NEVER store the full Aadhaar number (mask / last 4 only); explicit `consent: "Y"` per
+      call; data localization (Aadhaar-derived data must stay in India — keep full eKYC in India-hosted infra, only store
+      masked/verified-status in Ory metadata which is global); 5-year audit trail.
+
+      - Aadhaar Act 2016 §28/§29/§33 restrict sharing, storing, and disclosure of core biometric data.
+
+      - Status: community/proposed — Aadhaar is not natively supported and integration is fundamentally outsourced.
     oryMechanism:
-      - standards
+      - actions
   - name: bankid
     displayName: BankID
     category: government-identity
@@ -1367,12 +1383,31 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      BankID is a high-assurance electronic identification system used in Sweden and Norway for online authentication and
-      digital signing. It is issued by banks and provides a government-recognized identity verification level suitable for
-      financial services, healthcare, and public sector applications. Integrating BankID with Ory Network requires a
-      licensed broker intermediary (suc...
+      BankID — the high-assurance electronic identity used in Sweden and Norway for banking, public services, and
+      healthcare. Direct BankID API access is restricted to licensed providers; integration goes through an OIDC broker
+      (Criipto, Signicat, Nets) that exposes BankID as standard OIDC and is consumable by Kratos's generic OIDC provider.
     status: active
-    vendor: BankID
+    vendor: BankID (Sweden / Norway)
+    useCase: >-
+      A consumer or B2B product targeting Swedish or Norwegian users needs the de-facto national authentication method —
+      required by users in those markets and trusted for high-assurance flows like banking, healthcare, and government
+      services.
+    coreFunctionality: >-
+      - Configured as a generic OIDC provider (id=bankid, provider=generic) pointing at a broker's OIDC issuer.
+
+      - Common brokers: Criipto (cleanest OIDC wrapping), Signicat, Nets.
+
+      - Scopes typically include openid, profile, and a personal-number scope (name varies per broker — e.g. ssn).
+
+      - Jsonnet mapper extracts personal number (Swedish personnummer / Norwegian fødselsnummer), name, and country
+      (broker reports identityscheme like sebankid / nobankid).
+
+      - PSD2 Strong Customer Authentication (SCA) satisfied; eIDAS Substantial (NO mobile) or High (SE, NO hardware).
+
+      - Personal numbers are sensitive PII — prefer metadata_admin over metadata_public.
+
+      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is
+      chosen.
     oryMechanism:
       - standards
   - name: eidas
@@ -1382,12 +1417,29 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      eIDAS (electronic IDentification, Authentication and trust Services) is a European Union regulation that establishes
-      a framework for cross-border electronic identification and trust services. Through eIDAS, citizens of EU member
-      states can use their national electronic identity (eID) to access services in other member states. This integration
-      connects Ory Network to eIDAS-co...
+      eIDAS — the EU regulation enabling cross-border use of national electronic IDs (German Personalausweis, Italian
+      SPID, Belgian eID, French FranceConnect, Spanish DNI, etc.). Direct eIDAS node access requires government approval;
+      integration goes through a commercial broker (Signicat, Criipto, IDnow, yes.com) that exposes eIDAS as standard OIDC
+      and is consumable by Kratos's generic OIDC provider.
     status: active
-    vendor: eIDAS
+    vendor: European Commission (eIDAS regulation)
+    useCase: >-
+      An EU-targeted product needs cross-border identity verification — a French citizen authenticating to a German
+      service, etc. — using their national eID rather than re-running document verification per country.
+    coreFunctionality: >-
+      - Configured as a generic OIDC provider in Kratos pointing at the broker's issuer; broker handles per-country eIDAS
+      node integration.
+
+      - Common brokers: Signicat (pan-EU), Criipto (Nordic + EU), IDnow, yes.com (DE).
+
+      - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token; Jsonnet maps to identity
+      metadata for downstream policy. Substantial roughly maps to Ory aal1; High to aal2.
+
+      - Per-country eID schemes vary in user experience (card reader for DE Personalausweis, mobile app for FR
+      FranceConnect, etc.) — the broker abstracts this.
+
+      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is
+      chosen.
     oryMechanism:
       - standards
   - name: idin
@@ -1397,12 +1449,32 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      iDIN is a Dutch identity verification service operated by the Dutch banking sector that allows individuals to
-      identify themselves online using their bank credentials. It provides verified identity attributes (name, address,
-      date of birth) backed by KYC data that banks have already collected. iDIN is widely used in the Netherlands for age
-      verification, onboarding, and regulat...
+      iDIN is the Dutch banks' identity-verification service — users identify themselves online with their existing
+      online-banking credentials (ING, Rabobank, ABN AMRO, etc.) and the bank returns verified attributes (name, address,
+      date of birth, 18+ flag). Widely used in the Netherlands for KYC, age verification, and onboarding. Integration goes
+      through a licensed broker (Signicat, CM.com, Connective) exposing iDIN as standard OIDC.
     status: active
-    vendor: iDIN
+    vendor: Currence iDIN (Dutch banks)
+    useCase: >-
+      A Dutch-market product needs identity verification at signup or for age-gating without running its own
+      document-verification flow — leaning on the KYC the user's bank already completed.
+    coreFunctionality: >-
+      - Configured as a generic OIDC provider in Kratos pointing at a broker (Signicat, CM.com, Connective).
+
+      - Bank-KYC verified attributes — high confidence by construction.
+
+      - Common scopes: openid, profile, plus broker-specific iDIN scopes for name / address / DOB / `is18OrOlder` flag.
+
+      - dateOfBirth is sensitive PII — prefer metadata_admin storage; if only age check is needed, request the is18OrOlder
+      flag instead.
+
+      - BSN (Dutch citizen service number) is NOT returned by default — requires Dutch government approval for the BSN
+      scope.
+
+      - Suitable for PSD2 SCA where the bank login itself acts as the strong-customer-authentication factor.
+
+      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is
+      chosen.
     oryMechanism:
       - standards
   - name: helm
@@ -1534,14 +1606,30 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      GBG (which acquired Acuant) is a global identity verification provider with deep document and biometric coverage.
-      This integration calls the GBG identity verification API from an Ory Actions webhook during registration to verify
-      document + selfie evidence, and writes the verification outcome back into the Ory identity for downstream policy
-      decisions.
+      Run GBG (which acquired Acuant) identity verification — document + biometric — from an Ory Actions webhook during
+      registration. Calls the GBG GO Journey API, returns the GBG decision (PASS / REFER / FAIL) so Ory can gate the
+      registration flow, and writes the verdict to identity metadata for downstream policy.
     status: active
     vendor: GBG (Acuant)
+    useCase: >-
+      A regulated product wants document + biometric identity verification with GBG's deep international document coverage
+      (long Acuant heritage), wired into a configurable GBG "journey" so the same Ory action can back several risk levels
+      by swapping the journey id.
+    coreFunctionality: >-
+      - One sync endpoint POST /gbg/verify-identity called from registration.after with response.parse: true so Ory
+      consumes the GBG decision directly.
+
+      - GBG-side flow defined as a "journey" (journey id is required); journey definition controls which evidence types
+      are required (document, selfie, address, etc.).
+
+      - Decision values: PASS / REFER / FAIL — the action fails the registration on REFER/FAIL, or writes the verdict into
+      identity.metadata for downstream policy.
+
+      - Authenticated via X-Webhook-Secret shared with the Ory hook config.
+
+      - First-call cold-path latency can be 5-10s; handler caps at 15s.
     oryMechanism:
-      - actions-webhook
+      - actions
   - name: id-me
     displayName: ID.me
     category: identity-verification
@@ -1549,12 +1637,32 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      ID.me is a US-government-trusted identity verification provider that delivers IAL2 / AAL2 assurance through standard
-      OIDC. Configuring ID.me as a federated provider in Ory Network gives customers a low-touch path to verified identity
-      for healthcare, government, retail, and other use cases that require proof of who the user actually is rather than
-      just who they claim to be.
+      Configure ID.me as a federated OIDC provider in Ory Network to deliver IAL2 / AAL2 assurance — the
+      US-government-trusted identity verification standard required for healthcare, government, retail discount, and
+      similar use cases that need proof of who the user actually is. ID.me also provides verified group claims (Military,
+      Nurse, Teacher, Student, Government Employee, etc.) for verified-discount and access-gating.
     status: active
     vendor: ID.me
+    useCase: >-
+      A US-targeted product needs verified-identity sign-in for healthcare, government, retail discount, or other use
+      cases requiring NIST 800-63 IAL2 — and wants to lean on ID.me's existing user base of verified consumers rather than
+      running its own document-verification flow.
+    coreFunctionality: >-
+      - Configured as a generic OIDC provider in Ory Kratos (id-me does NOT have a dedicated kratos provider key);
+      standard OIDC discovery applies.
+
+      - Endpoints: authorization https://api.id.me/oauth/authorize; token https://api.id.me/oauth/token; userinfo
+      https://api.id.me/api/public/v3/userinfo.
+
+      - Scopes drive what's verified — `openid` for identity, plus scopes like `military`, `nurse`, `teacher` for verified
+      group claims (require ID.me application review per scope).
+
+      - Redirect URI: https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback/id-me.
+
+      - Kratos Jsonnet maps standard OIDC claims plus ID.me-specific group/verification claims to identity traits /
+      metadata.
+
+      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC provider path.
     oryMechanism:
       - standards
   - name: jumio
@@ -1563,22 +1671,62 @@ integrations:
     path: identity-verification/jumio
     maintainedBy: Ory Engineering
     type: webhook
-    description: Jumio identity verification (Document + Selfie + Face Match) integrated with Ory Network via Ory Actions webhooks.
+    description: >-
+      Run Jumio identity verification (Document + Selfie + Face Match) from Ory Actions during registration; consume
+      Jumio's HMAC-signed callback when the workflow finishes and gate login on the stored verification status. Common in
+      regulated industries (financial services, healthcare, gambling, crypto) for high-assurance KYC.
     status: active
     vendor: Jumio
+    useCase: >-
+      A regulated B2C product (fintech, crypto, online gambling, regulated healthcare) needs document + biometric KYC at
+      signup with a vendor that's already on most regulators' approved lists.
+    coreFunctionality: >-
+      - Three endpoints: POST /jumio/initiate (sync registration.after; starts workflow with customerInternalReference =
+      Kratos identity id); POST /jumio/callback (async from Jumio; HMAC-SHA256 verified; PATCHes verdict to identity
+      metadata); POST /jumio/validate (sync login.after with can_interrupt: true; blocks rejected identities).
+
+      - customerInternalReference is the binding between Jumio workflow and Kratos identity — set on initiate, consumed on
+      callback.
+
+      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+
+      - Configured via Ory Actions on registration.after (sync) + login.after (sync, can_interrupt) — no Kratos schema
+      changes required.
+
+      - SDK: @ory/client for Kratos admin API; native fetch for Jumio API.
     oryMechanism:
-      - standards
+      - actions
   - name: lexisnexis
-    displayName: Lexisnexis
+    displayName: LexisNexis InstantID
     category: identity-verification
     path: identity-verification/lexisnexis
     maintainedBy: Ory Engineering
     type: webhook
-    description: LexisNexis identity data verification (NAS/NAP/CVI scoring) integrated with Ory Network via Ory Actions webhooks.
+    description: >-
+      Run LexisNexis Risk Solutions InstantID identity verification from Ory Actions during registration. Database- backed
+      scoring (NAS / NAP / CVI) of name/address/phone/SSN/DOB matches — common in US financial services and insurance
+      where document scans are too high-friction. Gates login on the stored verification status.
     status: active
-    vendor: Lexisnexis
+    vendor: LexisNexis Risk Solutions
+    useCase: >-
+      A US-focused regulated product (financial services, insurance, healthcare) wants identity verification at signup
+      without document upload, scoring against authoritative US data — and wants the threshold per check configurable per
+      product risk profile.
+    coreFunctionality: >-
+      - Two endpoints: POST /lexisnexis/verify (sync registration.after with can_interrupt; calls InstantID, evaluates
+      NAS/NAP/CVI vs thresholds, PATCHes verdict to identity); POST /lexisnexis/validate (sync login.after with
+      can_interrupt; blocks identities with failed status).
+
+      - NAS / NAP / CVI scores returned per inquiry — defaults 50 (calibrated for low-risk consumer flows; tune up for
+      higher risk).
+
+      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+
+      - Synchronous-only — no async callback path (InstantID returns its decision in the API response).
+
+      - SDK: @ory/client for Kratos admin API; native fetch for LexisNexis API.
     oryMechanism:
-      - standards
+      - actions
   - name: onfido
     displayName: Onfido
     category: identity-verification
@@ -1586,12 +1734,30 @@ integrations:
     maintainedBy: Ory Engineering
     type: webhook
     description: >-
-      Onfido identity verification (Document + Face Matching across EU/US/CA regions) integrated with Ory Network via Ory
-      Actions webhooks.
+      Run Onfido identity verification (document, biometric, motion, database checks composed via configurable workflows)
+      from Ory Actions during registration; consume Onfido's HMAC-signed callback when the workflow finishes and gate
+      login on the stored verification status.
     status: active
     vendor: Onfido
+    useCase: >-
+      A B2C product needs identity verification at signup with global coverage (especially EU + UK) and the flexibility to
+      compose document, selfie, motion, and database checks per workflow without per-region code.
+    coreFunctionality: >-
+      - Three endpoints: POST /onfido/initiate (sync registration.after; creates applicant + workflow run with
+      custom_data.kratos_identity_id; returns SDK token); POST /onfido/callback (async from Onfido; X-SHA2-Signature
+      HMAC-SHA256; PATCHes verdict to identity metadata); POST /onfido/validate (sync login.after with can_interrupt:
+      true; blocks declined identities).
+
+      - custom_data.kratos_identity_id is the binding between Onfido workflow run and Kratos identity — set on initiate,
+      consumed on callback.
+
+      - Region-aware (ONFIDO_REGION = EU/US/CA) — selects the right API base host for data residency.
+
+      - Onfido SDK token returned by initiate is short-lived; client must render the verification UI immediately.
+
+      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
     oryMechanism:
-      - standards
+      - actions
   - name: persona
     displayName: Persona
     category: identity-verification
@@ -1599,12 +1765,31 @@ integrations:
     maintainedBy: Ory Engineering
     type: webhook
     description: >-
-      Persona identity verification with configurable templates (document capture, biometric, liveness). Integrates with
-      Ory Network via Ory Actions webhooks.
+      Run Persona identity verification (configurable templates — document capture, selfie + liveness, database checks,
+      watchlist screening) from Ory Actions during registration; consume Persona's HMAC-signed callback when the inquiry
+      completes and gate login on the stored verification status.
     status: active
     vendor: Persona
+    useCase: >-
+      A regulated B2C product needs identity verification at signup tailored to product risk — Persona's templates let the
+      same handler back KYC-light onboarding (document + selfie) and high-trust flows (with database verification +
+      watchlist) without changing code.
+    coreFunctionality: >-
+      - Three endpoints: POST /persona/initiate (sync registration.after; creates Inquiry with reference-id = Kratos
+      identity id; returns hosted URL); POST /persona/callback (async from Persona; HMAC-SHA256 via X-Persona-Signature;
+      PATCHes verdict to identity metadata); POST /persona/validate (sync login.after with can_interrupt: true; blocks
+      login when status == declined).
+
+      - Identity-side state stored in metadata_admin via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+
+      - Reference-id is the binding between Persona Inquiry and Kratos identity — set on initiate, consumed on callback.
+
+      - Configured via Ory Actions on registration.after (sync) + login.after (sync, can_interrupt) — no Kratos schema
+      changes required.
+
+      - SDK: @ory/client for Kratos admin API; native fetch for Persona API.
     oryMechanism:
-      - standards
+      - actions
   - name: prove
     displayName: Prove
     category: identity-verification
@@ -1612,14 +1797,31 @@ integrations:
     maintainedBy: Ory Engineering
     type: webhook
     description: >-
-      Prove (formerly Payfone) is a phone-centric identity verification platform that uses telecom signals and phone
-      intelligence to verify identities, detect SIM swaps, and authenticate users via their mobile phone number. This
-      integration adds pre-registration or post-registration identity verification to Ory Network flows, enabling
-      phone-based identity proofing and fraud detect...
+      Phone-anchored identity verification — telecom signals, SIM-swap detection, identity prefill, and continuous
+      phone-ownership verification — across three Ory Actions lifecycle points: pre-registration lookup (prefill),
+      post-registration enrollment, and per-login validation.
     status: active
-    vendor: Prove
+    vendor: Prove (formerly Payfone)
+    useCase: >-
+      A US-focused product wants signup friction reduced (Prove prefill cuts forms by autofilling name/address from the
+      phone number) AND wants ongoing phone-ownership verification so a SIM-swapped phone can't be used to resume an
+      existing account.
+    coreFunctionality: >-
+      - Three sync endpoints: POST /prove/lookup (registration.before with can_interrupt — prefill or block on SIM swap),
+      POST /prove/enroll (registration.after — enroll phone with Prove Identity Manager, store prove_identity_id), POST
+      /prove/validate (login.after with can_interrupt — confirm continuous phone ownership, block on a fail).
+
+      - All sync — Prove's APIs return decisions in the response, no async callbacks.
+
+      - Phone collection is a prerequisite — identity schema must capture E.164 phone number before /prove/lookup fires.
+
+      - Identity-side state stored in metadata_admin via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+
+      - Uses Prove's official SDK (@prove-identity/prove-api) for the API surface.
+
+      - Defaults to UAT (platform.uat.proveapis.com); override PROVE_SERVER_URL for production.
     oryMechanism:
-      - standards
+      - actions
   - name: socure
     displayName: Socure
     category: identity-verification
@@ -1627,14 +1829,32 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Socure is an ML-based identity verification platform with strong fraud detection and KYC coverage. This integration
-      calls Socure ID+ from an Ory Actions webhook during registration; results are written back to the Ory identity.
-      Socure also supports an asynchronous webhook back to the handler for long-running verifications, which this
-      integration optionally consumes.
+      Run Socure ID+ (ML-based identity verification with strong fraud signals — device fingerprint, email reputation,
+      network risk, KYC, phone risk) from an Ory Action webhook during registration. Supports both the sync path (Socure
+      returns a verdict immediately) and the async path (Socure POSTs the final verdict back to /socure/results-callback
+      when long-running checks complete).
     status: active
     vendor: Socure
+    useCase: >-
+      A regulated B2C product needs ML-driven identity verification at signup with strong fraud signals beyond document
+      checks — device, email, network, phone risk — and wants a single deployment that handles both fast and slow Socure
+      verdict paths.
+    coreFunctionality: >-
+      - Sync path: POST /socure/verify-identity (Ory Action target on registration.after); calls Socure ID+ POST
+      /api/3.0/EmailAuthScore with configured SOCURE_MODULES; returns reference_id / decision (kyc.fieldValidations) /
+      fraud_score for the response-parse Jsonnet to apply policy.
+
+      - Async path: POST /socure/results-callback (FROM Socure when async checks complete); HMAC-SHA256 over raw body via
+      X-Socure-Signature; when ORY_SDK_URL + ORY_ADMIN_API_KEY are set, PATCHes the final decision to
+      metadata_public.socure_decision on the matching identity.
+
+      - SOCURE_MODULES configures which signals run (commonly kyc, fraud, phonerisk).
+
+      - Single deployment, single binary handles both paths — async config is optional.
+
+      - Authenticated via shared ORY_WEBHOOK_SECRET (sync) and SOCURE_CALLBACK_SECRET (async HMAC).
     oryMechanism:
-      - actions-webhook
+      - actions
   - name: duo-security
     displayName: Duo Security
     category: mfa
