@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T21:19:35Z
+  generated: 2026-05-12T22:01:52Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -794,7 +794,7 @@ integrations:
       - actions
     protocol:
       - rest-api
-  - name: salesforce-crm
+  - name: salesforce
     displayName: Salesforce (CRM)
     category: crm
     path: crm/salesforce

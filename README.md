@@ -12,16 +12,20 @@ A high-level summary, generated from the registry:
 
 | Type | Count | What it means |
 |---|---|---|
-| `webhook` | 29 | Ory Action calls a deployed handler during a flow (registration, login, etc.) |
-| `config` | 114 | Configuration in the Ory Console only — no webhook code |
+| `config` | 102 | Configuration in the Ory Console only — no webhook code |
+| `webhook` | 36 | Ory Action calls a deployed handler during a flow (registration, login, etc.) |
+| `session-validation` | 4 | Validates Ory sessions / JWTs at the edge or gateway tier |
+| `sdk-client` | 2 | Vendor SDK in your app, fed Ory identity attributes (feature flags, etc.) |
 | `http-event` | 0 | Consumer of Ory Network Live Events (Enterprise feature). Templates exist; no integrations yet. |
 
 | Maintainer | Count |
 |---|---|
-| Ory Engineering | 54 |
-| Community contributors | 89 |
+| Ory Engineering | 60 |
+| Community contributors | 84 |
 
-Counts: 143 integrations across 28 categories.
+Counts: 144 integrations across 28 categories.
+
+Each entry also carries a multi-value `protocol:` field (`oidc`, `oauth2`, `saml2`, `scim2`, `smtp`, `rest-api`, `http-webhook`, `jwt`, `otlp`, `webauthn`, `openid-2.0`, `custom`) so the registry is filterable both by Ory-side mechanism (`oryMechanism`) and by vendor-side wire protocol (`protocol`).
 
 ## Browse by category
 
