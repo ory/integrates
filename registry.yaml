@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-11T21:29:35Z
+  generated: 2026-05-12T00:08:16Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -1709,18 +1709,31 @@ integrations:
     oryMechanism:
       - courier-spi
   - name: amazon-lwa
-    displayName: Login with Amazon (LWA) - Ory Network
+    displayName: Login with Amazon
     category: social-sign-in
     path: social-sign-in/amazon-lwa
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Login with Amazon (LWA) allows users to authenticate using their Amazon account credentials. Integrating LWA with
-      Ory Network provides a seamless sign-in experience for consumer-facing applications, particularly those in the
-      e-commerce space. Amazon has hundreds of millions of active customer accounts, making it a valuable authentication
-      option for retail, marketplace, and c...
+      Login with Amazon (LWA) as a social sign-in provider in Ory Network. OAuth2 flow against the Amazon Developer
+      platform; Ory calls Amazon's customer-profile API to populate the claims envelope and maps to the identity schema.
     status: active
-    vendor: Login with Amazon (LWA) - Ory Network
+    vendor: Amazon
+    useCase: >-
+      A consumer product targeting the Amazon ecosystem (Alexa skills, FireOS apps, retail-adjacent flows) wants sign-in
+      via the OAuth provider hundreds of millions of users already have an account with.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: amazon`); registered as an "OpenID Connect provider" in the Ory
+      Console wizard.
+
+      - Standard scope `profile` (also `postal_code` if needed). Amazon doesn't issue an id_token, so Ory calls the LWA
+      customer-profile API and exposes name / email as claims.
+
+      - Default Jsonnet maps email to traits.email; email may be empty if the user denied the email permission on the
+      consent screen.
+
+      - Configured via Amazon Security Profile (Login with Amazon → Create a New Security Profile); the Allowed Return
+      URLs in Web Settings must include the Ory redirect URI.
     oryMechanism:
       - standards
   - name: apple
@@ -1785,18 +1798,29 @@ integrations:
     oryMechanism:
       - standards
   - name: dingtalk
-    displayName: DingTalk Social Sign-In - Ory Network
+    displayName: DingTalk
     category: social-sign-in
     path: social-sign-in/dingtalk
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      DingTalk (by Alibaba Group) is a leading enterprise collaboration platform widely used in China with over 600
-      million users. Integrating DingTalk with Ory Network enables B2B applications targeting the Chinese market to
-      authenticate users with their DingTalk corporate accounts. This is essential for enterprise applications, SaaS
-      platforms, and internal tools serving organiza...
+      DingTalk (钉钉) by Alibaba Group as a social sign-in provider in Ory Network. Enterprise communication platform widely
+      used in mainland China; common for B2B and APAC enterprise products that want sign-in via the workplace identity
+      their users already have.
     status: active
-    vendor: DingTalk Social Sign-In - Ory Network
+    vendor: Alibaba
+    useCase: >-
+      A B2B SaaS or internal tool serving organizations in mainland China wants single-sign-on via the corporate
+      collaboration platform that ~600M users are signed into during the workday.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: dingtalk`); CLI-only configuration today (no Ory Console wizard).
+
+      - Supported scopes: `openid` (basic identity) or `openid corpid` (also returns the corporate identifier).
+
+      - Default Jsonnet maps email when present; DingTalk doesn't surface verified-email semantics, so default mapping is
+      conservative.
+
+      - Configured via the DingTalk Open Platform — corporation-scoped apps require organization-side enablement.
     oryMechanism:
       - standards
   - name: discord
@@ -1980,32 +2004,52 @@ integrations:
     oryMechanism:
       - standards
   - name: lark
-    displayName: Lark/Feishu Social Sign-In - Ory Network
+    displayName: Lark / Feishu
     category: social-sign-in
     path: social-sign-in/lark
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Lark (international) / Feishu (China) is ByteDance's enterprise collaboration platform, widely used across Asia for
-      workplace communication, project management, and business workflows. Integrating Lark with Ory Network enables B2B
-      applications to authenticate enterprise users through their Lark accounts, making it essential for applications
-      targeting businesses in Asia.
+      Lark (international) / Feishu (mainland China) by ByteDance as a social sign-in provider in Ory Network. Enterprise
+      collaboration platform used across Asia for workplace communication and business workflows; useful for B2B apps that
+      want sign-in via the workplace identity their users already have.
     status: active
-    vendor: Lark/Feishu Social Sign-In - Ory Network
+    vendor: ByteDance
+    useCase: >-
+      A B2B SaaS or internal tool serving organizations across Asia (especially mainland China and APAC) wants
+      single-sign-on via the workplace platform that ~10M+ enterprise users sign into daily.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: lark`); CLI-only configuration today.
+
+      - Configured via the Feishu Open Platform Developer Console; backs both Lark (overseas) and Feishu (China) tenants
+      under one integration.
+
+      - Default Jsonnet maps email when present; richer fields (name, avatar, employee_no) available from Lark's user-info
+      API.
+
+      - Application-side approval may be required for org-scoped scopes per Lark's tenant administration model.
     oryMechanism:
       - standards
   - name: line
-    displayName: LINE Login - Ory Network
+    displayName: LINE
     category: social-sign-in
     path: social-sign-in/line
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      LINE is the dominant messaging platform in Japan, Thailand, Taiwan, and Indonesia with over 200 million monthly
-      active users. LINE Login provides OIDC-compliant authentication, making it essential for consumer applications
-      targeting these markets. LINE Login can also provide access to the LINE Messaging API for sending notifications.
+      LINE Login as a social sign-in provider in Ory Network. LINE is the dominant messaging platform in Japan, Taiwan,
+      and Thailand; LINE Login is OIDC-compliant and the natural sign-in option for consumer products targeting users in
+      those markets.
     status: active
-    vendor: LINE Login - Ory Network
+    vendor: LINE
+    useCase: >-
+      A consumer app targeting Japan, Taiwan, Thailand, or Indonesia wants sign-in via the messaging platform that ~200M
+      users have on their phone. LINE Login can also be paired with the LINE Messaging API to send notifications.
+    coreFunctionality: |-
+      - First-party Kratos OIDC provider (`provider: line`); both Console wizard and CLI configurations supported.
+      - LINE channel must enable `PROFILE`, `OPENID_CONNECT`, and `OC_EMAIL` permissions on the LINE Developer Console.
+      - Default Jsonnet maps email + name → first_name; add scopes for richer profile or messaging access as needed.
+      - Optional pairing with LINE Messaging API enables push notifications to authenticated users.
     oryMechanism:
       - standards
   - name: linkedin
@@ -2084,48 +2128,83 @@ integrations:
     oryMechanism:
       - standards
   - name: netid
-    displayName: NetID Social Sign-In - Ory Network
+    displayName: NetID
     category: social-sign-in
     path: social-sign-in/netid
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      NetID is a European single sign-on standard backed by the European netID Foundation. It provides a privacy-focused,
-      GDPR-compliant identity solution primarily used in Germany and Europe. NetID partners include major media companies,
-      e-commerce platforms, and telecom providers. Integrating NetID with Ory Network enables European applications to
-      offer a trusted, privacy-respec...
+      NetID as a social sign-in provider in Ory Network. NetID is the European single-sign-in alliance backed by
+      Mediahuis, RTL, and ProSiebenSat.1; OIDC-compliant and positioned as a privacy-respecting, GDPR-aligned alternative
+      to US-based social sign-in providers.
     status: active
-    vendor: NetID Social Sign-In - Ory Network
+    vendor: European netID Foundation
+    useCase: >-
+      A consumer media or e-commerce product targeting Germany and the EU wants a privacy-aligned sign-in option backed by
+      trusted regional brands rather than the dominant US-based providers.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: netid`); both Console wizard and CLI configurations supported.
+
+      - Required scopes: openid, email. Default Jsonnet only returns the email when `email_verified` is true (NetID
+      enforces verification).
+
+      - Sandbox vs live: NetID Clients start in sandbox mode and require explicit test users; promote the Service to
+      enable real users.
+
+      - Configured via the NetID Developer Zone (developerzone.netid.dev); Service + Client model maps to vendor-side /
+      app-side credentials.
     oryMechanism:
       - standards
   - name: patreon
-    displayName: Patreon Social Sign-In - Ory Network
+    displayName: Patreon
     category: social-sign-in
     path: social-sign-in/patreon
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Patreon is the leading membership and subscription platform for creators, with millions of patrons supporting
-      content creators. Integrating Patreon with Ory Network enables applications to authenticate users via their Patreon
-      accounts and verify membership/subscription tiers, making it ideal for gated content, community platforms, and
-      creator tools.
+      Patreon as a social sign-in provider in Ory Network. Patreon's OAuth response includes the user's identity plus
+      their pledge / membership data, which downstream code can use to gate access on tier or campaign membership.
     status: active
-    vendor: Patreon Social Sign-In - Ory Network
+    vendor: Patreon
+    useCase: >-
+      A creator-economy product or member-only platform wants sign-in via the OAuth provider its patrons already use.
+      Application code can read the Patreon membership API after sign-in to gate content on pledge tier.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: patreon`); CLI-only configuration.
+
+      - Supported claims: Subject, Email, Name, GivenName, FamilyName, LastName, Picture.
+
+      - Default Jsonnet maps email; downstream apps typically call Patreon's membership API with the access_token to gate
+      access on tier.
+
+      - Configured via Patreon's OAuth client portal; consent screen is Patreon-managed.
     oryMechanism:
       - standards
   - name: salesforce
-    displayName: Salesforce Social Sign-In - Ory Network
+    displayName: Salesforce
     category: social-sign-in
     path: social-sign-in/salesforce
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Salesforce is the world's leading CRM platform with a large ecosystem of enterprise users. Salesforce supports
-      OpenID Connect, making it a straightforward OIDC provider for Ory Network. This integration enables enterprise
-      applications to authenticate Salesforce users, making it ideal for CRM integrations, partner portals, and B2B
-      applications where users already have Salesfo...
+      Salesforce as a social sign-in provider in Ory Network. Salesforce is OIDC-compliant; the integration is useful for
+      B2B products in the Salesforce ecosystem where reps and admins should sign in with their existing Salesforce
+      account.
     status: active
-    vendor: Salesforce Social Sign-In - Ory Network
+    vendor: Salesforce
+    useCase: >-
+      A B2B SaaS or partner portal integrated with the Salesforce ecosystem wants single-sign-on via the CRM seat its
+      users already have. The access_token can be reused server-side to call Salesforce APIs on behalf of the user.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: salesforce`); both Console wizard and CLI configurations supported.
+
+      - Salesforce Connected App with `openid`, `profile`, `email` scopes; PKCE must be disabled (Kratos doesn't support
+      PKCE for this provider) and "Require Secret for Web Server Flow" enabled.
+
+      - Tenant URL is mandatory in the Ory Console form (typically https://<tenant>.my.salesforce.com) for issuer
+      validation.
+
+      - Default Jsonnet returns email gated on email_verified; maps `nickname` → `username`.
     oryMechanism:
       - standards
   - name: slack
@@ -2243,31 +2322,58 @@ integrations:
     oryMechanism:
       - standards
   - name: twitch
-    displayName: Log in with Twitch - Ory Network
+    displayName: Twitch
     category: social-sign-in
     path: social-sign-in/twitch
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Twitch is the world's leading live streaming platform with over 140 million monthly active users, primarily focused
-      on gaming, esports, and creative content. Integrating Twitch with Ory Network enables gaming platforms, streaming
-      tools, community applications, and esports platforms to authenticate users with their Twitch accounts.
+      Twitch as a social sign-in provider in Ory Network. Common in gaming, streaming, and creator-tooling products.
+      Twitch publishes an OIDC discovery URL but doesn't return an id_token — Ory calls Twitch's /me API and surfaces the
+      user info as claims for Jsonnet mapping.
     status: active
-    vendor: Log in with Twitch - Ory Network
+    vendor: Twitch
+    useCase: >-
+      A gaming, streaming, or creator-tooling product wants sign-in via the OAuth provider its viewers and streamers
+      already use. Optional Twitch scopes (channel info, follows, subscriptions) enable feature gating on creator tier.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: twitch`); CLI-only configuration.
+
+      - Twitch publishes /.well-known/openid-configuration but the `openid` claim isn't returned in the access_token; Ory
+      hits Twitch's /me API to populate the claims envelope.
+
+      - Default Jsonnet returns email gated on email_verified.
+
+      - Configured via the Twitch Developer Portal; scopes follow the Twitch Helix scope catalog.
     oryMechanism:
       - standards
   - name: uaepass
-    displayName: UAEPass — Social Sign-In
+    displayName: UAE PASS
     category: social-sign-in
     path: social-sign-in/uaepass
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      UAEPass is the United Arab Emirates' national digital identity, used to access government and licensed
-      private-sector services. UAEPass exposes a standard OAuth 2.0 / OIDC interface and can be configured as a federated
-      identity provider in Ory Kratos for any application that targets UAE users or needs regional compliance.
+      UAE PASS as a social sign-in provider in Ory Network. UAE PASS is the United Arab Emirates' official digital
+      identity platform for nationals, residents, and visitors; OIDC-compliant and required for products serving UAE
+      residents.
     status: active
-    vendor: UAEPass — Social Sign-In
+    vendor: UAE PASS
+    useCase: >-
+      A consumer or government-adjacent product operating in the UAE wants sign-in via the national digital identity
+      service that residents already use to access government and licensed private-sector services.
+    coreFunctionality: >-
+      - First-party Kratos OIDC provider (`provider: uaepass`); both Console wizard and CLI configurations supported.
+
+      - Issuer URL is environment-specific: https://id.uaepass.ae for production, https://stg-id.uaepass.ae for staging.
+
+      - Default Jsonnet maps sub → subject, email → email, fullnameEN → name.
+
+      - Onboarding is gated — applications must be registered with the UAE PASS partner portal and approved before going
+      live.
+
+      - Supports both web and mobile authentication flows; mobile-app handoff to the UAE PASS app is documented on the
+      partner portal.
     oryMechanism:
       - standards
   - name: vk
@@ -2312,18 +2418,30 @@ integrations:
     oryMechanism:
       - standards
   - name: yandex
-    displayName: Yandex Login - Ory Network
+    displayName: Yandex
     category: social-sign-in
     path: social-sign-in/yandex
     maintainedBy: Ory Engineering
     type: config
     description: >-
-      Yandex is Russia's largest technology company and internet services provider, with services spanning search, email,
-      maps, ride-hailing, and more. Yandex ID provides OAuth 2.0 authentication with access to Yandex user profiles.
-      Integrating Yandex with Ory Network is important for applications targeting the Russian market, where Yandex
-      services are widely used.
+      Yandex as a social sign-in provider in Ory Network. Yandex is the dominant Russian search-and-services portal;
+      Yandex ID provides OAuth 2.0 authentication with access to Yandex user profiles. Useful for products serving
+      Russian-language consumers and CIS markets.
     status: active
-    vendor: Yandex Login - Ory Network
+    vendor: Yandex
+    useCase: >-
+      A consumer product targeting Russian-speaking users (Russia, Belarus, Kazakhstan, the broader CIS) wants sign-in via
+      the OAuth provider its users already use for search, mail, maps, and ride-hailing.
+    coreFunctionality: >-
+      - First-party Kratos OAuth2 provider (`provider: yandex`); CLI-only configuration.
+
+      - Yandex returns an access_token only (no id_token); Ory calls Yandex's user-info API and surfaces the result as
+      claims.
+
+      - Default Jsonnet maps email when present (Yandex doesn't expose an email_verified claim, so the default is
+      conservative).
+
+      - Configured via the Yandex OAuth client portal (yandex.com/dev/id/doc/en/register-client).
     oryMechanism:
       - standards
   - name: freshdesk
