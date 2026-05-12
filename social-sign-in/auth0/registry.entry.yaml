@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: auth0
-displayName: Auth0 as Upstream IdP - Ory Network
-vendor: Auth0 as Upstream IdP - Ory Network
+displayName: Auth0
+vendor: Auth0 (Okta)
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Auth0 can serve as an upstream Identity Provider (IdP) for Ory Network via OIDC federation. This integration is ideal
-  for organizations migrating from Auth0 to Ory or for federated identity scenarios where Auth0 manages a subset of
-  users. By connecting Auth0 as a social sign-in provider, existing Auth0 users can authenticate through Ory without
-  requiring password resets or a...
+  Auth0 as an upstream OIDC provider in Ory Network. Useful for migrations from Auth0 to Ory (run side-by-side and
+  federate Auth0 users into Ory until cutover) or for products that already issue identities through Auth0 and want to
+  layer Ory's flows on top.
+useCase: >-
+  An org migrating from Auth0 to Ory wants existing Auth0 users to authenticate through Ory without password resets
+  during the cutover. Pre-existing Auth0 sessions remain valid; new Ory identities are created on first sign-in.
+coreFunctionality: |-
+  - First-party Kratos OIDC provider (`provider: auth0`); both Console wizard and CLI configurations supported.
+  - Tenant URL is required (typically https://<tenant>.auth0.com) for issuer validation against the customer's specific Auth0 tenant.
+  - Standard scopes: openid, profile, email. Default Jsonnet returns email gated on email_verified; optional `nickname` → `username` mapping.
+  - Auth0 application type must be "Regular Web Applications"; the Ory redirect URI goes into Auth0's Allowed Callback URLs.
+  - Common migration pattern: run Auth0 + Ory side-by-side with Auth0 as the upstream IdP, then disable the Auth0 provider once enough users have been transparently linked to native Ory identities.
 oryMechanism:
   - standards
 status: active

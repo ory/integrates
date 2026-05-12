@@ -2,15 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: vk
-displayName: VKontakte (VK) Social Sign-In - Ory Network
-vendor: VKontakte (VK) Social Sign-In - Ory Network
+displayName: VKontakte
+vendor: VK
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  VKontakte (VK) is the largest social network in Russia and the CIS region, with over 100 million monthly active users.
-  Integrating VK with Ory Network is essential for applications targeting the Russian-speaking market. VK provides OAuth
-  2.0 authentication with access to user profiles, friends lists, and social graph data.
+  VKontakte (VK) as a social sign-in provider in Ory Network. The dominant Russian-language social network — the
+  natural sign-in option for consumer products targeting Russia and CIS markets.
+useCase: >-
+  A consumer product targeting Russian-speaking users wants sign-in via the OAuth provider those users use as their
+  primary social network. Often paired with the Yandex provider for broader CIS coverage.
+coreFunctionality: |-
+  - First-party Kratos OAuth2 provider (`provider: vk`); CLI-only configuration.
+  - VK returns an access_token only (no id_token); Ory calls VK's users.get API to populate the claims envelope.
+  - Default Jsonnet maps email when present (VK doesn't expose email_verified, so the default is conservative — `email` scope is required for any chance of getting it).
+  - Configured via the VK developers portal (vk.com/apps?act=manage); App ID = Client ID, Secure key = Client Secret.
+  - Optional VK scopes for friends list, photos, etc. — enable per app needs.
 oryMechanism:
   - standards
 status: active

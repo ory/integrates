@@ -2,14 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: naver
-displayName: Naver Login - Ory Network
-vendor: Naver Login - Ory Network
+displayName: Naver
+vendor: Naver
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
-  > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Naver uses standard
-  OAuth 2.0, making it straightforward to integrate as a generic provider.
+  Naver Login as a social sign-in provider in Ory Network. Naver is South Korea's largest search portal — a
+  complementary sign-in option to Kakao for products targeting Korean users. OAuth 2.0 (not OIDC).
+useCase: >-
+  A consumer product targeting South Korean users wants sign-in via Naver in addition to (or instead of) Kakao —
+  Naver dominates search and adjacent services in Korea while Kakao dominates messaging.
+coreFunctionality: |-
+  - Configured via the Ory CLI as a generic provider — Naver isn't OIDC (no /.well-known/openid-configuration), so the Console wizard's discovery flow doesn't apply.
+  - Authorization endpoint: https://nid.naver.com/oauth2.0/authorize; Token endpoint: https://nid.naver.com/oauth2.0/token; Profile API: https://openapi.naver.com/v1/nid/me.
+  - Default Jsonnet maps response.id (Naver user id), response.email, response.nickname.
+  - Configured at the Naver Developers Console (developers.naver.com/apps).
+  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
 oryMechanism:
   - standards
 status: active

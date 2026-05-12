@@ -1,195 +1,41 @@
-# GitHub App Authentication - Ory Network Integration
+# GitHub App
 
-## Overview
+> **Maintained by:** Ory Engineering
 
-GitHub App authentication goes beyond simple OAuth login by leveraging GitHub Apps, which can act on behalf of users with fine-grained permissions and can also authenticate as the app itself for server-to-server operations. This integration uses Ory Hydra for OAuth2 server capabilities alongside Ory Kratos for identity management, enabling complex token issuance flows for GitHub App integrations.
+Sign in with a **GitHub App** (not the older OAuth Apps flow). GitHub Apps offer fine-grained, per-repository permissions, per-installation rate limits, and JWT-based server-to-server authentication for acting as the app itself. Use this variant when your product needs to act on a GitHub installation's behalf — read repos, open PRs, post checks — in addition to identifying the user.
 
-## Integration Architecture
+**Type:** config (Ory CLI configuration; no webhook code in this directory)
+**Docs page:** [ory.com/docs/kratos/social-signin/github](https://www.ory.com/docs/kratos/social-signin/github)
 
-```
-User Browser/App
-       |
-       v
-  Ory Self-Service Login UI (Kratos)
-       |
-       v
-  Ory Kratos (OIDC Strategy - GitHub OAuth)
-       |
-       v
-  GitHub App Authorization
-  (https://github.com/login/oauth/authorize)
-       |
-       v
-  GitHub User Authorization & Installation
-       |
-       v
-  GitHub Token Endpoint
-       |
-       v
-  Ory Kratos creates/updates identity
-       |
-       v
-  Ory Hydra (OAuth2 Server)
-  - Issues access/refresh tokens for your API
-  - Manages consent flows
-       |
-       v
-  Your Application API
-  (Uses Hydra tokens + GitHub App installation tokens)
-```
+This is a **variant of the standard GitHub provider** — the OIDC flow is identical (Ory uses `provider: github` under a different `id`), but on the GitHub side you register a **GitHub App** instead of an OAuth App so you also get installation tokens.
 
-**GitHub App vs OAuth App:**
+## Setup
 
-| Feature | OAuth App | GitHub App |
-|---------|-----------|------------|
-| Permissions | Broad scopes | Fine-grained, per-repository |
-| Rate limits | 5,000 req/hour per user | 5,000 req/hour per installation |
-| Installation | Per-user authorization | Per-org/account installation |
-| Server-to-server | Not supported | JWT-based app authentication |
-| Webhooks | Limited | Rich webhook events |
-
-## Ory Products
-
-| Product | Role |
-|---------|------|
-| **Ory Kratos** | User identity management and GitHub OAuth login |
-| **Ory Hydra** | OAuth2/OIDC server for issuing your application's tokens |
-| **Ory Network** | Managed cloud hosting for both services |
-
-## Prerequisites
-
-1. **Ory Network Account** — Sign up at [console.ory.sh](https://console.ory.sh).
-2. **GitHub Account** — With permission to create GitHub Apps.
-3. **GitHub App** — Create at [github.com/settings/apps/new](https://github.com/settings/apps/new):
-   - Set **Homepage URL** to your application URL.
-   - Set **Callback URL** for user authorization:
-     ```
-     https://{your-project-slug}.projects.oryapis.com/self-service/methods/oidc/callback/github-app
-     ```
+1. Follow the [Ory docs page](https://www.ory.com/docs/kratos/social-signin/github) for the **base GitHub provider configuration**, but at the GitHub side create a **GitHub App** at [github.com/settings/apps/new](https://github.com/settings/apps/new) instead of an OAuth App:
+   - Set the **Callback URL** to the Ory redirect URI (`https://$PROJECT_SLUG.projects.oryapis.com/self-service/methods/oidc/callback/github-app`).
    - Enable **Request user authorization (OAuth) during installation**.
-   - Configure required **Permissions** (e.g., repository contents, issues, pull requests).
-   - Generate a **Private Key** (.pem file) for server-to-server authentication.
-   - Note the **App ID**, **Client ID**, and **Client Secret**.
+   - Configure the **Permissions** the app needs (e.g. repository contents, pull requests).
+   - Generate and download a **Private Key** (`.pem`) — used later for server-to-server JWTs, not for Ory.
+   - Note the **App ID**, **Client ID**, **Client Secret**.
+2. Configure the provider via Ory CLI with `provider: github` and `id: github-app`. The `id` is what appears in the redirect URI; the `provider` tells Kratos which OAuth grammar to use.
+3. **Server-to-server** (acting as the app itself) is **out of scope for the Ory provider** — your application code mints a JWT signed with the `.pem` key and exchanges it at `POST /app/installations/{installation_id}/access_tokens` for an installation token. Ory only handles user identification.
 
-4. **Ory Hydra OAuth2 Client** — Create an OAuth2 client in Ory Network for your application:
-   ```bash
-   ory create oauth2-client \
-     --project <your-project-id> \
-     --workspace <your-workspace-id> \
-     --name "My GitHub App Integration" \
-     --grant-type authorization_code,refresh_token \
-     --response-type code \
-     --redirect-uri "https://your-app.com/callback" \
-     --scope openid,offline_access,github:repos
-   ```
+## When to choose this over the regular `github` provider
 
-## Configuration
+| | OAuth App (`github`) | GitHub App (this) |
+|--|--|--|
+| Permissions | Broad scopes | Fine-grained, per-repo |
+| Rate limits | 5,000/hr per user | 5,000/hr per installation |
+| Server-to-server | Not supported | JWT-based |
+| Webhooks | Limited | Rich events |
 
-### Step 1: Configure GitHub as Social Sign-In (Kratos)
-
-```bash
-ory patch identity-config \
-  --project <your-project-id> \
-  --workspace <your-workspace-id> \
-  --add '/selfservice/methods/oidc/config/providers/-={
-    "id": "github-app",
-    "provider": "github",
-    "client_id": "<your-github-app-client-id>",
-    "client_secret": "<your-github-app-client-secret>",
-    "scope": ["user:email", "read:user"],
-    "mapper_url": "base64://'"$(base64 < github-app-mapper.jsonnet)"'"
-  }'
-```
-
-### Step 2: Set Up Hydra OAuth2 Client
-
-The Ory Hydra component handles issuing your application's own OAuth2 tokens, separate from GitHub's tokens.
-
-```bash
-ory create oauth2-client \
-  --project <your-project-id> \
-  --workspace <your-workspace-id> \
-  --name "GitHub App Integration Client" \
-  --grant-type authorization_code,refresh_token,client_credentials \
-  --response-type code \
-  --redirect-uri "https://your-app.com/oauth/callback" \
-  --scope openid,offline_access
-```
-
-### Step 3: Implement Consent & Token Exchange
-
-Your application needs to:
-
-1. Authenticate the user via Kratos (GitHub login).
-2. Use the GitHub App installation token for GitHub API operations.
-3. Issue your own tokens via Hydra for API authorization.
-
-## Technical Details
-
-### GitHub App JWT Authentication (Server-to-Server)
-
-For server-to-server operations, your app authenticates as the GitHub App itself:
-
-```bash
-# Generate JWT from your GitHub App private key
-# Header: {"alg": "RS256", "typ": "JWT"}
-# Payload: {"iss": "<app-id>", "iat": <now>, "exp": <now+600>}
-# Sign with your .pem private key
-```
-
-Then exchange the JWT for an installation access token:
-
-```
-POST https://api.github.com/app/installations/{installation_id}/access_tokens
-Authorization: Bearer <jwt>
-```
-
-### Token Architecture
-
-| Token | Issuer | Purpose |
-|-------|--------|---------|
-| GitHub OAuth token | GitHub | User-authorized GitHub API access |
-| GitHub App installation token | GitHub | Server-to-server GitHub API access |
-| Ory session token | Ory Kratos | User session management |
-| Ory OAuth2 access token | Ory Hydra | Your API authorization |
-
-## Example Identity Schema
-
-### Jsonnet Claims Mapper (`github-app-mapper.jsonnet`)
-
-```jsonnet
-local claims = std.extVar('claims');
-
-{
-  identity: {
-    traits: {
-      [if 'email' in claims then 'email' else null]: claims.email,
-      name: {
-        [if 'name' in claims then 'full' else null]: claims.name,
-      },
-      [if 'login' in claims then 'username' else null]: claims.login,
-      [if 'avatar_url' in claims then 'picture' else null]: claims.avatar_url,
-    },
-  },
-}
-```
-
-## Testing
-
-1. **Install the GitHub App** on a test organization or personal account.
-2. **Start a login flow** and authorize the GitHub App.
-3. **Verify identity creation** and that the GitHub App installation is linked.
-4. **Test server-to-server** by generating a JWT and requesting an installation token.
-5. **Test Hydra token issuance** by completing the OAuth2 authorization code flow.
-
-```bash
-ory list identities --project <your-project-id> --workspace <your-workspace-id>
-```
+If you only need user login, the regular `github` provider is simpler.
 
 ## Resources
 
-- [Ory Kratos GitHub Social Sign-In](https://www.ory.sh/docs/kratos/social-signin/github)
-- [GitHub Apps Documentation](https://docs.github.com/en/apps/creating-github-apps)
-- [GitHub App Authentication](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app)
-- [Ory Hydra OAuth2 Documentation](https://www.ory.sh/docs/hydra)
-- [Ory CLI Reference](https://www.ory.sh/docs/cli/ory)
+- [GitHub Apps documentation](https://docs.github.com/en/apps/creating-github-apps)
+- [Authenticating with a GitHub App](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app)
+
+## License
+
+Apache-2.0. (Configuration-only — no source code in this directory.)

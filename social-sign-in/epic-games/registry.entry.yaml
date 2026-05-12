@@ -2,14 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: epic-games
-displayName: Epic Games Login - Ory Network
-vendor: Epic Games Login - Ory Network
+displayName: Epic Games
+vendor: Epic Games
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
-  > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Epic Games supports
-  standard OAuth 2.0, making it possible to integrate as a generic provider.
+  Epic Games (Epic Online Services) as a social sign-in provider in Ory Network. Configures as a generic OAuth/OIDC
+  provider in Ory; no Epic-specific page yet.
+useCase: >-
+  A gaming product targeting Fortnite, Rocket League, or Unreal-engine titles wants sign-in via the Epic Account
+  identity its players already use. Often paired with Steam or Battle.net for broader gamer coverage.
+coreFunctionality: |-
+  - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI).
+  - Issuer URL: https://api.epicgames.dev/epic/oauth/v2 — Epic Online Services (EOS) issues the tokens.
+  - Standard scopes: openid, basic_profile.
+  - Default Jsonnet maps sub (Epic Account ID), preferred_username, email when present.
+  - Epic Games Developer Portal manages client provisioning; the EOS application client is what backs OAuth.
+  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
 oryMechanism:
   - standards
 status: active

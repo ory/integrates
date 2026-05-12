@@ -1,8 +1,8 @@
 # This file is the source of truth for this integration's registry metadata.
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
-name: salesforce
-displayName: Salesforce
+name: salesforce-crm
+displayName: Salesforce (CRM)
 vendor: Salesforce
 category: crm
 type: config

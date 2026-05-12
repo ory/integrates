@@ -2,15 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: tiktok
-displayName: TikTok — Social Sign-In
-vendor: TikTok — Social Sign-In
+displayName: TikTok
+vendor: TikTok
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
-  TikTok is one of the largest short-video platforms globally with strong reach in younger demographics. The TikTok Login
-  Kit exposes a standard OAuth 2.0 / OIDC-style flow that Ory Kratos can consume as a generic OIDC provider, giving
-  customers a frictionless sign-in for TikTok's user base.
+  Add Login with TikTok as a social sign-in provider in Ory Network. Useful for consumer media products, creator
+  tools, and short-form video adjacent apps where TikTok is the audience graph. TikTok Login Kit is OAuth 2.0
+  (not OIDC) and is configured as a generic provider with explicit endpoints.
+useCase: >-
+  A consumer media or creator product wants Login with TikTok in addition to Google/Facebook so users with strong
+  TikTok presence can sign in with the account they actually use day to day.
+coreFunctionality: |-
+  - Configured via the Ory CLI as a generic provider — TikTok isn't OIDC so the Console wizard's discovery flow doesn't apply.
+  - Authorization endpoint: https://www.tiktok.com/v2/auth/authorize; Token: https://open.tiktokapis.com/v2/oauth/token/; Profile: https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name.
+  - Default Jsonnet maps data.user.open_id, display_name, and email (when the email scope is granted).
+  - Scopes opt-in: `user.info.basic` is base; `user.info.email` is a separately approved scope and may require TikTok app review.
+  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
 oryMechanism:
   - standards
 status: active

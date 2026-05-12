@@ -2,14 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: battle-net
-displayName: Battle.net Login - Ory Network
-vendor: Battle.net Login - Ory Network
+displayName: Battle.net
+vendor: Blizzard Entertainment
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
-  > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Battle.net supports
-  standard OAuth 2.0 with OIDC, making it straightforward to integrate.
+  Battle.net (Blizzard) as a social sign-in provider in Ory Network. OIDC-compliant and configures cleanly as a generic
+  OIDC provider; no Battle.net-specific Ory page yet — pattern follows the generic-OIDC docs.
+useCase: >-
+  A gaming product targeting Blizzard's player base (World of Warcraft, Overwatch, Hearthstone, Diablo) wants sign-in
+  via the OAuth provider its players already use to access their games and battle.tag identity.
+coreFunctionality: |-
+  - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI) — Battle.net is OIDC-certified.
+  - Issuer URL: https://oauth.battle.net (global identity; regional aliases also resolve here).
+  - Standard scopes: openid (basic identity); add `wow.profile` / `sc2.profile` etc. for game-specific data.
+  - Default Jsonnet maps battle_tag, sub, email when present.
+  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
 oryMechanism:
   - standards
 status: active

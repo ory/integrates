@@ -2,14 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: kakao
-displayName: Kakao Login - Ory Network
-vendor: Kakao Login - Ory Network
+displayName: Kakao
+vendor: Kakao
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
-  > **Status: Community/Proposed** — This integration does not have official Ory documentation yet. Kakao supports
-  standard OIDC, making it straightforward to integrate.
+  Kakao Login as a social sign-in provider in Ory Network. Kakao is the dominant identity and messaging platform in
+  South Korea; OIDC-compliant and configures as a generic OIDC provider in Ory.
+useCase: >-
+  A consumer product targeting South Korean users wants sign-in via the platform that nearly every Korean smartphone
+  user has installed for messaging, payments, and identity.
+coreFunctionality: |-
+  - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI).
+  - Issuer URL: https://kauth.kakao.com.
+  - Standard scopes: openid, profile_nickname, account_email; Kakao requires explicit scope opt-in for email and other PII fields on the app's "Consent Items" screen.
+  - Client Secret must be explicitly enabled under the app's Security settings (it's optional for Kakao apps by default).
+  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
 oryMechanism:
   - standards
 status: active

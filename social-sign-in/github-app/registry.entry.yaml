@@ -2,16 +2,27 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: github-app
-displayName: GitHub App Authentication - Ory Network
-vendor: GitHub App Authentication - Ory Network
+displayName: GitHub App
+vendor: GitHub
 category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  GitHub App authentication goes beyond simple OAuth login by leveraging GitHub Apps, which can act on behalf of users
-  with fine-grained permissions and can also authenticate as the app itself for server-to-server operations. This
-  integration uses Ory Hydra for OAuth2 server capabilities alongside Ory Kratos for identity management, enabling
-  complex token issuance flows for Gi...
+  Sign in via a GitHub App (the modern variant of GitHub OAuth Apps) so the same identity flow that authenticates
+  the user also pairs with an app installation that can act on their org/repos with fine-grained permissions and
+  per-installation rate limits. The Ory side reuses the standard GitHub OIDC provider; the difference is on the
+  GitHub side where you register an App instead of an OAuth App.
+useCase: >-
+  A developer-tool product (CI, code review, security scanner, automation) needs both user login and the ability
+  to act on the user's repositories — opening PRs, posting check runs, reading code. The GitHub App flow gives
+  scoped per-repo permissions and a separate JWT-based server-to-server credential, neither of which OAuth Apps
+  provide.
+coreFunctionality: |-
+  - Kratos provider configuration uses `provider: github` with a distinct `id` (e.g. `github-app`); the user-facing OAuth flow is identical to the regular GitHub provider.
+  - GitHub-side registration uses GitHub Apps (settings/apps/new) instead of OAuth Apps, with the Ory redirect URI set as the Callback URL and "Request user authorization (OAuth) during installation" enabled.
+  - Fine-grained per-repository permissions, per-installation rate limits (5,000 req/hr per installation), and rich webhook events.
+  - Server-to-server authentication via JWT signed with the App's private key, exchanged at GitHub for an installation access token — handled by the application, not by Ory.
+  - Use the regular `github` provider instead if only user login is needed; choose this variant when the product also needs to act on installations.
 oryMechanism:
   - standards
 status: active

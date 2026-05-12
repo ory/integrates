@@ -2,14 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: steam
-displayName: Steam Login - Ory Network
-vendor: Steam Login - Ory Network
+displayName: Steam
+vendor: Valve
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
-  > **Status: Community/Proposed** — This integration does not have official Ory documentation. Steam uses **OpenID
-  2.0** (legacy), NOT OAuth 2.0 or OIDC, which requires special handling.
+  Sign in with Steam — Valve's PC gaming platform — surfaced through Ory Network. Steam predates OAuth/OIDC and
+  uses OpenID 2.0, so Kratos cannot consume it directly; a small OpenID 2.0 → OIDC proxy in front of Steam is
+  the recommended bridge, with Kratos then configured as a generic OIDC provider against the proxy.
+useCase: >-
+  A gaming, esports, community, or game-launcher product wants Sign in with Steam so users authenticate with
+  their existing Steam identity rather than creating a separate account.
+coreFunctionality: |-
+  - Steam is NOT natively supported by Kratos — it speaks OpenID 2.0 (2007 spec), not OAuth 2.0/OIDC.
+  - Recommended pattern: deploy a small OpenID 2.0 → OIDC proxy that wraps Steam's `https://steamcommunity.com/openid/login` endpoint and exposes a normal OIDC issuer; configure Kratos against the proxy as a generic provider.
+  - Alternative: implement Steam OpenID 2.0 in your backend and create/lookup identities via the Kratos Admin API, bypassing the social-signin subsystem.
+  - Steam does NOT share email; design the identity schema to use the 64-bit Steam ID as the credential identifier.
+  - A Steam Web API key (from steamcommunity.com/dev/apikey) is needed to fetch profile data via GetPlayerSummaries; profile visibility may be restricted.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active

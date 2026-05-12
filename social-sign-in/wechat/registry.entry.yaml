@@ -2,14 +2,27 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: wechat
-displayName: WeChat Login - Ory Network
-vendor: WeChat Login - Ory Network
+displayName: WeChat
+vendor: Tencent
 category: social-sign-in
 type: config
-maintainedBy: Ory Engineering
+maintainedBy: Community contributors
 description: >-
-  > **Status: Community/Proposed** — This integration does not have official Ory documentation. WeChat uses a
-  non-standard OAuth flow that requires special handling.
+  Sign in with WeChat (微信) — Tencent's super-app and the default identity for products targeting users in mainland
+  China. WeChat's OAuth dialect is non-standard (uses appid/secret instead of client_id/client_secret, no id_token,
+  and surface-specific authorization endpoints), so a small OIDC proxy in front of WeChat is the recommended
+  bridge to Kratos.
+useCase: >-
+  A consumer product targeting users in mainland China needs Sign in with WeChat as effectively the default
+  identity provider — comparable to how Google sign-in functions in Western markets.
+coreFunctionality: |-
+  - WeChat is NOT natively supported by Kratos — its OAuth dialect renames client_id/client_secret to appid/secret and never returns an id_token.
+  - Recommended pattern: deploy an OIDC proxy that translates the standard OIDC request to WeChat's flow and returns a normal id_token; configure Kratos against the proxy as a generic provider.
+  - Three distinct authorization endpoints by surface: web QR-code (open.weixin.qq.com/connect/qrconnect), in-app (open.weixin.qq.com/connect/oauth2/authorize), and Mini Programs.
+  - Use `unionid` (cross-app stable identifier under one Open Platform account) rather than `openid` (per-app) for the identity credential.
+  - WeChat does NOT share email; identity schema must accommodate.
+  - Operational prerequisites: Chinese business entity for Open Platform registration, ICP filing for the callback domain, and testing from within China for reliable connectivity.
+  - Status: community/proposed — no dedicated ory/docs page.
 oryMechanism:
   - standards
 status: active
