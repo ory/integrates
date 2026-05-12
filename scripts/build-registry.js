@@ -83,14 +83,117 @@ metadata:
 integrations:
 `;
 
-const body = yaml.dump(entries, { indent: 2, lineWidth: 120, noRefs: true, sortKeys: false });
-const indented = body
-  .split("\n")
-  .map((l) => (l.length ? `  ${l}` : l))
-  .join("\n");
+// Custom YAML serializer for entries.
+//
+// js-yaml.dump() picks YAML's folded scalar style (>-) for any multi-line
+// string, which collapses bulleted `coreFunctionality` content and inserts
+// awkward blank-line separators between every bullet. We want:
+//   - literal block scalar (|-) for strings that already contain newlines
+//     (coreFunctionality, mostly) — preserves bullet structure exactly
+//   - folded scalar (>-) for long single-line prose (description, useCase)
+//   - plain scalar for short single-line values
+
+const FOLD_WIDTH = 120;
+// Display order — fields not listed here go after, alphabetically.
+const FIELD_ORDER = [
+  "name", "displayName", "vendor", "category", "path",
+  "type", "maintainedBy", "status",
+  "description", "useCase", "coreFunctionality",
+  "oryMechanism", "protocol", "subscribedEvents",
+];
+
+function plainSafe(s) {
+  // Quote when ambiguous: leading/trailing whitespace, leading symbols that
+  // start other YAML constructs, or contains characters that would change
+  // parsing. Keep simple; quote on any whiff of ambiguity.
+  if (/^\s|\s$/.test(s)) return true;
+  if (/[:#@&*!|>%`,\[\]{}]/.test(s)) return true;
+  if (/^(true|false|null|yes|no|on|off|~|-|\?)$/i.test(s)) return true;
+  if (/^-?\d/.test(s)) return true;
+  return false;
+}
+
+function quotePlain(s) {
+  // Use single quotes; double up single-quote chars per YAML spec.
+  return `'${s.replace(/'/g, "''")}'`;
+}
+
+function foldText(s, width, indent) {
+  // Greedy word-wrap at `width` minus indent.
+  const max = width - indent.length;
+  const words = s.split(/\s+/);
+  const lines = [];
+  let current = "";
+  for (const w of words) {
+    if (current.length === 0) {
+      current = w;
+    } else if (current.length + 1 + w.length <= max) {
+      current = `${current} ${w}`;
+    } else {
+      lines.push(current);
+      current = w;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function dumpScalar(key, value, indent) {
+  const childIndent = `${indent}  `;
+  if (Array.isArray(value)) {
+    const lines = [`${indent}${key}:`];
+    for (const item of value) {
+      lines.push(`${childIndent}- ${plainSafe(String(item)) ? quotePlain(String(item)) : item}`);
+    }
+    return lines.join("\n");
+  }
+  if (value === null || value === undefined) {
+    return `${indent}${key}:`;
+  }
+  if (typeof value === "boolean" || typeof value === "number") {
+    return `${indent}${key}: ${value}`;
+  }
+  const s = String(value);
+  if (s.includes("\n")) {
+    // Literal block scalar — preserve newlines exactly.
+    const lines = [`${indent}${key}: |-`];
+    for (const line of s.split("\n")) {
+      lines.push(line.length ? `${childIndent}${line}` : "");
+    }
+    return lines.join("\n");
+  }
+  if (s.length + key.length + indent.length + 2 > FOLD_WIDTH) {
+    // Folded block scalar — wrap long single-line prose for readability.
+    const lines = [`${indent}${key}: >-`];
+    for (const line of foldText(s, FOLD_WIDTH, childIndent)) {
+      lines.push(`${childIndent}${line}`);
+    }
+    return lines.join("\n");
+  }
+  // Plain or quoted single-line.
+  return `${indent}${key}: ${plainSafe(s) ? quotePlain(s) : s}`;
+}
+
+function dumpEntry(entry) {
+  const baseIndent = "    "; // 4 spaces — entry fields under "  - name:"
+  const keys = [...FIELD_ORDER.filter((k) => k in entry), ...Object.keys(entry).filter((k) => !FIELD_ORDER.includes(k))];
+  const lines = [];
+  for (const k of keys) {
+    const block = dumpScalar(k, entry[k], baseIndent);
+    if (k === keys[0]) {
+      // First field becomes the list item: replace leading 4 spaces with "  - "
+      lines.push(block.replace(baseIndent, "  - "));
+    } else {
+      lines.push(block);
+    }
+  }
+  return lines.join("\n");
+}
+
+const body = entries.map(dumpEntry).join("\n");
 
 const outPath = path.join(REPO_ROOT, "registry.yaml");
-fs.writeFileSync(outPath, header + indented);
+fs.writeFileSync(outPath, header + body + "\n");
 
 const byType = {};
 const byMaintainer = {};
