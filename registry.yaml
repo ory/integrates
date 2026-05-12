@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T14:48:55Z
+  generated: 2026-05-12T21:19:35Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -43,6 +43,9 @@ integrations:
       - Status: community/proposed — emerging space, reference architecture more than turnkey product.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
+      - rest-api
   - name: apigee
     displayName: Google Apigee
     category: api-gateways
@@ -75,6 +78,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - jwt
   - name: aws-api-gateway
     displayName: AWS API Gateway
     category: api-gateways
@@ -109,6 +114,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - jwt
   - name: kong
     displayName: Kong API Gateway
     category: api-gateways
@@ -144,6 +151,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - jwt
+      - rest-api
   - name: traefik
     displayName: Traefik
     category: api-gateways
@@ -179,6 +189,8 @@ integrations:
       - 503 on Ory outages so Traefik surfaces a clear gateway error instead of treating an outage as "unauthorized".
     oryMechanism:
       - session-validation
+    protocol:
+      - rest-api
   - name: amplitude
     displayName: Amplitude
     category: cdp-analytics
@@ -210,6 +222,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: mailchimp
     displayName: Mailchimp (Marketing)
     category: cdp-analytics
@@ -242,6 +256,8 @@ integrations:
       - Documented at https://www.ory.com/docs/actions/integrations/mailchimp.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: mixpanel
     displayName: Mixpanel
     category: cdp-analytics
@@ -274,6 +290,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: mparticle
     displayName: mParticle
     category: cdp-analytics
@@ -305,6 +323,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: segment
     displayName: Segment
     category: cdp-analytics
@@ -337,7 +357,9 @@ integrations:
 
       - Fire-and-forget: Segment outages and 5xx responses are logged but never propagate to Ory.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: aws
     displayName: AWS
     category: cloud-infrastructure
@@ -368,6 +390,8 @@ integrations:
       - No AWS-specific Ory docs page; the Ory self-hosted/operations pages cover the cloud-agnostic concerns.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: azure
     displayName: Microsoft Azure
     category: cloud-infrastructure
@@ -399,6 +423,8 @@ integrations:
       enterprise-sso/microsoft-entra-id (separate concerns from cloud deployment).
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: gcp
     displayName: GCP
     category: cloud-infrastructure
@@ -431,6 +457,8 @@ integrations:
       (separate concerns from cloud deployment).
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: drata
     displayName: Drata
     category: compliance-audit
@@ -463,6 +491,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; implementation lives in Drata's custom-connector layer.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: vanta
     displayName: Vanta
     category: compliance-audit
@@ -496,6 +526,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; implementation lives in Vanta's custom-integration layer.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: didomi
     displayName: Didomi
     category: consent-privacy
@@ -528,6 +560,9 @@ integrations:
       - Status: community/proposed — implementation lives in the customer's webhook handler.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
+      - http-webhook
   - name: onetrust
     displayName: OneTrust
     category: consent-privacy
@@ -559,7 +594,10 @@ integrations:
 
       - Skips unmapped consent categories silently so partial Purpose ID configuration doesn't break registration.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
+      - http-webhook
   - name: osano
     displayName: Osano
     category: consent-privacy
@@ -594,6 +632,9 @@ integrations:
       - Status: community/proposed — implementation lives in the customer's webhook handler.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
+      - http-webhook
   - name: docker
     displayName: Docker
     category: containerization
@@ -624,6 +665,8 @@ integrations:
       secret handling you'll want.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: kubernetes
     displayName: Kubernetes
     category: containerization
@@ -650,6 +693,8 @@ integrations:
       visibility or non-default customization justifies the maintenance burden.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: hubspot
     displayName: HubSpot
     category: crm
@@ -676,7 +721,10 @@ integrations:
 
       - 502 on HubSpot errors so the failure surfaces in Ory instead of being silently dropped.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
+      - http-webhook
   - name: microsoft-dynamics-365
     displayName: Microsoft Dynamics 365
     category: crm
@@ -710,6 +758,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - oauth2
   - name: pipedrive
     displayName: Pipedrive
     category: crm
@@ -741,6 +792,8 @@ integrations:
       - SDK: native fetch (no Pipedrive SDK); @ory/client not used (handler doesn't read back from Ory).
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: salesforce-crm
     displayName: Salesforce (CRM)
     category: crm
@@ -776,6 +829,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - oauth2
   - name: zoho-crm
     displayName: Zoho CRM
     category: crm
@@ -809,6 +865,9 @@ integrations:
       - SDK: native fetch (no Zoho SDK); @ory/client not used (handler doesn't read back from Ory).
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - oauth2
   - name: cockroachdb
     displayName: CockroachDB
     category: data-persistence
@@ -843,6 +902,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - custom
   - name: bamboohr
     displayName: BambooHR
     category: directory-sync
@@ -873,7 +934,9 @@ integrations:
       - BambooHR Basic auth: API key as username, literal "x" as password — documented in code so it doesn't look like a
       typo.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: google-workspace-scim
     displayName: Google Workspace SCIM
     category: directory-sync
@@ -906,6 +969,8 @@ integrations:
       sign-in side.
     oryMechanism:
       - directory-sync
+    protocol:
+      - scim2
   - name: jumpcloud-scim
     displayName: JumpCloud SCIM
     category: directory-sync
@@ -936,6 +1001,8 @@ integrations:
       - Pushes lifecycle events on its own schedule; no manual sync button.
     oryMechanism:
       - directory-sync
+    protocol:
+      - scim2
   - name: microsoft-scim
     displayName: Microsoft Entra ID SCIM
     category: directory-sync
@@ -967,6 +1034,8 @@ integrations:
       - Pair with enterprise-sso/microsoft-entra-id for the federated sign-in side.
     oryMechanism:
       - directory-sync
+    protocol:
+      - scim2
   - name: okta-scim
     displayName: Okta SCIM
     category: directory-sync
@@ -1000,6 +1069,8 @@ integrations:
       - Pair with enterprise-sso/okta for the federated sign-in side.
     oryMechanism:
       - directory-sync
+    protocol:
+      - scim2
   - name: onelogin-scim
     displayName: OneLogin SCIM
     category: directory-sync
@@ -1030,6 +1101,8 @@ integrations:
       - Now branded as One Identity OneLogin following the Quest Software / One Identity acquisition.
     oryMechanism:
       - directory-sync
+    protocol:
+      - scim2
   - name: workday-scim
     displayName: Workday SCIM
     category: directory-sync
@@ -1064,6 +1137,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - directory-sync
+    protocol:
+      - scim2
+      - rest-api
   - name: akamai-edgeworkers
     displayName: Akamai EdgeWorkers
     category: edge-token-validation
@@ -1098,6 +1174,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - jwt
+      - rest-api
   - name: cloudflare-workers
     displayName: Cloudflare Workers
     category: edge-token-validation
@@ -1129,6 +1208,9 @@ integrations:
       - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to login with return_to.
     oryMechanism:
       - session-validation
+    protocol:
+      - jwt
+      - rest-api
   - name: fastly-compute
     displayName: Fastly Compute@Edge
     category: edge-token-validation
@@ -1166,6 +1248,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - jwt
+      - rest-api
   - name: aws-ses
     displayName: Amazon SES
     category: email-providers
@@ -1199,6 +1284,8 @@ integrations:
       back into reputation.
     oryMechanism:
       - courier-spi
+    protocol:
+      - smtp
   - name: brevo
     displayName: Brevo (Sendinblue)
     category: email-providers
@@ -1227,6 +1314,9 @@ integrations:
       - DKIM and Return-Path must be aligned with the From domain for Gmail/Microsoft deliverability.
     oryMechanism:
       - courier-spi
+    protocol:
+      - smtp
+      - rest-api
   - name: mailchimp-transactional
     displayName: Mailchimp Transactional (Mandrill)
     category: email-providers
@@ -1260,6 +1350,8 @@ integrations:
       instead.
     oryMechanism:
       - courier-spi
+    protocol:
+      - smtp
   - name: mailgun
     displayName: Mailgun
     category: email-providers
@@ -1289,6 +1381,8 @@ integrations:
       - Mailgun auto-manages bounce/complaint/unsubscribe suppression lists.
     oryMechanism:
       - courier-spi
+    protocol:
+      - smtp
   - name: postmark
     displayName: Postmark
     category: email-providers
@@ -1321,6 +1415,8 @@ integrations:
       - Postmark auto-deactivates hard-bouncing addresses to protect reputation.
     oryMechanism:
       - courier-spi
+    protocol:
+      - smtp
   - name: sendgrid
     displayName: SendGrid
     category: email-providers
@@ -1354,6 +1450,9 @@ integrations:
       content.
     oryMechanism:
       - courier-spi
+    protocol:
+      - smtp
+      - rest-api
   - name: sparkpost
     displayName: SparkPost
     category: email-providers
@@ -1385,6 +1484,9 @@ integrations:
       rendering (not recommended — Ory renders templates by default).
     oryMechanism:
       - courier-spi
+    protocol:
+      - smtp
+      - rest-api
   - name: auth0-saml
     displayName: Auth0 SAML
     category: enterprise-sso
@@ -1413,6 +1515,8 @@ integrations:
       - MFA enforcement sits at the Auth0 IdP layer; Ory consumes the resulting authenticated assertion.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: cyberark-identity
     displayName: CyberArk Identity
     category: enterprise-sso
@@ -1442,6 +1546,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
+      - oidc
   - name: forgerock-am
     displayName: ForgeRock Access Management
     category: enterprise-sso
@@ -1473,6 +1580,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
+      - oidc
   - name: generic-oidc
     displayName: Generic OIDC Provider
     category: enterprise-sso
@@ -1504,6 +1614,8 @@ integrations:
       Polis page.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: generic-saml
     displayName: Generic SAML 2.0
     category: enterprise-sso
@@ -1538,6 +1650,8 @@ integrations:
       Polis page.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: google-workspace
     displayName: Google Workspace SAML
     category: enterprise-sso
@@ -1567,6 +1681,8 @@ integrations:
       per-organization isolation.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: hid-global
     displayName: HID Global Identity Services
     category: enterprise-sso
@@ -1600,6 +1716,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
+      - oidc
   - name: ibm-security-verify
     displayName: IBM Security Verify
     category: enterprise-sso
@@ -1630,6 +1749,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
+      - oidc
   - name: jumpcloud
     displayName: JumpCloud
     category: enterprise-sso
@@ -1659,6 +1781,8 @@ integrations:
       - For SCIM provisioning of JumpCloud users into Ory, see directory-sync/jumpcloud-scim (separate concern from SSO).
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: keycloak
     displayName: Keycloak
     category: enterprise-sso
@@ -1694,6 +1818,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
+      - saml2
   - name: microsoft-adfs
     displayName: Microsoft AD FS
     category: enterprise-sso
@@ -1725,6 +1852,8 @@ integrations:
       - WS-Federation NOT supported — Polis only consumes SAML 2.0.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: microsoft-entra-id
     displayName: Microsoft Entra ID (Azure AD)
     category: enterprise-sso
@@ -1760,6 +1889,8 @@ integrations:
       - For SCIM provisioning into Ory, see directory-sync/microsoft-scim (separate concern).
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: okta
     displayName: Okta
     category: enterprise-sso
@@ -1791,6 +1922,9 @@ integrations:
       - For SCIM provisioning of Okta users into Ory, see directory-sync/okta-scim (separate concern).
     oryMechanism:
       - standards
+    protocol:
+      - saml2
+      - oidc
   - name: onelogin
     displayName: OneLogin
     category: enterprise-sso
@@ -1821,6 +1955,8 @@ integrations:
       - For SCIM provisioning of OneLogin users into Ory, see directory-sync/onelogin-scim (separate concern).
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: pingone
     displayName: PingOne
     category: enterprise-sso
@@ -1851,6 +1987,8 @@ integrations:
       the legacy on-prem product.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: rippling
     displayName: Rippling
     category: enterprise-sso
@@ -1883,6 +2021,8 @@ integrations:
       endpoint.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: launchdarkly
     displayName: LaunchDarkly
     category: feature-flags
@@ -1916,6 +2056,8 @@ integrations:
       - Ships as an importable library (peer-depends on @launchdarkly/node-server-sdk ^9) — not a deployed HTTP service.
     oryMechanism:
       - sdk-client
+    protocol:
+      - rest-api
   - name: split-io
     displayName: Split.io
     category: feature-flags
@@ -1948,6 +2090,8 @@ integrations:
       - Status: community/proposed — convention guide, not turnkey code.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: arkose-labs
     displayName: Arkose Labs
     category: fraud-bot-protection
@@ -1978,6 +2122,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: castle
     displayName: Castle.io
     category: fraud-bot-protection
@@ -2006,7 +2152,9 @@ integrations:
 
       - Fails open on Castle outages so authentication never breaks because of Castle availability.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: cloudflare-turnstile
     displayName: Cloudflare Turnstile
     category: fraud-bot-protection
@@ -2038,6 +2186,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; same pattern as hCaptcha / reCAPTCHA / Arkose.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: hcaptcha
     displayName: hCaptcha
     category: fraud-bot-protection
@@ -2070,6 +2220,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; same pattern as Turnstile / reCAPTCHA / Arkose.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: recaptcha
     displayName: Google reCAPTCHA
     category: fraud-bot-protection
@@ -2102,7 +2254,9 @@ integrations:
 
       - Fails closed on a siteverify outage so a Google-API hiccup doesn't silently disable bot protection.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: sift
     displayName: Sift
     category: fraud-bot-protection
@@ -2140,6 +2294,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: generic-oidc
     displayName: Generic OIDC Provider
     category: generic-protocols
@@ -2170,6 +2326,8 @@ integrations:
       authoritative Ory docs.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: generic-saml
     displayName: Generic SAML 2.0
     category: generic-protocols
@@ -2204,6 +2362,8 @@ integrations:
       authoritative Ory Polis page.
     oryMechanism:
       - standards
+    protocol:
+      - saml2
   - name: aadhaar
     displayName: Aadhaar
     category: government-identity
@@ -2235,6 +2395,8 @@ integrations:
       - Status: community/proposed — Aadhaar is not natively supported and integration is fundamentally outsourced.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: bankid
     displayName: BankID
     category: government-identity
@@ -2269,6 +2431,8 @@ integrations:
       chosen.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: eidas
     displayName: eIDAS
     category: government-identity
@@ -2301,6 +2465,8 @@ integrations:
       chosen.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: idin
     displayName: iDIN
     category: government-identity
@@ -2336,6 +2502,8 @@ integrations:
       chosen.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: helm
     displayName: Helm Charts
     category: iac-devops
@@ -2366,6 +2534,8 @@ integrations:
       manager rather than committing them; use a managed Postgres (RDS, Cloud SQL, Azure DB), not in-cluster.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: pulumi
     displayName: Pulumi
     category: iac-devops
@@ -2394,6 +2564,8 @@ integrations:
       for the rest.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: terraform
     displayName: Terraform Provider
     category: iac-devops
@@ -2428,6 +2600,8 @@ integrations:
       - Provider is for Ory Network only — does NOT manage self-hosted Kratos/Hydra/Keto/Oathkeeper.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: equifax
     displayName: Equifax
     category: identity-verification
@@ -2457,7 +2631,10 @@ integrations:
 
       - 502 on Equifax errors / outages so the verdict is never silently a pass.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
+      - oauth2
   - name: gbg-acuant
     displayName: GBG (Acuant)
     category: identity-verification
@@ -2489,6 +2666,8 @@ integrations:
       - First-call cold-path latency can be 5-10s; handler caps at 15s.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: id-me
     displayName: ID.me
     category: identity-verification
@@ -2524,6 +2703,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC provider path.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: jumio
     displayName: Jumio
     category: identity-verification
@@ -2555,6 +2736,10 @@ integrations:
       - SDK: @ory/client for Kratos admin API; native fetch for Jumio API.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - oauth2
+      - http-webhook
   - name: lexisnexis
     displayName: LexisNexis InstantID
     category: identity-verification
@@ -2586,6 +2771,8 @@ integrations:
       - SDK: @ory/client for Kratos admin API; native fetch for LexisNexis API.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: onfido
     displayName: Onfido
     category: identity-verification
@@ -2617,6 +2804,9 @@ integrations:
       - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - http-webhook
   - name: persona
     displayName: Persona
     category: identity-verification
@@ -2649,6 +2839,9 @@ integrations:
       - SDK: @ory/client for Kratos admin API; native fetch for Persona API.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - http-webhook
   - name: prove
     displayName: Prove
     category: identity-verification
@@ -2681,6 +2874,9 @@ integrations:
       - Defaults to UAT (platform.uat.proveapis.com); override PROVE_SERVER_URL for production.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - oauth2
   - name: socure
     displayName: Socure
     category: identity-verification
@@ -2714,6 +2910,9 @@ integrations:
       - Authenticated via shared ORY_WEBHOOK_SECRET (sync) and SOCURE_CALLBACK_SECRET (async HMAC).
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - http-webhook
   - name: duo-security
     displayName: Duo Security
     category: mfa
@@ -2742,7 +2941,9 @@ integrations:
 
       - 502 on Duo errors so a Duo outage never silently grants MFA.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: okta-verify
     displayName: Okta Verify
     category: mfa
@@ -2773,7 +2974,9 @@ integrations:
 
       - 502 on Okta errors (SSWS revoked, factor lookup 404) so Okta outages never silently grant MFA.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: yubikey
     displayName: YubiKey (WebAuthn / FIDO2)
     category: mfa
@@ -2812,6 +3015,8 @@ integrations:
       variant.
     oryMechanism:
       - standards
+    protocol:
+      - webauthn
   - name: datadog
     displayName: Datadog
     category: monitoring-observability
@@ -2841,6 +3046,9 @@ integrations:
       /self-hosted/operations/observability.
     oryMechanism:
       - standards
+    protocol:
+      - otlp
+      - rest-api
   - name: new-relic
     displayName: New Relic
     category: monitoring-observability
@@ -2873,6 +3081,8 @@ integrations:
       SDK/collector level, not backend side, to preserve head-of-trace context.
     oryMechanism:
       - standards
+    protocol:
+      - otlp
   - name: opentelemetry
     displayName: OpenTelemetry
     category: monitoring-observability
@@ -2902,6 +3112,8 @@ integrations:
       - Sampling at the SDK / collector level (not backend-side) preserves head-of-trace context.
     oryMechanism:
       - standards
+    protocol:
+      - otlp
   - name: prometheus-grafana
     displayName: Prometheus + Grafana
     category: monitoring-observability
@@ -2930,6 +3142,8 @@ integrations:
       into Tempo/Jaeger.
     oryMechanism:
       - standards
+    protocol:
+      - rest-api
   - name: recurly
     displayName: Recurly
     category: payment-billing
@@ -2963,6 +3177,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - http-webhook
   - name: stripe
     displayName: Stripe
     category: payment-billing
@@ -2994,7 +3211,10 @@ integrations:
 
       - Stripe API version pinned via STRIPE_API_VERSION env; bumps are explicit decisions, not silent updates.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
+      - http-webhook
   - name: elastic-siem
     displayName: Elastic SIEM
     category: siem-security-analytics
@@ -3027,6 +3247,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: microsoft-sentinel
     displayName: Microsoft Sentinel
     category: siem-security-analytics
@@ -3061,6 +3283,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: splunk
     displayName: Splunk
     category: siem-security-analytics
@@ -3091,7 +3315,9 @@ integrations:
 
       - Authentication method inference from flow.type (oidc / totp / webauthn / lookup_secret / fallback password).
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: sumo-logic
     displayName: Sumo Logic
     category: siem-security-analytics
@@ -3126,6 +3352,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: messagebird
     displayName: MessageBird (Bird)
     category: sms-providers
@@ -3154,6 +3382,8 @@ integrations:
       - Optional reportUrl in the body enables real-time delivery callbacks.
     oryMechanism:
       - courier-spi
+    protocol:
+      - rest-api
   - name: plivo
     displayName: Plivo
     category: sms-providers
@@ -3176,6 +3406,8 @@ integrations:
       - Optional `url` field in the body enables real-time delivery callbacks.
     oryMechanism:
       - courier-spi
+    protocol:
+      - rest-api
   - name: sinch
     displayName: Sinch
     category: sms-providers
@@ -3207,6 +3439,8 @@ integrations:
       directly.
     oryMechanism:
       - courier-spi
+    protocol:
+      - rest-api
   - name: twilio
     displayName: Twilio
     category: sms-providers
@@ -3236,6 +3470,8 @@ integrations:
       - Twilio Test Credentials (separate SID/Token) simulate sends without delivery or charges — useful for CI.
     oryMechanism:
       - courier-spi
+    protocol:
+      - rest-api
   - name: vonage
     displayName: Vonage (Nexmo)
     category: sms-providers
@@ -3266,6 +3502,8 @@ integrations:
       for SMS-only use.
     oryMechanism:
       - courier-spi
+    protocol:
+      - rest-api
   - name: whatsapp
     displayName: WhatsApp Business
     category: sms-providers
@@ -3298,6 +3536,8 @@ integrations:
       empty template.
     oryMechanism:
       - courier-spi
+    protocol:
+      - rest-api
   - name: amazon-lwa
     displayName: Login with Amazon
     category: social-sign-in
@@ -3326,6 +3566,8 @@ integrations:
       URLs in Web Settings must include the Ory redirect URI.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: apple
     displayName: Apple
     category: social-sign-in
@@ -3359,6 +3601,8 @@ integrations:
       persist this verbatim in traits.email.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: auth0
     displayName: Auth0
     category: social-sign-in
@@ -3390,6 +3634,8 @@ integrations:
       provider once enough users have been transparently linked to native Ory identities.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: battle-net
     displayName: Battle.net
     category: social-sign-in
@@ -3417,6 +3663,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: dingtalk
     displayName: DingTalk
     category: social-sign-in
@@ -3443,6 +3691,8 @@ integrations:
       - Configured via the DingTalk Open Platform — corporation-scoped apps require organization-side enablement.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: discord
     displayName: Discord
     category: social-sign-in
@@ -3471,6 +3721,8 @@ integrations:
       - Refresh tokens supported by default — the access token has limited TTL.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: epic-games
     displayName: Epic Games
     category: social-sign-in
@@ -3494,6 +3746,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: facebook
     displayName: Facebook
     category: social-sign-in
@@ -3522,6 +3776,8 @@ integrations:
       - No native account-linking; relies on standard Kratos linking by verified email.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: github
     displayName: GitHub
     category: social-sign-in
@@ -3551,6 +3807,8 @@ integrations:
       Ory.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: github-app
     displayName: GitHub App
     category: social-sign-in
@@ -3585,6 +3843,8 @@ integrations:
       needs to act on installations.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: gitlab
     displayName: GitLab
     category: social-sign-in
@@ -3608,6 +3868,8 @@ integrations:
       gitlab.com. - Refresh tokens supported when the GitLab application is configured with `read_api`-level access.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: google
     displayName: Google
     category: social-sign-in
@@ -3639,6 +3901,8 @@ integrations:
       additional_id_token_audiences.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: kakao
     displayName: Kakao
     category: social-sign-in
@@ -3667,6 +3931,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: lark
     displayName: Lark / Feishu
     category: social-sign-in
@@ -3694,6 +3960,8 @@ integrations:
       - Application-side approval may be required for org-scoped scopes per Lark's tenant administration model.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: line
     displayName: LINE
     category: social-sign-in
@@ -3716,6 +3984,8 @@ integrations:
       - Optional pairing with LINE Messaging API enables push notifications to authenticated users.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: linkedin
     displayName: LinkedIn
     category: social-sign-in
@@ -3747,6 +4017,8 @@ integrations:
       - Refresh tokens are supported; access tokens are short-lived (~60 days).
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: microsoft
     displayName: Microsoft
     category: social-sign-in
@@ -3778,6 +4050,8 @@ integrations:
       common multitenant endpoint.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: naver
     displayName: Naver
     category: social-sign-in
@@ -3806,6 +4080,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: netid
     displayName: NetID
     category: social-sign-in
@@ -3834,6 +4110,8 @@ integrations:
       app-side credentials.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: patreon
     displayName: Patreon
     category: social-sign-in
@@ -3859,6 +4137,8 @@ integrations:
       - Configured via Patreon's OAuth client portal; consent screen is Patreon-managed.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: salesforce
     displayName: Salesforce
     category: social-sign-in
@@ -3886,6 +4166,8 @@ integrations:
       - Default Jsonnet returns email gated on email_verified; maps `nickname` → `username`.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: slack
     displayName: Slack
     category: social-sign-in
@@ -3915,6 +4197,8 @@ integrations:
       with the same email.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: spotify
     displayName: Spotify
     category: social-sign-in
@@ -3943,6 +4227,8 @@ integrations:
       - Refresh tokens supported by default.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: steam
     displayName: Steam
     category: social-sign-in
@@ -3976,6 +4262,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - openid-2.0
   - name: telegram
     displayName: Telegram Login
     category: social-sign-in
@@ -4005,7 +4293,9 @@ integrations:
 
       - Stateless and read-only — does not touch Ory directly; the application owns the upsert and session-bootstrap.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - custom
   - name: tiktok
     displayName: TikTok
     category: social-sign-in
@@ -4037,6 +4327,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: twitch
     displayName: Twitch
     category: social-sign-in
@@ -4063,6 +4355,8 @@ integrations:
       - Configured via the Twitch Developer Portal; scopes follow the Twitch Helix scope catalog.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: uaepass
     displayName: UAE PASS
     category: social-sign-in
@@ -4092,6 +4386,8 @@ integrations:
       partner portal.
     oryMechanism:
       - standards
+    protocol:
+      - oidc
   - name: vk
     displayName: VKontakte
     category: social-sign-in
@@ -4119,6 +4415,8 @@ integrations:
       - Optional VK scopes for friends list, photos, etc. — enable per app needs.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: wechat
     displayName: WeChat
     category: social-sign-in
@@ -4156,6 +4454,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
+      - custom
   - name: x-twitter
     displayName: X / Twitter
     category: social-sign-in
@@ -4184,6 +4485,8 @@ integrations:
       - Free Twitter Developer tier suffices — no paid subscription required for social sign-in.
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: yandex
     displayName: Yandex
     category: social-sign-in
@@ -4211,6 +4514,8 @@ integrations:
       - Configured via the Yandex OAuth client portal (yandex.com/dev/id/doc/en/register-client).
     oryMechanism:
       - standards
+    protocol:
+      - oauth2
   - name: freshdesk
     displayName: Freshdesk
     category: support-helpdesk
@@ -4243,6 +4548,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: intercom
     displayName: Intercom
     category: support-helpdesk
@@ -4279,6 +4586,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: zendesk
     displayName: Zendesk
     category: support-helpdesk
@@ -4311,7 +4620,9 @@ integrations:
       - Distinguishes ory_lookup_failed (502) from no-match (404) so the sidebar can render "no Ory identity found"
       without false alarms.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: clearbit
     displayName: Clearbit
     category: user-enrichment
@@ -4343,7 +4654,9 @@ integrations:
 
       - Silently no-ops when Clearbit returns 404/422 (free email providers, missing data).
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - rest-api
   - name: fullcontact
     displayName: FullContact
     category: user-enrichment
@@ -4377,6 +4690,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
   - name: zoominfo
     displayName: ZoomInfo
     category: user-enrichment
@@ -4412,6 +4727,9 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
       - actions
+    protocol:
+      - rest-api
+      - oauth2
   - name: hookdeck
     displayName: Hookdeck
     category: webhook-infrastructure
@@ -4452,6 +4770,8 @@ integrations:
       - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
+    protocol:
+      - http-webhook
   - name: svix
     displayName: Svix
     category: webhook-infrastructure
@@ -4483,4 +4803,6 @@ integrations:
 
       - Fire-and-forget: Svix outages and 5xx responses are logged but never propagate to Ory.
     oryMechanism:
-      - actions-webhook
+      - actions
+    protocol:
+      - http-webhook
