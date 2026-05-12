@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T04:27:54Z
+  generated: 2026-05-12T05:02:24Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -1161,120 +1161,256 @@ integrations:
     oryMechanism:
       - standards
   - name: jumpcloud
-    displayName: JumpCloud SSO
+    displayName: JumpCloud
     category: enterprise-sso
     path: enterprise-sso/jumpcloud
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      JumpCloud is a cloud-based directory platform that provides unified identity, access, and device management. As an
-      alternative to traditional Active Directory, JumpCloud serves as a modern cloud directory for organizations looking
-      to manage identities across platforms (Windows, macOS, Linux) without on-premises infrastructure.
+      Configure JumpCloud (the cloud directory platform — modern alternative to on-prem Active Directory) as a SAML 2.0
+      Identity Provider into Ory Polis. Documented directly in the Ory Polis SSO providers docs. Common workforce IdP for
+      organizations without legacy AD.
     status: active
-    vendor: JumpCloud SSO
+    vendor: JumpCloud
+    useCase: >-
+      A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity is in
+      JumpCloud — this integration is the per-customer SAML connection setup.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/jumpcloud; Polis acts as the SAML SP, JumpCloud as the IdP.
+
+      - JumpCloud side: Admin console → SSO → Custom SAML App; configure IdP Entity ID, ACS URL, Audience URI from Ory's
+      setup-link.
+
+      - Attribute mapping: email, firstname, lastname; memberOf for group claims.
+
+      - User groups MUST be explicitly assigned to the SAML app — users in the directory but not in an assigned group
+      cannot sign in.
+
+      - For SCIM provisioning of JumpCloud users into Ory, see directory-sync/jumpcloud-scim (separate concern from SSO).
     oryMechanism:
       - standards
   - name: keycloak
-    displayName: Keycloak SSO
+    displayName: Keycloak
     category: enterprise-sso
     path: enterprise-sso/keycloak
     maintainedBy: Community contributors
     type: config
     description: >-
-      Keycloak is an open-source identity and access management solution maintained by Red Hat. It provides SAML 2.0,
-      OpenID Connect, and OAuth 2.0 federation capabilities, making it a popular choice for enterprises that need a
-      self-hosted or hybrid identity provider. Keycloak is widely deployed in organizations that require full control over
-      their identity infrastructure, need to...
+      Configure Keycloak — the open-source CNCF-graduated identity and access management server — as an upstream OIDC
+      (preferred) or SAML 2.0 identity provider in Ory Polis. Common when an enterprise self-hosts their IdP for control,
+      data residency, or vendor-lock-in avoidance. No dedicated docs; configures via the Polis generic OIDC or generic
+      SAML walkthrough.
     status: active
-    vendor: Keycloak SSO
+    vendor: Keycloak (CNCF)
+    useCase: >-
+      An enterprise running a self-hosted Keycloak as their workforce IdP wants Ory-protected applications to consume
+      Keycloak-issued sessions instead of standing up a separate identity store.
+    coreFunctionality: >-
+      - Configured as a generic OIDC RP (recommended — Keycloak's OIDC support is first-class) or generic SAML SP in Ory
+      Polis pointing at a Keycloak client.
+
+      - Keycloak side: Clients → Create client (OpenID Connect, Confidential type); set Valid redirect URI to Polis ACS
+      URL.
+
+      - Issuer URL pattern: https://<keycloak-host>/realms/<realm-name>; Polis uses /.well-known/openid-configuration
+      automatically.
+
+      - Group claims released via a Group Membership mapper on the client's dedicated client scope — must be added
+      explicitly.
+
+      - Self-hosted: pin both Keycloak and Polis library versions; test upgrades against staging since Keycloak's protocol
+      responses occasionally change in major releases.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
       - standards
   - name: microsoft-adfs
-    displayName: Microsoft AD FS SAML SSO
+    displayName: Microsoft AD FS
     category: enterprise-sso
     path: enterprise-sso/microsoft-adfs
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Microsoft Active Directory Federation Services (AD FS) is an on-premises identity federation solution that extends
-      Active Directory identities to cloud applications. AD FS is widely used by enterprises that maintain on-premises
-      Active Directory infrastructure and need to provide SSO to cloud-based applications without migrating to a fully
-      cloud-based IdP.
+      Configure on-premises Microsoft Active Directory Federation Services (AD FS) as a SAML 2.0 Identity Provider into
+      Ory Polis. Documented directly in the Ory Polis SSO providers docs. Common path for enterprises maintaining on-prem
+      Active Directory who want SSO to cloud apps without migrating to Entra ID.
     status: active
-    vendor: Microsoft AD FS SAML SSO
+    vendor: Microsoft
+    useCase: >-
+      An enterprise with significant investment in on-prem Active Directory wants their AD-anchored workforce identities
+      to authenticate to Ory-protected applications without migrating user management to a cloud IdP.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/microsoft-adfs; Polis acts as the SAML SP, AD FS as the IdP.
+
+      - AD FS side: Relying Party Trusts → Add Relying Party Trust → import Polis SP metadata XML.
+
+      - Claim Issuance Policy: LDAP attribute mapping (E-Mail-Addresses → Email, Given-Name → Given Name, Surname →
+      Surname); NameID format Email.
+
+      - Token signing certificate auto-rollover (typically yearly) requires updating metadata in Polis — subscribe to AD
+      FS event 102 or pull metadata on a schedule.
+
+      - Group claims via Group SID or Token-Groups Unqualified Names attribute; map server-side in Ory.
+
+      - WS-Federation NOT supported — Polis only consumes SAML 2.0.
     oryMechanism:
       - standards
   - name: microsoft-entra-id
-    displayName: Microsoft Entra ID (Azure AD) SAML SSO
+    displayName: Microsoft Entra ID (Azure AD)
     category: enterprise-sso
     path: enterprise-sso/microsoft-entra-id
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Microsoft Entra ID (formerly Azure Active Directory) is the world's most widely adopted cloud-based identity and
-      access management service. It is the default IdP for organizations using Microsoft 365, Azure, and the broader
-      Microsoft ecosystem. As a SAML Identity Provider, Entra ID enables enterprises to extend their existing directory to
-      applications protected by Ory Networ...
+      Configure Microsoft Entra ID (formerly Azure AD) as a SAML 2.0 Identity Provider into Ory Polis. Documented directly
+      in the Ory Polis SSO providers docs (under the historical `azure` filename — Microsoft renamed Azure AD to Entra ID
+      in 2023). The most common enterprise SSO integration alongside Google Workspace because Entra ID is the default IdP
+      for organizations on Microsoft 365 / Azure.
     status: active
-    vendor: Microsoft Entra ID (Azure AD) SAML SSO
+    vendor: Microsoft
+    useCase: >-
+      A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity is in
+      Microsoft Entra ID — this integration is the per-customer SAML connection setup against Entra ID.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/azure (URL filename predates the Entra ID rename); Polis
+      acts as the SAML SP, Entra ID as the IdP.
+
+      - Entra side: Enterprise applications → New application → Non-gallery → Single sign-on → SAML; configure Identifier
+      (Entity ID) and Reply URL (ACS) from Ory's setup-link; download Federation Metadata XML.
+
+      - Assignment required is ON by default — users must be in an assigned group (or directly assigned) to sign in.
+      Common gotcha.
+
+      - Conditional Access policies (MFA, device compliance, named locations) sit at the Entra layer; resulting
+      authenticated assertion flows through to Ory.
+
+      - For OIDC sign-in (consumer/low-friction), use social-sign-in/microsoft instead — Polis SAML is for B2B enterprise
+      SSO with per-organization isolation.
+
+      - For SCIM provisioning into Ory, see directory-sync/microsoft-scim (separate concern).
     oryMechanism:
       - standards
   - name: okta
-    displayName: Okta SAML/OIDC SSO
+    displayName: Okta
     category: enterprise-sso
     path: enterprise-sso/okta
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Okta is the dominant cloud identity platform, used by thousands of enterprises for workforce and customer identity
-      management. Okta supports both SAML 2.0 and OpenID Connect (OIDC) federation, making it one of the most flexible IdP
-      options for integration with Ory Network.
+      Configure Okta as a SAML 2.0 (preferred for B2B SSO) or OIDC Identity Provider into Ory Polis. Documented directly
+      in the Ory Polis SSO providers docs. Near-default option in most enterprise SSO conversations because Okta dominates
+      cloud workforce identity.
     status: active
-    vendor: Okta SAML/OIDC SSO
+    vendor: Okta
+    useCase: >-
+      A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity is in
+      Okta — this integration is the per-customer SAML or OIDC connection setup.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/okta; Polis acts as the SAML SP / OIDC RP, Okta as the IdP.
+
+      - Okta side: Applications → Create App Integration → SAML 2.0 (preferred) or OIDC Web Application.
+
+      - SAML: Single sign-on URL = Polis ACS URL; Audience URI = Polis Entity ID; both from Ory's setup-link.
+
+      - Attribute statements: email, firstName, lastName. Groups released only if explicitly mapped in attribute
+      statements (SAML) or claims (OIDC).
+
+      - Sign-on Policies (MFA, network zones, device trust) sit at the Okta layer; resulting authenticated assertion flows
+      through to Ory.
+
+      - For SCIM provisioning of Okta users into Ory, see directory-sync/okta-scim (separate concern).
     oryMechanism:
       - standards
   - name: onelogin
-    displayName: OneLogin SAML SSO
+    displayName: OneLogin
     category: enterprise-sso
     path: enterprise-sso/onelogin
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      OneLogin is a cloud-based identity and access management platform that provides unified access management, including
-      single sign-on, multi-factor authentication, and user provisioning. OneLogin supports SAML 2.0 federation and is
-      used by enterprises across various industries for workforce identity management.
+      Configure OneLogin (One Identity) as a SAML 2.0 Identity Provider into Ory Polis. Documented directly in the Ory
+      Polis SSO providers docs. Common workforce IdP competing with Okta and JumpCloud in the cloud-IAM space.
     status: active
-    vendor: OneLogin SAML SSO
+    vendor: One Identity (OneLogin)
+    useCase: >-
+      A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce identity is in
+      OneLogin — this integration is the per-customer SAML connection setup.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/onelogin; Polis acts as the SAML SP, OneLogin as the IdP.
+
+      - OneLogin side: Applications → Add App → SAML Custom Connector (Advanced); configure Audience/EntityID, Recipient,
+      ACS Consumer URL, ACS Consumer URL Validator (regex).
+
+      - Parameters map outbound attributes: Email, First Name, Last Name; add Groups parameter if mapping group claims.
+
+      - ACS URL Validator is a regex — escape ? and & if the ACS URL contains them.
+
+      - Now branded as One Identity OneLogin following the Quest Software / One Identity acquisition; older docs may use
+      either name.
+
+      - For SCIM provisioning of OneLogin users into Ory, see directory-sync/onelogin-scim (separate concern).
     oryMechanism:
       - standards
   - name: pingone
-    displayName: PingOne SSO
+    displayName: PingOne
     category: enterprise-sso
     path: enterprise-sso/pingone
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      PingOne is Ping Identity's cloud-based identity platform designed for enterprise and regulated industries. PingOne
-      provides identity verification, single sign-on, multi-factor authentication, and access management. It is
-      particularly prevalent in financial services, healthcare, government, and other highly regulated sectors where
-      strict identity governance and compliance are...
+      Configure PingOne (Ping Identity's cloud identity platform) as a SAML 2.0 Identity Provider into Ory Polis.
+      Documented directly in the Ory Polis SSO providers docs. Common in regulated industries (financial services,
+      healthcare, government) where Ping's compliance posture matters.
     status: active
-    vendor: PingOne SSO
+    vendor: Ping Identity
+    useCase: >-
+      A regulated SaaS product with an Ory Network identity stack offers enterprise SSO and a customer's workforce
+      identity is in PingOne — this integration is the per-customer SAML connection setup.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/pingone; Polis acts as the SAML SP, PingOne as the IdP.
+
+      - PingOne side: Connections → Applications → Add Application → Web App → SAML; configure ACS URL and Entity ID from
+      Ory's setup-link.
+
+      - Attribute Mapping: email, firstName, lastName; add Group attribute if mapping group claims.
+
+      - Don't confuse PingOne (cloud) with PingFederate (on-prem) — both speak SAML, configuration paths differ. This
+      entry covers PingOne; PingFederate configures as a generic SAML SP.
+
+      - Following the 2023 ForgeRock acquisition, Ping Identity owns both products — see enterprise-sso/forgerock-am for
+      the legacy on-prem product.
     oryMechanism:
       - standards
   - name: rippling
-    displayName: Rippling SSO
+    displayName: Rippling
     category: enterprise-sso
     path: enterprise-sso/rippling
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: config
     description: >-
-      Rippling is a unified workforce management platform that combines HR, IT, and Finance. Rippling's identity
-      management capabilities allow organizations to manage employee lifecycle, device management, and application access
-      from a single platform. As a SAML Identity Provider, Rippling enables SSO for employees into applications protected
-      by Ory Network, with the added benefit...
+      Configure Rippling (the unified HR + IT + Finance workforce platform) as a SAML 2.0 Identity Provider into Ory
+      Polis. Documented directly in the Ory Polis SSO providers docs. Less common as a pure SSO IdP than Okta or Entra ID,
+      but a natural fit for organizations using Rippling for HR-driven access lifecycle.
     status: active
-    vendor: Rippling SSO
+    vendor: Rippling
+    useCase: >-
+      A SaaS product with an Ory Network identity stack offers enterprise SSO and a customer is already using Rippling to
+      manage employee onboarding, offboarding, and role changes — and wants application access to follow those HR events
+      automatically.
+    coreFunctionality: >-
+      - Configured per Ory Polis docs at /polis/sso-providers/rippling; Polis acts as the SAML SP, Rippling as the IdP.
+
+      - Rippling side: IT Management → Single Sign-On → Add Custom App → SAML; configure ACS URL and SP Entity ID from
+      Ory's setup-link.
+
+      - Attribute mapping pulls HR fields (work email, first name, last name, department, employee ID) into SAML
+      attributes.
+
+      - Distinguishing feature: HR-driven access lifecycle — when an employee changes role or leaves, Rippling removes
+      them from SAML app's assigned users, deactivating SSO access automatically.
+
+      - SCIM provisioning into Ory available as a separate Rippling add-on; configure pointing at Ory Network's SCIM
+      endpoint.
     oryMechanism:
       - standards
   - name: launchdarkly
