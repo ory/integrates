@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T00:21:44Z
+  generated: 2026-05-12T00:52:32Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -115,6 +115,38 @@ integrations:
     vendor: Amplitude
     oryMechanism:
       - standards
+  - name: mailchimp
+    displayName: Mailchimp (Marketing)
+    category: cdp-analytics
+    path: cdp-analytics/mailchimp
+    maintainedBy: Community contributors
+    type: webhook
+    description: >-
+      Sync new Ory Network users into a Mailchimp audience (subscriber list) via Ory Actions so newly registered users
+      automatically land in the marketing CRM. Distinct from the Mailchimp Transactional (Mandrill) integration under
+      email-providers, which sends transactional emails — this one is for marketing campaigns and audience management.
+    status: active
+    vendor: Mailchimp
+    useCase: >-
+      A consumer or SaaS product running marketing on Mailchimp wants every newly registered Ory user to appear in the
+      right Mailchimp audience, tagged with traits collected at registration, without writing a separate sync job or
+      relying on manual exports.
+    coreFunctionality: >-
+      - Implemented as an Ory Actions webhook on `flows.registration.after.hooks` that calls Mailchimp's Lists/Audiences
+      API.
+
+      - Jsonnet template maps Ory identity traits (email, name, custom traits) into Mailchimp merge fields and audience
+      tags.
+
+      - Synchronous or asynchronous webhook execution depending on whether registration should block on the Mailchimp
+      call.
+
+      - Authentication via Mailchimp Marketing API key (separate from the Mandrill API key used by the transactional
+      integration).
+
+      - Documented at https://www.ory.com/docs/actions/integrations/mailchimp.
+    oryMechanism:
+      - actions
   - name: mixpanel
     displayName: Mixpanel
     category: cdp-analytics
@@ -384,7 +416,7 @@ integrations:
     displayName: Pipedrive
     category: crm
     path: crm/pipedrive
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: webhook
     description: This document outlines how to integrate Ory with Pipedrive CRM.
     status: active
@@ -408,7 +440,7 @@ integrations:
     displayName: Zoho CRM
     category: crm
     path: crm/zoho-crm
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: webhook
     description: >-
       Zoho CRM contact sync from Ory Network via Ory Actions webhooks. OAuth2 with automatic token refresh, HMAC webhook
@@ -522,7 +554,7 @@ integrations:
     displayName: Workday SCIM
     category: directory-sync
     path: directory-sync/workday-scim
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Workday is one of the most widely deployed enterprise HCM systems, and acts as the source of truth for employee data
@@ -592,7 +624,7 @@ integrations:
     displayName: Amazon SES — Email Provider
     category: email-providers
     path: email-providers/aws-ses
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Amazon Simple Email Service (SES) is a cloud-based email sending service from AWS designed for transactional and
@@ -606,7 +638,7 @@ integrations:
     displayName: Brevo (formerly Sendinblue) — Email Provider
     category: email-providers
     path: email-providers/brevo
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Brevo (formerly Sendinblue) is a European email and marketing platform with strong GDPR posture. Brevo exposes both
@@ -621,7 +653,7 @@ integrations:
     displayName: Mailchimp Transactional (Mandrill) — Email Provider
     category: email-providers
     path: email-providers/mailchimp-transactional
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Mailchimp Transactional (formerly Mandrill) is the transactional email service built into the Mailchimp platform. It
@@ -636,7 +668,7 @@ integrations:
     displayName: Mailgun — Email Provider
     category: email-providers
     path: email-providers/mailgun
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Mailgun is an email delivery service built for developers, offering both SMTP and REST API interfaces. It provides
@@ -651,7 +683,7 @@ integrations:
     displayName: Postmark — Email Provider
     category: email-providers
     path: email-providers/postmark
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Postmark is a transactional email service known for exceptional deliverability and speed. Unlike general-purpose
@@ -666,7 +698,7 @@ integrations:
     displayName: SendGrid — Email Provider
     category: email-providers
     path: email-providers/sendgrid
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       SendGrid (a Twilio company) is one of the most widely used email delivery platforms, supporting both transactional
@@ -680,7 +712,7 @@ integrations:
     displayName: SparkPost — Email Provider
     category: email-providers
     path: email-providers/sparkpost
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       SparkPost (a MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics
@@ -710,7 +742,7 @@ integrations:
     displayName: CyberArk Identity
     category: enterprise-sso
     path: enterprise-sso/cyberark-identity
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       CyberArk Identity (the SSO and identity portion of the CyberArk platform, distinct from CyberArk's PAM product)
@@ -725,7 +757,7 @@ integrations:
     displayName: ForgeRock Access Management
     category: enterprise-sso
     path: enterprise-sso/forgerock-am
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       ForgeRock Access Management (now part of Ping Identity) is a widely deployed enterprise IAM platform that supports
@@ -799,7 +831,7 @@ integrations:
     displayName: IBM Security Verify
     category: enterprise-sso
     path: enterprise-sso/ibm-security-verify
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       IBM Security Verify is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and
@@ -1263,7 +1295,7 @@ integrations:
     displayName: ID.me
     category: identity-verification
     path: identity-verification/id-me
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       ID.me is a US-government-trusted identity verification provider that delivers IAL2 / AAL2 assurance through standard
@@ -1278,7 +1310,7 @@ integrations:
     displayName: Jumio
     category: identity-verification
     path: identity-verification/jumio
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: webhook
     description: Jumio identity verification (Document + Selfie + Face Match) integrated with Ory Network via Ory Actions webhooks.
     status: active
@@ -1289,7 +1321,7 @@ integrations:
     displayName: Lexisnexis
     category: identity-verification
     path: identity-verification/lexisnexis
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: webhook
     description: LexisNexis identity data verification (NAS/NAP/CVI scoring) integrated with Ory Network via Ory Actions webhooks.
     status: active
@@ -1300,7 +1332,7 @@ integrations:
     displayName: Onfido
     category: identity-verification
     path: identity-verification/onfido
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: webhook
     description: >-
       Onfido identity verification (Document + Face Matching across EU/US/CA regions) integrated with Ory Network via Ory
@@ -1313,7 +1345,7 @@ integrations:
     displayName: Persona
     category: identity-verification
     path: identity-verification/persona
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: webhook
     description: >-
       Persona identity verification with configurable templates (document capture, biometric, liveness). Integrates with
@@ -1326,7 +1358,7 @@ integrations:
     displayName: Prove
     category: identity-verification
     path: identity-verification/prove
-    maintainedBy: Community contributors
+    maintainedBy: Ory Engineering
     type: webhook
     description: >-
       Prove (formerly Payfone) is a phone-centric identity verification platform that uses telecom signals and phone
@@ -1444,7 +1476,7 @@ integrations:
     displayName: New Relic
     category: monitoring-observability
     path: monitoring-observability/new-relic
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       New Relic is a full-stack observability platform that natively ingests OpenTelemetry data over OTLP/HTTP.
@@ -1635,7 +1667,7 @@ integrations:
     displayName: Sinch — SMS Provider
     category: sms-providers
     path: sms-providers/sinch
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Sinch is an enterprise communications platform offering global SMS delivery and verification services through a
@@ -1965,7 +1997,7 @@ integrations:
     displayName: GitHub App
     category: social-sign-in
     path: social-sign-in/github-app
-    maintainedBy: Ory Engineering
+    maintainedBy: Community contributors
     type: config
     description: >-
       Sign in via a GitHub App (the modern variant of GitHub OAuth Apps) so the same identity flow that authenticates the
