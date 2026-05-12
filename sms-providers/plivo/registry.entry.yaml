@@ -2,16 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: plivo
-displayName: Plivo — SMS Provider
-vendor: Plivo — SMS Provider
+displayName: Plivo
+vendor: Plivo
 category: sms-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  Plivo is a cloud communications platform offering SMS and voice APIs with a focus on reliability and
-  cost-effectiveness. Plivo provides competitive per-message pricing, direct carrier connections in over 190 countries,
-  and a straightforward REST API. It is a strong alternative for organizations seeking lower SMS costs without
-  sacrificing delivery quality.
+  Use Plivo as the HTTP SMS courier for Ory Network OTPs and verification codes. Plivo is mentioned alongside
+  Twilio in the Ory SMS docs as a supported HTTP courier target — a common pick when SMS unit economics matter.
+useCase: >-
+  An Ory Network customer with high SMS volume wants to lower per-message cost without giving up direct-carrier
+  delivery quality, or wants a second SMS provider for failover from Twilio.
+coreFunctionality: |-
+  - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+  - Endpoint POST https://api.plivo.com/v1/Account/<AUTH_ID>/Message/ with HTTP Basic auth (Auth ID : Auth Token).
+  - JSON body: src (E.164 of your Plivo number), dst (E.164 recipient — Ory provides this directly), text.
+  - For production, use a Plivo Powerpack (number pool with intelligent routing) — replace src with powerpack_uuid.
+  - Optional `url` field in the body enables real-time delivery callbacks.
 oryMechanism:
   - courier-spi
 status: active

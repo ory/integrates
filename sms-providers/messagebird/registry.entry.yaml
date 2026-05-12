@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: messagebird
-displayName: MessageBird (Bird) — SMS Provider
-vendor: MessageBird (Bird) — SMS Provider
+displayName: MessageBird (Bird)
+vendor: Bird
 category: sms-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  MessageBird (now rebranded as Bird) is a European-headquartered cloud communications platform providing SMS, voice,
-  and messaging APIs. It offers strong coverage across Europe, Asia-Pacific, and globally, with a focus on reliability
-  and regulatory compliance. MessageBird is a compelling choice for organizations with European user bases or those
-  looking for an alternative to ...
+  Use MessageBird (rebranded as Bird) as the HTTP SMS courier for Ory Network OTPs and verification codes.
+  Strong EU/APAC coverage and a common alternative to US-based SMS providers for products with EU regulatory
+  or data-residency requirements.
+useCase: >-
+  An Ory Network customer with significant EU or APAC user volume — or one that prefers a EU-headquartered
+  vendor for compliance reasons — wants to route OTP/verification SMS through MessageBird rather than Twilio.
+coreFunctionality: |-
+  - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+  - Endpoint POST https://rest.messagebird.com/messages with Authorization: AccessKey <API_KEY>.
+  - Originator is either a MessageBird virtual number or an alphanumeric sender ID (up to 11 chars; not allowed in US/Canada/China).
+  - Jsonnet body strips the leading "+" from Ory's E.164 recipient before passing it to MessageBird (MSISDN format).
+  - Optional reportUrl in the body enables real-time delivery callbacks.
 oryMechanism:
   - courier-spi
 status: active

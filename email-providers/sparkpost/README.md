@@ -1,10 +1,11 @@
-# SparkPost — Ory Network Integration
+# SparkPost
 
-> **Maintained by:** Ory Engineering
+> **Maintained by:** Community contributors
 
-## Overview
+SparkPost (a Bird/MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics and deliverability tooling — a fit for high-volume identity emails with stringent deliverability requirements.
 
-SparkPost (a MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics and deliverability tooling. SparkPost exposes both an SMTP relay and a REST Transmissions API, and can be wired up as an Ory Network courier for verification, recovery, and MFA email delivery. SparkPost is a good fit for customers with high transactional email volume and stringent deliverability requirements.
+**Type:** config (Kratos courier-spi over SMTP or HTTP — no webhook code)
+**Docs page:** No dedicated section in the Ory docs; configures as a [generic SMTP courier](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#your-own-server) (or as an HTTP courier for the REST Transmissions API).
 
 ## How it works
 

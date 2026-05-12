@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: mailgun
-displayName: Mailgun — Email Provider
-vendor: Mailgun — Email Provider
+displayName: Mailgun
+vendor: Mailgun
 category: email-providers
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Mailgun is an email delivery service built for developers, offering both SMTP and REST API interfaces. It provides
-  robust email sending, tracking, and analytics capabilities. Mailgun is well-suited for transactional email with strong
-  deliverability tooling, including automatic suppression management, detailed event logs, and built-in email
-  validation.
+  Use Mailgun as the SMTP courier for Ory Network transactional emails. Developer-focused vendor with strong
+  deliverability tooling (automatic suppression management, detailed event logs, built-in validation) and
+  documented directly in the Ory SMTP courier page.
+useCase: >-
+  An Ory Network customer wants a developer-friendly transactional email vendor with strong deliverability
+  tooling and per-region (US vs EU) hosting for data-residency requirements.
+coreFunctionality: |-
+  - Configured via Kratos's SMTP courier per docs/kratos/emails-sms/sending-emails-smtp#mailgun (no code).
+  - Connection URI: smtp://postmaster%40<domain>:<smtp_password>@smtp.mailgun.org:587 (US) or smtp.eu.mailgun.org (EU).
+  - The "@" in the SMTP username MUST be URL-encoded as %40 in the connection URI.
+  - DNS verification (SPF, DKIM, CNAME tracking) is critical for deliverability — sandbox domains only deliver to pre-authorized recipients.
+  - Mailgun auto-manages bounce/complaint/unsubscribe suppression lists.
 oryMechanism:
   - courier-spi
 status: active

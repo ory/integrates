@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: postmark
-displayName: Postmark — Email Provider
-vendor: Postmark — Email Provider
+displayName: Postmark
+vendor: Postmark (ActiveCampaign)
 category: email-providers
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Postmark is a transactional email service known for exceptional deliverability and speed. Unlike general-purpose email
-  platforms, Postmark focuses exclusively on transactional email, enforcing strict sending policies that result in
-  consistently high inbox placement rates. It is an excellent choice for identity-related emails where delivery speed
-  and reliability are paramount.
+  Use Postmark as the SMTP courier for Ory Network transactional emails. Transactional-only sending policy
+  produces industry-leading deliverability and speed (delivery often within seconds); documented directly in
+  the Ory SMTP courier page.
+useCase: >-
+  An Ory Network customer where time-to-inbox matters most — typically high-traffic consumer products that
+  send verification codes, MFA OTPs, and password recovery links and care more about deliverability speed than
+  about marketing-email features.
+coreFunctionality: |-
+  - Configured via Kratos's SMTP courier per docs/kratos/emails-sms/sending-emails-smtp#postmark (no code).
+  - Connection URI: smtps://<SERVER_API_TOKEN>:<SERVER_API_TOKEN>@smtp.postmarkapp.com:465 — Postmark uses the Server API Token as BOTH the SMTP username and password.
+  - Each Postmark "Server" gets its own token; pick a server scoped to identity emails to keep streams separate from app-level transactional or marketing.
+  - Domain verification with DKIM CNAMEs is preferred over per-address sender signatures.
+  - Postmark approves new accounts manually; transactional identity emails fit the policy cleanly.
+  - Postmark auto-deactivates hard-bouncing addresses to protect reputation.
 oryMechanism:
   - courier-spi
 status: active

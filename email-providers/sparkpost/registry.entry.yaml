@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: sparkpost
-displayName: SparkPost — Email Provider
-vendor: SparkPost — Email Provider
+displayName: SparkPost
+vendor: SparkPost (Bird)
 category: email-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  SparkPost (a MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics
-  and deliverability tooling. SparkPost exposes both an SMTP relay and a REST Transmissions API, and can be wired up as
-  an Ory Network courier for verification, recovery, and MFA email delivery. SparkPost is a good fit for customers with
-  high transactional email volume and stringent deliverability requirements.
+  Use SparkPost as the SMTP or HTTP courier for Ory Network transactional emails. Enterprise-grade transactional
+  email platform (now part of Bird/MessageBird) with strong delivery analytics and per-region (US vs EU) hosting.
+  No dedicated section in the Ory docs; configures as a generic SMTP or HTTP courier.
+useCase: >-
+  An Ory Network customer with high transactional email volume and stringent deliverability requirements wants
+  enterprise-grade tooling and per-region (US vs EU) hosting for data-residency.
+coreFunctionality: |-
+  - SMTP relay (recommended): smtps://SMTP_Injection:<API_KEY>@smtp.sparkpostmail.com:587 (US) or smtp.eu.sparkpost.com (EU). The literal username "SMTP_Injection" is correct for all customers; password is the API key.
+  - REST Transmissions API alternative: POST https://api.sparkpost.com/api/v1/transmissions (US) or api.eu.sparkpost.com (EU) with `Authorization: <API_KEY>` and a Jsonnet body.
+  - SparkPost separates US and EU accounts — pick data residency before integration; migrations are not trivial.
+  - API key needs the "Send via SMTP" permission; minimum scope is sufficient.
+  - Stored templates available via the API if SparkPost-side template management is preferred over Kratos-side rendering (not recommended — Ory renders templates by default).
 oryMechanism:
   - courier-spi
 status: active

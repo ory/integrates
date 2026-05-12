@@ -2,15 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: sendgrid
-displayName: SendGrid — Email Provider
-vendor: SendGrid — Email Provider
+displayName: SendGrid
+vendor: SendGrid
 category: email-providers
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  SendGrid (a Twilio company) is one of the most widely used email delivery platforms, supporting both transactional and
-  marketing email. It offers a robust SMTP relay, a REST API, and extensive analytics. SendGrid is a solid choice for
-  teams that need a well-documented, widely adopted email provider with generous free-tier sending limits.
+  Use SendGrid (a Twilio company) as the SMTP or HTTP courier for Ory Network transactional emails. SendGrid
+  is one of the most widely used transactional-email platforms; documented directly in the Ory SMTP courier
+  page with both SMTP and HTTP variants.
+useCase: >-
+  Default email provider choice for many Ory Network customers — well-known, well-documented, generous free tier
+  for development, and supports both SMTP (simplest) and HTTP API (richer payload control via Jsonnet) wiring.
+coreFunctionality: |-
+  - Configured via Kratos's email courier per docs/kratos/emails-sms/sending-emails-smtp#sendgrid (no code).
+  - SMTP: smtps://apikey:<API_KEY>@smtp.sendgrid.net:465 (or smtp:// on 587 for STARTTLS); username is the literal string "apikey".
+  - HTTP: POST https://api.sendgrid.com/v3/mail/send with Authorization: Bearer <API_KEY> and a Jsonnet body (request_config delivery strategy).
+  - API key needs only "Mail Send" permission — no need for full account access.
+  - Domain authentication (SPF/DKIM CNAMEs in DNS) strongly recommended over single-sender verification for deliverability.
+  - Don't use SendGrid dynamic templates — Ory renders templates before sending; SendGrid should receive final content.
 oryMechanism:
   - courier-spi
 status: active

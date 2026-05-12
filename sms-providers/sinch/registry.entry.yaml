@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: sinch
-displayName: Sinch — SMS Provider
-vendor: Sinch — SMS Provider
+displayName: Sinch
+vendor: Sinch
 category: sms-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  Sinch is an enterprise communications platform offering global SMS delivery and verification services through a
-  straightforward REST API. Sinch can be wired up as an Ory Network SMS courier for verification codes, MFA OTPs, and
-  identity-related messages, with broad carrier coverage and verification-specific features that make it a strong fit for
-  high-trust authentication use cases.
+  Use Sinch as the HTTP SMS courier for Ory Network OTPs and verification codes. Sinch is an enterprise
+  communications platform with broad carrier coverage and verification-specific features — a fit for high-trust
+  authentication flows.
+useCase: >-
+  An Ory Network customer wants global SMS delivery from an enterprise vendor with strong verification-flow
+  experience and per-region routing (US/EU stacks), in addition to or in place of Twilio/MessageBird.
+coreFunctionality: |-
+  - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+  - Endpoint POST https://{region}.sms.api.sinch.com/xms/v1/<service-plan-id>/batches with Bearer token auth (`us.` or `eu.` host).
+  - JSON body: from (registered sender — long/short code or alphanumeric per country regulations), to[] (E.164), body.
+  - Sinch enforces per-country sender registration; using the wrong sender for a region silently degrades delivery.
+  - Sinch's higher-level Verification API is intentionally NOT used here; Kratos's OTP generation/validation stays the source of truth.
+  - Delivery status: configure a Sinch delivery-report webhook to your own service; Kratos does not consume reports directly.
 oryMechanism:
   - courier-spi
 status: active

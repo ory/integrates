@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: vonage
-displayName: Vonage (Nexmo) — SMS Provider
-vendor: Vonage (Nexmo) — SMS Provider
+displayName: Vonage (Nexmo)
+vendor: Vonage
 category: sms-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  Vonage (formerly Nexmo) is a global cloud communications platform providing SMS, voice, and messaging APIs. Vonage has
-  particularly strong coverage in EMEA and APAC regions and is known for reliable message delivery and competitive
-  international pricing. It is a solid alternative to Twilio for organizations with significant international user
-  bases.
+  Use Vonage (formerly Nexmo) as the HTTP SMS courier for Ory Network OTPs and verification codes. Strong EMEA
+  and APAC carrier coverage and competitive international pricing make Vonage a common alternative to Twilio
+  for products with significant non-US user bases.
+useCase: >-
+  An Ory Network customer with EMEA/APAC user concentration wants SMS delivery from a vendor strongest in those
+  regions, in addition to or instead of US-centric Twilio.
+coreFunctionality: |-
+  - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
+  - Endpoint POST https://rest.nexmo.com/sms/json. Authentication is API key + secret in the request BODY (not headers), so the Kratos courier `auth` block stays empty and credentials live in the Jsonnet template.
+  - JSON body: api_key, api_secret, from (alphanumeric ID up to 11 chars OR a Vonage virtual number — alphanumeric not allowed in US/Canada), to, text.
+  - Vonage accepts E.164 with or without leading "+"; strip in Jsonnet if a country rejects the + form.
+  - Newer Messages API (api.nexmo.com/v1/messages) available with JWT/header auth; the REST SMS API above is simpler for SMS-only use.
 oryMechanism:
   - courier-spi
 status: active

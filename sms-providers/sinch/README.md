@@ -1,10 +1,11 @@
-# Sinch — Ory Network Integration
+# Sinch
 
-> **Maintained by:** Ory Engineering
+> **Maintained by:** Community contributors
 
-## Overview
+Sinch is an enterprise communications platform with global carrier coverage and verification-specific features. Wire it up as an Ory Network HTTP SMS courier for OTPs and verification codes.
 
-Sinch is an enterprise communications platform offering global SMS delivery and verification services through a straightforward REST API. Sinch can be wired up as an Ory Network SMS courier for verification codes, MFA OTPs, and identity-related messages, with broad carrier coverage and verification-specific features that make it a strong fit for high-trust authentication use cases.
+**Type:** config (Kratos courier-spi over HTTP — no webhook code)
+**Docs page:** [ory.com/docs/kratos/emails-sms/sending-sms](https://www.ory.com/docs/kratos/emails-sms/sending-sms)
 
 ## How it works
 

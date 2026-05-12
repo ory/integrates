@@ -2,16 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: mailchimp-transactional
-displayName: Mailchimp Transactional (Mandrill) — Email Provider
-vendor: Mailchimp Transactional (Mandrill) — Email Provider
+displayName: Mailchimp Transactional (Mandrill)
+vendor: Mailchimp
 category: email-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  Mailchimp Transactional (formerly Mandrill) is the transactional email service built into the Mailchimp platform. It
-  is designed for automated, triggered emails such as verification codes, password resets, and notifications. Mailchimp
-  Transactional is a natural choice for organizations already using Mailchimp for marketing, as it shares the same
-  account, billing, and sender ...
+  Use Mailchimp Transactional (Mandrill) as the SMTP courier for Ory Network transactional emails. The
+  transactional product built into Mailchimp; natural choice when the marketing side already runs on Mailchimp
+  and you want shared billing, sender reputation, and dashboards. Distinct from the marketing-audience
+  Mailchimp integration under cdp-analytics/mailchimp.
+useCase: >-
+  An Ory Network customer already using Mailchimp for marketing wants identity emails (verification, recovery,
+  MFA) sent from the same vendor account so reputation, billing, and analytics stay consolidated.
+coreFunctionality: |-
+  - Configured via Kratos's SMTP courier (no code) — no dedicated section in Ory docs; uses the generic SMTP courier path.
+  - Connection URI: smtps://apikey:<API_KEY>@smtp.mandrillapp.com:465 — username is any string (apikey is conventional); password is the Mandrill API key.
+  - Mandrill is a PAID add-on to Mailchimp requiring a transactional email block purchase.
+  - Domain verification (SPF include:spf.mandrillapp.com + DKIM TXT) is mandatory for production sending.
+  - Don't use Mandrill server-side templates — Ory renders templates before handing to SMTP.
+  - For the marketing-audience use case (adding registered users to a Mailchimp list), use cdp-analytics/mailchimp instead.
 oryMechanism:
   - courier-spi
 status: active

@@ -2,15 +2,26 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: aws-ses
-displayName: Amazon SES — Email Provider
-vendor: Amazon SES — Email Provider
+displayName: Amazon SES
+vendor: Amazon Web Services
 category: email-providers
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Amazon Simple Email Service (SES) is a cloud-based email sending service from AWS designed for transactional and
-  marketing email. It offers high deliverability, pay-per-use pricing, and deep integration with the AWS ecosystem. SES
-  is a strong choice for organizations already running infrastructure on AWS.
+  Use Amazon SES as the SMTP courier for Ory Network transactional emails. SES is AWS's email service with
+  high deliverability, pay-per-use pricing, and deep AWS integration; documented directly in the Ory SMTP
+  courier page. Natural choice when the rest of the stack is on AWS.
+useCase: >-
+  An Ory Network customer running on AWS wants email delivery from the same cloud, billed and observed
+  alongside the rest of their AWS infrastructure (CloudWatch metrics, SNS bounce/complaint notifications,
+  IAM-based credential rotation).
+coreFunctionality: |-
+  - Configured via Kratos's SMTP courier per docs/kratos/emails-sms/sending-emails-smtp#aws-ses (no code).
+  - Connection URI: smtps://<smtp_user>:<url-encoded smtp_pass>@email-smtp.<region>.amazonaws.com:465 (or :587 for STARTTLS).
+  - SES SMTP credentials are generated in the SES console and wrap an IAM user — they are NOT the same as IAM access keys.
+  - URL-encode "+", "/", "=" in the SMTP password (commonly appear) — %2B, %2F, %3D.
+  - New SES accounts are sandboxed and only deliver to verified recipients; production access must be requested.
+  - Easy DKIM (three CNAME records) is the standard deliverability setup; bounce/complaint notifications via SNS feed back into reputation.
 oryMechanism:
   - courier-spi
 status: active

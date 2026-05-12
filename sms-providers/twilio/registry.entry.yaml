@@ -2,16 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: twilio
-displayName: Twilio — SMS Provider
-vendor: Twilio — SMS Provider
+displayName: Twilio
+vendor: Twilio
 category: sms-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  Twilio Programmable SMS is the leading cloud communications platform for sending and receiving text messages globally.
-  It offers extensive carrier coverage, reliable delivery, and a well-documented REST API. Twilio is the primary SMS
-  provider used with Ory Network for sending SMS-based verification codes, MFA one-time passwords, and other
-  identity-related messages.
+  Use Twilio Programmable SMS as the HTTP SMS courier for Ory Network OTPs and verification codes. Twilio is
+  the most widely deployed cloud SMS platform and is the canonical example used in the Ory SMS docs.
+useCase: >-
+  Default SMS provider for most Ory Network customers shipping phone-based verification or MFA — broad carrier
+  coverage, mature tooling, and the path of least resistance off the existing Ory documentation.
+coreFunctionality: |-
+  - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms (the example uses Twilio directly).
+  - Endpoint POST https://api.twilio.com/2010-04-01/Accounts/<SID>/Messages.json with HTTP Basic auth (Account SID : Auth Token).
+  - Content-Type MUST be application/x-www-form-urlencoded (Twilio rejects JSON); body is URL-encoded To, From, Body.
+  - For production, prefer a Twilio Messaging Service (replace From=... with MessagingServiceSid=MGxxxx...) for sender pooling and per-country routing.
+  - Twilio Test Credentials (separate SID/Token) simulate sends without delivery or charges — useful for CI.
 oryMechanism:
   - courier-spi
 status: active

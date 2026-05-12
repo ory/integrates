@@ -2,16 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: brevo
-displayName: Brevo (formerly Sendinblue) — Email Provider
-vendor: Brevo (formerly Sendinblue) — Email Provider
+displayName: Brevo (Sendinblue)
+vendor: Brevo
 category: email-providers
 type: config
 maintainedBy: Community contributors
 description: >-
-  Brevo (formerly Sendinblue) is a European email and marketing platform with strong GDPR posture. Brevo exposes both an
-  SMTP relay and a REST v3 API for transactional email, and can be wired up as an Ory Network courier for verification,
-  recovery, and MFA email delivery. Brevo is a good fit for customers that want EU-hosted email infrastructure or need
-  Brevo-side analytics on identity-driven email.
+  Use Brevo (formerly Sendinblue) as the SMTP or HTTP courier for Ory Network transactional emails. EU-headquartered
+  vendor with strong GDPR posture, exposing both an SMTP relay and a REST v3 transactional-email API. No dedicated
+  section in the Ory docs; configures as a generic SMTP courier (or HTTP courier for the REST variant).
+useCase: >-
+  An Ory Network customer with EU data-residency or GDPR concerns wants a EU-headquartered email vendor for
+  identity emails, in addition to or instead of US-based providers like SendGrid or Mailgun.
+coreFunctionality: |-
+  - SMTP relay (recommended): smtps://<smtp_login>:<smtp_key>@smtp-relay.brevo.com:587 (STARTTLS) or :465 (TLS).
+  - REST API alternative: POST https://api.brevo.com/v3/smtp/email with header `api-key: <brevo-api-key>` and a Jsonnet body wired via Kratos's HTTP courier.
+  - Brevo SMTP keys are distinct from API keys — do not confuse them.
+  - Free tier rate-limits SMTP; identity flows at scale should be on a paid plan.
+  - DKIM and Return-Path must be aligned with the From domain for Gmail/Microsoft deliverability.
 oryMechanism:
   - courier-spi
 status: active
