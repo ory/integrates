@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T13:37:58Z
+  generated: 2026-05-12T13:46:44Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -552,24 +552,63 @@ integrations:
     maintainedBy: Community contributors
     type: webhook
     description: >-
-      Microsoft Dynamics 365 is a major enterprise CRM and ERP platform. This integration syncs Ory identities to Dynamics
-      365 contact records via the Dataverse Web API (OData v4) using an Ory Actions webhook. When a user registers or
-      updates their profile, the handler creates or upserts the corresponding Dynamics contact.
+      Sync Ory identities to Microsoft Dynamics 365 Contact records via the Dataverse Web API (OData v4) using an Ory
+      Actions webhook. On registration / profile update the handler creates or upserts the corresponding Dynamics Contact
+      keyed by an `ory_identity_id` alternate key.
     status: active
-    vendor: Microsoft Dynamics 365
+    vendor: Microsoft
+    useCase: >-
+      An enterprise running their CRM and ERP on Dynamics 365 wants Ory-managed identities to appear as Contacts in
+      Dataverse — automatically, with stable cross-system identifiers — so sales, marketing, and service teams see Ory
+      users in their existing pipeline without separate exports.
+    coreFunctionality: >-
+      - Ory Action webhook on registration.after / settings.after upserts a Contact in Dynamics 365 via the Dataverse Web
+      API (OData v4).
+
+      - Upsert keyed by an `ory_identity_id` alternate key on the Contact entity — must be created in Dataverse before
+      first run.
+
+      - Dataverse auth via Microsoft Entra ID OAuth2 client credentials (Server-to-Server app registration with
+      delegated/application permission for the Dataverse environment).
+
+      - Region-aware: the Dataverse endpoint is per-environment (https://<env>.crm.dynamics.com/api/data/v9.2).
+
+      - Async (response.ignore: true) — handler returns 200 to Ory immediately; Dataverse calls run in the background.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - actions-webhook
+      - actions
   - name: pipedrive
     displayName: Pipedrive
     category: crm
     path: crm/pipedrive
     maintainedBy: Ory Engineering
     type: webhook
-    description: This document outlines how to integrate Ory with Pipedrive CRM.
+    description: >-
+      Sync Ory identities to Pipedrive persons via Ory Actions webhooks, and log a login activity to each person's
+      timeline on every login so sales has a real-time view of customer engagement. Async-only — Pipedrive availability
+      never blocks user flows.
     status: active
     vendor: Pipedrive
+    useCase: >-
+      A sales-led B2B SaaS product wants newly registered users to appear in Pipedrive as Persons and wants every login
+      surfaced as an activity on the person's timeline so the sales team sees account engagement without asking
+      engineering for data exports.
+    coreFunctionality: >-
+      - Two async endpoints: POST /pipedrive/sync-user (registration.after / settings.after — creates or updates Pipedrive
+      person, stores Ory identity id on a custom field); POST /pipedrive/track-login-activity (login.after — looks up
+      Pipedrive person by email, logs a "User Login" activity with device + IP context).
+
+      - Both async (response.ignore: true) — handler returns 200 to Ory immediately; Pipedrive calls run in the
+      background.
+
+      - Authenticated via X-Webhook-Secret shared with the Ory hook config.
+
+      - Pipedrive custom field stores the Ory identity id for stable cross-system linkage.
+
+      - SDK: native fetch (no Pipedrive SDK); @ory/client not used (handler doesn't read back from Ory).
     oryMechanism:
-      - standards
+      - actions
   - name: salesforce-crm
     displayName: Salesforce (CRM)
     category: crm
@@ -577,12 +616,34 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Create Salesforce Leads or Contacts automatically when users register in Ory. Uses Ory Actions webhooks with OAuth2
-      service-to-service authentication to call the Salesforce REST API.
+      Sync Ory identities to Salesforce as Leads or Contacts via Ory Actions webhooks calling the Salesforce REST API with
+      OAuth2 service-to-service authentication. Distinct from social-sign-in/salesforce (the sign-in provider). No
+      first-party webhook handler ships here — wiring is Ory Action config + Jsonnet body.
     status: active
     vendor: Salesforce
+    useCase: >-
+      A B2B SaaS product running their sales pipeline on Salesforce wants newly registered users to land as Leads in
+      Salesforce automatically — no separate sync job, no daily exports.
+    coreFunctionality: >-
+      - Ory Action on registration.after (and/or settings.after) posts to Salesforce REST API: POST
+      /services/data/vXX.0/sobjects/Lead/ or /Contact/.
+
+      - Salesforce Connected App with OAuth2 Client Credentials Flow + `api` scope; integration-user Permission Set grants
+      object-create permission.
+
+      - Best practice: deploy a small token-broker service that handles OAuth2 token refresh and returns short-lived
+      bearer tokens to Ory — pointing Ory directly at Salesforce's token endpoint works but is operationally fragile.
+
+      - Lead vs Contact: start with Lead; promote to Contact via Salesforce-side automation, not Ory.
+
+      - Edition matters — Connected Apps + Permission Sets require Salesforce Enterprise edition or higher.
+
+      - Daily API call limits vary by edition; high-volume signup flows may need batch creation rather than per-event
+      calls.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: zoho-crm
     displayName: Zoho CRM
     category: crm
@@ -590,12 +651,32 @@ integrations:
     maintainedBy: Ory Engineering
     type: webhook
     description: >-
-      Zoho CRM contact sync from Ory Network via Ory Actions webhooks. OAuth2 with automatic token refresh, HMAC webhook
-      verification, multi-region support (IN/US/EU).
+      Sync Ory identities to Zoho CRM Contact records via Ory Actions webhooks. Async upsert keyed by email using Zoho's
+      bulk upsert endpoint; handler manages OAuth token caching and refresh. Multi-region (US / IN / EU / AU / JP / CA /
+      CN) — match ZOHO_API_BASE_URL to the data-center your Zoho org lives in.
     status: active
-    vendor: Zoho CRM
+    vendor: Zoho
+    useCase: >-
+      An Ory Network customer running their CRM on Zoho wants newly registered users to land in Zoho as Contact records
+      automatically — no separate sync job, no manual exports.
+    coreFunctionality: >-
+      - One async endpoint POST /zoho/sync-contact called from registration.after and settings.after with response.ignore:
+      true so Zoho availability never blocks user flows.
+
+      - OAuth flow: long-lived ZOHO_REFRESH_TOKEN exchanged for short-lived access tokens (1-hour TTL); handler caches and
+      refreshes automatically.
+
+      - Refresh tokens are rate-limited (15 per 7 minutes per org) — must reuse the env-provided refresh token, never
+      generate fresh per request.
+
+      - Multi-region: regional API base hosts (zohoapis.com US / .in IN / .eu EU / .com.au AU / .jp JP / .ca CA / .com.cn
+      CN) and matching accounts URLs.
+
+      - Upsert keyed by email via Zoho's bulk upsert endpoint — idempotent across re-runs.
+
+      - SDK: native fetch (no Zoho SDK); @ory/client not used (handler doesn't read back from Ory).
     oryMechanism:
-      - standards
+      - actions
   - name: cockroachdb
     displayName: CockroachDB
     category: data-persistence
@@ -1657,15 +1738,31 @@ integrations:
     category: fraud-bot-protection
     path: fraud-bot-protection/arkose-labs
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      Arkose Labs is a bot detection and fraud prevention platform that uses adaptive enforcement challenges to stop
-      automated attacks while allowing legitimate users through. It is designed for high-value transactions such as
-      account creation, login, and payment flows.
+      Bot and fraud prevention via Arkose Labs's adaptive enforcement challenges (invisible scoring escalating to
+      interactive puzzles on risk). Wired into Ory via an Ory Action on registration.before / login.before with
+      can_interrupt, verifying the Arkose token from the client SDK. No dedicated Ory docs page.
     status: active
     vendor: Arkose Labs
+    useCase: >-
+      A high-value B2C product (financial, gaming, marketplace) needs strong bot defense at signup and login — more
+      friction-sensitive than reCAPTCHA but more capable against sophisticated automation.
+    coreFunctionality: >-
+      - Pattern: client SDK collects token → form submits token to Ory → Ory Action calls handler with can_interrupt →
+      handler verifies via Arkose /api/v4/verify/ → handler returns success/failure → Ory consumes via response.parse.
+
+      - Two Arkose keys: Public Key (client SDK) and Private Key (server verify); never expose Private.
+
+      - Arkose tokens are one-time-use — handler must not retry verify with the same token.
+
+      - Use a per-flow token (don't reuse across registration and login).
+
+      - Adaptive challenges escalate per-risk; pick challenge type per-flow risk profile via Arkose's game configuration.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: castle
     displayName: Castle.io
     category: fraud-bot-protection
@@ -1700,29 +1797,64 @@ integrations:
     category: fraud-bot-protection
     path: fraud-bot-protection/cloudflare-turnstile
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      Cloudflare Turnstile is a non-interactive CAPTCHA alternative that validates users without presenting visual
-      puzzles. It uses a combination of browser signals, machine learning, and proof-of-work challenges to distinguish
-      humans from bots, all without requiring user interaction in most cases.
+      Non-interactive CAPTCHA via Cloudflare Turnstile — invisible challenge using browser signals, ML, and proof-of-work.
+      Free with no per-call limit and privacy-preserving. Wired into Ory via an Ory Action on registration.before /
+      login.before with can_interrupt, verifying the Turnstile token from the client widget.
     status: active
-    vendor: Cloudflare Turnstile
+    vendor: Cloudflare
+    useCase: >-
+      A consumer product wants bot defense at signup/login without visible CAPTCHA friction — Turnstile's invisible
+      challenge keeps conversion high while still blocking obvious automation.
+    coreFunctionality: >-
+      - Pattern: client widget collects token (cf-turnstile-response) → form submits token to Ory → Ory Action with
+      can_interrupt calls handler → handler verifies via POST https://challenges.cloudflare.com/turnstile/v0/siteverify →
+      handler returns success/failure → Ory consumes via response.parse.
+
+      - Two keys: Site Key (public, client widget) and Secret Key (server verify); never expose Secret.
+
+      - Tokens are one-time-use and expire ~5 minutes after issue.
+
+      - Free with no per-call limit — practical default for new projects.
+
+      - Optional remoteip field in siteverify enables IP-binding check; pass the client IP through the reverse proxy.
+
+      - Status: community/proposed — no dedicated ory/docs page; same pattern as hCaptcha / reCAPTCHA / Arkose.
     oryMechanism:
-      - standards
+      - actions
   - name: hcaptcha
     displayName: hCaptcha
     category: fraud-bot-protection
     path: fraud-bot-protection/hcaptcha
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      hCaptcha is a privacy-focused CAPTCHA service that serves as an alternative to Google reCAPTCHA. It provides bot
-      detection while being compliant with privacy regulations such as GDPR. hCaptcha does not sell personal data and
-      offers publishers the ability to earn revenue from CAPTCHA challenges.
+      Privacy-focused CAPTCHA via hCaptcha — drop-in alternative to reCAPTCHA with stronger privacy posture
+      (GDPR-compliant, no data sale) and a paid Enterprise tier with adaptive challenge difficulty. Wired into Ory via an
+      Ory Action on registration.before / login.before with can_interrupt, verifying the hCaptcha token from the client
+      widget.
     status: active
     vendor: hCaptcha
+    useCase: >-
+      A consumer product wants CAPTCHA defense at signup/login without Google's reCAPTCHA privacy concerns — hCaptcha's
+      GDPR posture and no-data-sale guarantee make it a common choice in EU-targeted products.
+    coreFunctionality: >-
+      - Pattern: client widget collects token (h-captcha-response) → form submits → Ory Action with can_interrupt calls
+      handler → handler verifies via POST https://hcaptcha.com/siteverify → handler returns success/failure → Ory consumes
+      via response.parse.
+
+      - Two keys: Site Key (public, client widget) and Secret (server verify); never expose Secret.
+
+      - Tokens are one-time-use and expire 2 minutes after issue.
+
+      - hCaptcha API contract is nearly identical to reCAPTCHA — easy migration between the two.
+
+      - Enterprise tier adds adaptive risk scoring and invisible challenges; verify endpoint shape unchanged.
+
+      - Status: community/proposed — no dedicated ory/docs page; same pattern as Turnstile / reCAPTCHA / Arkose.
     oryMechanism:
-      - standards
+      - actions
   - name: recaptcha
     displayName: Google reCAPTCHA
     category: fraud-bot-protection
@@ -1757,19 +1889,42 @@ integrations:
     oryMechanism:
       - actions-webhook
   - name: sift
-    displayName: Sift (Digital Trust & Safety)
+    displayName: Sift
     category: fraud-bot-protection
     path: fraud-bot-protection/sift
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      Sift is a digital trust and safety platform that provides real-time fraud detection and account abuse prevention. It
-      uses machine learning to analyze user events and return abuse scores that help you decide whether to allow, review,
-      or block an action.
+      Digital trust & safety via Sift — real-time ML-based fraud and account-abuse scoring. Wired into Ory via two
+      Actions: a sync pre-flow check (registration.before / login.before with can_interrupt) reading the user's current
+      Sift abuse score and blocking when above threshold, plus an async post-event reporter emitting Sift events that feed
+      the model.
     status: active
-    vendor: Sift (Digital Trust & Safety)
+    vendor: Sift
+    useCase: >-
+      A consumer product (marketplace, fintech, gaming) needs ML-driven account-abuse prevention beyond bot defense —
+      repeat-fraudster detection, payment-fraud signals, network-effect risk — and is willing to feed Sift the event
+      stream needed to build a useful longitudinal model.
+    coreFunctionality: >-
+      - Two flows must run for Sift to be useful: pre-flow check (block on fail) AND post-event reporter (signal
+      collection).
+
+      - Pre-flow: GET https://api.sift.com/v205/users/{user_id}/score; block if score > threshold (start permissive at 80,
+      tighten with data).
+
+      - Post-event: POST https://api.sift.com/v205/events with reserved event names ($create_account, $login,
+      $transaction) including IP, user agent, session, traits.
+
+      - Both flows authenticated via a single server-side API Key.
+
+      - User IDs must be stable across sessions — Sift's model is keyed on user_id.
+
+      - Sift's value is longitudinal — single events have limited signal; payoff grows over time as the model learns the
+      user base.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: generic-oidc
     displayName: Generic OIDC Provider
     category: generic-protocols
@@ -3749,13 +3904,31 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Freshdesk is a customer support platform providing ticketing, collaboration, and automation tools. This integration
-      connects Freshdesk to Ory Network to synchronize user data for ticket correlation and display Ory identity context
-      within Freshdesk tickets, enabling support agents to understand a user's authentication state and identity details.
+      Sync Ory identities into Freshdesk Contacts via Ory Actions on registration.after / settings.after so support agents
+      see Ory identity context (verification state, MFA enrollment, recent activity) when handling tickets. Wiring is Ory
+      Action config + Jsonnet body calling Freshdesk's REST API — no first-party handler.
     status: active
-    vendor: Freshdesk
+    vendor: Freshworks
+    useCase: >-
+      A SaaS product running customer support on Freshdesk wants support agents to see the same identity record in
+      Freshdesk that exists in Ory — including verification and MFA state — without separate exports.
+    coreFunctionality: >-
+      - Ory Action on registration.after / settings.after calls Freshdesk POST /api/v2/contacts (or PUT for updates).
+
+      - Auth: HTTP Basic with the API key as username and "X" as password (Freshdesk convention).
+
+      - Optional: custom contact field ory_identity_id for stable cross-system lookup.
+
+      - response.ignore: true — Freshdesk availability never blocks user flows.
+
+      - 409 Conflict from POST means the contact already exists by email — handler should treat as success.
+
+      - For Ory identity context shown inside Freshdesk tickets, consider a Freshdesk Marketplace App calling Ory's admin
+      API — separate integration, not covered here.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: intercom
     displayName: Intercom
     category: support-helpdesk
@@ -3763,13 +3936,35 @@ integrations:
     maintainedBy: Community contributors
     type: config
     description: >-
-      Intercom is a customer messaging platform providing live chat, product tours, and customer engagement tools. This
-      integration connects Intercom to Ory Network to enrich Intercom user profiles with identity data and keep them
-      synchronized via webhooks, enabling identity-aware customer communication.
+      Sync Ory identities into Intercom Contacts via Ory Actions on registration.after / settings.after so chat, support,
+      and lifecycle messaging are identity-aware. Wiring is Ory Action config + Jsonnet body calling Intercom's REST API —
+      no first-party handler.
     status: active
     vendor: Intercom
+    useCase: >-
+      A SaaS product running customer messaging on Intercom (chat / support / lifecycle campaigns) wants Ory-managed
+      identities to appear as Intercom contacts automatically and wants the Intercom Messenger to recognize authenticated
+      users via HMAC identity verification.
+    coreFunctionality: >-
+      - Ory Action on registration.after / settings.after calls Intercom POST https://api.intercom.io/contacts with role:
+      "user".
+
+      - Auth: header Authorization: Bearer <ACCESS_TOKEN> + Intercom-Version: 2.11 (or current stable).
+
+      - Optional: store Intercom's returned id on metadata_public.intercom_id for downstream calls.
+
+      - response.ignore: true — Intercom availability never blocks user flows.
+
+      - Intercom Messenger identity verification: HMAC `user_hash` shared secret prevents spoofing of authenticated chat
+      sessions; configure in Intercom security settings.
+
+      - Tracking events ("user verified email", etc.) uses Events API (POST /events), not contact updates.
+
+      - Rate limits 10K calls/minute (Pro+) — generous for signup-rate flows.
+
+      - Status: community/proposed — no dedicated ory/docs page.
     oryMechanism:
-      - standards
+      - actions
   - name: zendesk
     displayName: Zendesk
     category: support-helpdesk
@@ -3840,31 +4035,69 @@ integrations:
     category: user-enrichment
     path: user-enrichment/fullcontact
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      FullContact is a person and company data enrichment platform that resolves identity fragments (email, phone, social
-      handle) into unified person and company profiles. This integration enriches Ory Network identities after
-      registration with demographic, firmographic, and social data, enabling personalization and lead qualification
-      without additional form fields.
+      Enrich Ory identities post-registration with demographic, firmographic, and social data from FullContact's
+      person/company resolution graph. Wired via an async Ory Action on registration.after calling a custom handler that
+      fetches FullContact enrichment and PATCHes metadata_public.fullcontact on the Ory identity.
     status: active
     vendor: FullContact
+    useCase: >-
+      A B2B SaaS product wants newly registered users enriched with name, employer, role, location, and social handles
+      automatically — for lead qualification, personalization, and routing — without making the user fill out a longer
+      signup form.
+    coreFunctionality: >-
+      - Pattern: Ory Action registration.after (async, response.ignore: true) → handler verifies shared secret → handler
+      calls POST https://api.fullcontact.com/v3/person.enrich → handler PATCHes metadata_public.fullcontact on the
+      identity via @ory/client.
+
+      - Best-effort enrichment — coverage varies by region and email type (personal vs business); handler should silently
+      no-op on 404 misses.
+
+      - Per-resolved-record billing — configure FullContact's multi-field resolution to avoid wasting credits.
+
+      - DSAR / right-to-be-forgotten: FullContact API supports a delete call; wire to your DSAR flow.
+
+      - SDK: native fetch + @ory/client for admin PATCH.
+
+      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
-      - standards
+      - actions
   - name: zoominfo
     displayName: ZoomInfo
     category: user-enrichment
     path: user-enrichment/zoominfo
     maintainedBy: Community contributors
-    type: config
+    type: webhook
     description: >-
-      ZoomInfo is a B2B data intelligence platform providing contact, company, and intent data for sales, marketing, and
-      recruiting teams. This integration enriches Ory Network identities after registration with B2B contact and company
-      data from ZoomInfo's database, enabling lead qualification, account-based marketing, and sales-ready data
-      enrichment.
+      Enrich Ory identities post-registration with B2B contact + company data from ZoomInfo (job title, department,
+      company name / size / industry, location). Wired via an async Ory Action on registration.after calling a custom
+      handler that fetches ZoomInfo enrichment and PATCHes metadata_public.zoominfo on the Ory identity.
     status: active
     vendor: ZoomInfo
+    useCase: >-
+      A B2B SaaS product running sales-led GTM wants newly registered users pre-qualified with firmographic data so sales
+      can route accounts by company size / industry without asking those questions on the signup form.
+    coreFunctionality: >-
+      - Pattern: Ory Action registration.after (async, response.ignore: true) → handler verifies shared secret → handler
+      authenticates against ZoomInfo (OAuth2 client credentials) → handler calls POST
+      https://api.zoominfo.com/enrich/contact → handler PATCHes metadata_public.zoominfo on the identity via @ory/client.
+
+      - ZoomInfo Enrich API is B2B-focused — personal emails (gmail, outlook) won't resolve; gate calls on a
+      business-email check to avoid wasting credits.
+
+      - Data quality is highest for US business contacts; EU coverage weaker and subject to GDPR-driven opt-outs.
+
+      - Licensing is the long pole — Enrich API is a paid add-on requiring a sales conversation.
+
+      - For intent signals (pricing page visits, whitepaper downloads), pair with ZoomInfo's intent product — separate
+      API, not covered here.
+
+      - Per-resolved-record billing; configure conservative match thresholds.
+
+      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
     oryMechanism:
-      - standards
+      - actions
   - name: hookdeck
     displayName: Hookdeck — Webhook Reliability Layer
     category: webhook-infrastructure
