@@ -3,11 +3,25 @@
 
 name: terraform
 displayName: Terraform Provider
-vendor: Terraform Provider
+vendor: Ory
 category: iac-devops
 type: config
-maintainedBy: Community contributors
-description: Manage your Ory Network configuration as infrastructure-as-code using the official Terraform provider.
+maintainedBy: Ory Engineering
+description: >-
+  Officially maintained Terraform provider for managing Ory Network resources as infrastructure-as-code —
+  identity schemas, OAuth2 clients, project configuration, identities, organizations, permissions, and
+  webhooks. Source at github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory`.
+  Targets Ory Network only — does not manage self-hosted Ory deployments.
+useCase: >-
+  A platform team running Ory Network wants their identity and OAuth2 configuration in Git (not the Console)
+  for code review, drift detection, and per-environment (dev/staging/prod) reproducibility.
+coreFunctionality: |-
+  - Registry source: ory/ory. Authentication via the `api_key` provider attribute or ORY_API_KEY env var; project via `project` or ORY_PROJECT/ORY_SDK_URL.
+  - Resources cover identity schemas (ory_identity_schema), OAuth2 clients (ory_oauth2_client), project config (ory_project_config), identities, organizations, permissions, and webhooks (ory_webhook).
+  - Many ory_project_config attributes were renamed to match OpenAPI spec; old names still work but emit deprecation warnings. The provider repo ships a migrate-deprecated-attrs.sh script for bulk rewrites.
+  - Two API key types in Ory — Workspace keys (manage projects) vs Project keys (manage in-project resources); pick the right scope.
+  - Existing resources can be adopted via `terraform import ory_<resource>.<name> <id>`.
+  - Provider is for Ory Network only — does NOT manage self-hosted Kratos/Hydra/Keto/Oathkeeper.
 oryMechanism:
   - standards
 status: active

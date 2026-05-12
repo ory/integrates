@@ -3,13 +3,23 @@
 
 name: prometheus-grafana
 displayName: Prometheus + Grafana
-vendor: Prometheus + Grafana
+vendor: Prometheus / Grafana
 category: monitoring-observability
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Monitor Ory Network authentication metrics using Prometheus for collection and Grafana for visualization. Includes
-  scrape configuration, PromQL queries, alert rules, and a Grafana dashboard structure.
+  Every Ory service exposes a Prometheus-compatible metrics endpoint at /metrics/prometheus. Documented in the
+  Ory self-hosted observability docs as the recommended metrics path; Grafana dashboards are not officially
+  published — build your own around Ory's HTTP request metrics plus standard Go runtime metrics.
+useCase: >-
+  An Ory customer running Prometheus + Grafana wants identity service metrics in the same dashboards as the
+  rest of their stack — request rate / latency / error rate per Ory endpoint, plus runtime health (Go GC,
+  memory, goroutines).
+coreFunctionality: |-
+  - Each Ory service exposes /metrics/prometheus; ports differ per product (Kratos admin 4434, Hydra admin 4445, Keto 4468, Oathkeeper 9000).
+  - Ory Network: scrape https://<project>.projects.oryapis.com/metrics/prometheus.
+  - No officially published Grafana dashboard JSON; build around Ory HTTP request metrics + standard Go runtime metrics.
+  - For richer signals (traces, distributed correlation), pair with monitoring-observability/opentelemetry feeding into Tempo/Jaeger.
 oryMechanism:
   - standards
 status: active

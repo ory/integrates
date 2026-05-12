@@ -8,10 +8,20 @@ category: monitoring-observability
 type: config
 maintainedBy: Community contributors
 description: >-
-  New Relic is a full-stack observability platform that natively ingests OpenTelemetry data over OTLP/HTTP. Self-hosted
-  Ory products (Kratos, Hydra, Keto, Oathkeeper) and Ory Network self-managed deployments emit OpenTelemetry traces,
-  metrics, and logs that New Relic can consume directly, giving customers a single pane of glass for identity-flow
-  performance, error rates, and downstream impact.
+  Send Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard OpenTelemetry
+  exporter. No dedicated New Relic page on ory.com/docs; configures via the same OpenTelemetry path Ory
+  documents for self-hosted tracing.
+useCase: >-
+  An Ory customer running New Relic wants identity-flow traces and metrics alongside the rest of their app's
+  observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate
+  identity events with downstream service calls.
+coreFunctionality: |-
+  - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). OTLP/gRPC also supported.
+  - Auth via header `api-key: <NEW_RELIC_LICENSE_KEY>` — use Account/Ingest-scope license keys, NEVER full user keys.
+  - Self-hosted Ory: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME).
+  - Ory Network: OTLP endpoint configured in Project Settings → Telemetry.
+  - For production, prefer an OpenTelemetry Collector in front for batching/retries/sampling.
+  - New Relic enforces attribute count/size limits — identity.id fine, identity.traits as flat blob not. Sample at SDK/collector level, not backend side, to preserve head-of-trace context.
 oryMechanism:
   - standards
 status: active

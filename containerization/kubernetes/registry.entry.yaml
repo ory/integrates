@@ -8,9 +8,17 @@ category: containerization
 type: config
 maintainedBy: Community contributors
 description: >-
-  This guide provides raw Kubernetes manifests for deploying Ory components (Kratos, Hydra, Keto, Oathkeeper) without
-  Helm. This approach is useful for teams that prefer direct manifest management, GitOps workflows (Flux, ArgoCD), or
-  need granular control over Kubernetes resources. For Helm-based deployment, see the official Ory Helm Charts.
+  Raw Kubernetes manifests for deploying the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper) without
+  Helm. Useful for teams running GitOps (Flux, ArgoCD) or that need customizations the Helm chart doesn't
+  expose. For most cases, prefer the official Helm charts under iac-devops/helm.
+useCase: >-
+  A platform team running GitOps wants per-resource visibility into Ory deployments, or needs to customize
+  resources beyond what the Ory Helm charts expose, and is willing to maintain the manifests instead of using
+  Helm.
+coreFunctionality: |-
+  - Reference manifests for the full stack: Deployments, public/admin Services (type ClusterIP), ConfigMaps, Secrets, optional Ingress.
+  - Pattern: each Ory component (Kratos, Hydra, Keto, Oathkeeper) as a separate Deployment with split public/admin Services.
+  - For most teams the Helm charts (iac-devops/helm) are the recommended path — choose raw manifests only when GitOps visibility or non-default customization justifies the maintenance burden.
 oryMechanism:
   - standards
 status: active

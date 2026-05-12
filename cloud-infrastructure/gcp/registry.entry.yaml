@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: gcp
-displayName: GCP Infrastructure
-vendor: GCP Infrastructure
+displayName: GCP
+vendor: Google Cloud
 category: cloud-infrastructure
 type: config
 maintainedBy: Community contributors
 description: >-
-  This guide covers deploying and integrating Ory with Google Cloud Platform infrastructure. While Ory Network is a
-  managed cloud service, organizations hosting applications on GCP need to understand connectivity patterns. This
-  document covers both connecting GCP-hosted applications to Ory Network (managed) and self-hosting Ory on GKE with
-  Cloud SQL.
+  Deployment patterns for running with Ory on Google Cloud — both the managed Ory Network case (GCP app reaching
+  out to Ory over HTTPS) and the self-hosted case (Ory on GKE with Cloud SQL Postgres). Not a vendor integration;
+  documentation of the GCP-side glue.
+useCase: >-
+  A GCP-resident product team needs the GCP-specific configuration to either reach Ory Network from inside a
+  VPC, or to self-host the open-source Ory stack on GKE with the typical GCP managed services (Cloud SQL,
+  Secret Manager, Workload Identity, GKE Gateway).
+coreFunctionality: |-
+  - Pattern A (Ory Network from GCP): outbound HTTPS egress to *.oryapis.com; API key in Secret Manager via Workload Identity; Cloud DNS CNAME to custom.oryapis.com.
+  - Pattern B (self-hosted on GKE): GKE Autopilot or Standard with Workload Identity, Cloud SQL for PostgreSQL HA, optional Memorystore Redis. Connect to Cloud SQL via the Cloud SQL Auth Proxy sidecar (preferred) or private IP with VPC peering.
+  - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
+  - GKE Gateway or Ingress with GCLB for HTTPS termination with a Google-managed certificate.
+  - For Google identity provider configuration, see social-sign-in/google and enterprise-sso/google-workspace (separate concerns from cloud deployment).
 oryMechanism:
   - standards
 status: active

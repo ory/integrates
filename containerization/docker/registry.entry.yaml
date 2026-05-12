@@ -8,9 +8,18 @@ category: containerization
 type: config
 maintainedBy: Community contributors
 description: >-
-  Ory provides official Docker images for all its components (Kratos, Hydra, Keto, Oathkeeper), enabling local
-  development, testing, and containerized deployment. This guide provides docker-compose configurations for running the
-  full Ory stack locally and covers production Docker deployment patterns.
+  Run the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper) using the official oryd/* Docker images. This
+  directory holds a reference docker-compose.yml for local development and CI reproduction; production
+  deployments should use the Helm charts.
+useCase: >-
+  A developer wants to bring up the open-source Ory stack locally — for development, CI reproduction, or trying
+  upgrades before promoting to a real cluster — without standing up Kubernetes.
+coreFunctionality: |-
+  - Reference docker-compose.yml runs Kratos, Hydra, Keto, Oathkeeper against a local Postgres with mailslurper for email testing.
+  - Uses the official oryd/kratos, oryd/hydra, oryd/keto, oryd/oathkeeper images from Docker Hub.
+  - Per-product Docker setup is documented in each product's install guide (Kratos, Hydra, Keto, Oathkeeper) on ory.com/docs.
+  - Hydra ships a Docker-Compose-based quickstart at /docs/hydra/self-hosted/quickstart.
+  - For production, use the Helm charts under iac-devops/helm — docker-compose lacks the probes, rolling updates, and secret handling you'll want.
 oryMechanism:
   - standards
 status: active

@@ -3,15 +3,24 @@
 
 name: azure
 displayName: Microsoft Azure
-vendor: Microsoft Azure
+vendor: Microsoft
 category: cloud-infrastructure
 type: config
 maintainedBy: Community contributors
 description: >-
-  Microsoft Azure is a major public cloud and a common deployment target for self-hosted Ory products. Open-source
-  Kratos, Hydra, Keto, and Oathkeeper run cleanly on Azure Kubernetes Service (AKS) or Azure Container Apps with Azure
-  Database for PostgreSQL or Azure Cosmos DB for PostgreSQL as the data store, and integrate with Microsoft Entra ID for
-  enterprise SSO use cases.
+  Deployment patterns for running with Ory on Microsoft Azure — both the managed Ory Network case (Azure app
+  reaching out to Ory over HTTPS) and the self-hosted case (Ory on AKS or Azure Container Apps with Azure
+  Database for PostgreSQL). Not a vendor integration; documentation of the Azure-side glue.
+useCase: >-
+  An Azure-resident product team needs the Azure-specific configuration to either reach Ory Network from inside
+  a VNet, or to self-host the open-source Ory stack on AKS with the typical Azure managed services (PostgreSQL
+  Flexible Server, Key Vault, Workload Identity, Application Gateway Ingress).
+coreFunctionality: |-
+  - Pattern A (Ory Network from Azure): outbound HTTPS egress to *.oryapis.com (NSG + optional Azure Firewall app rule); API key in Azure Key Vault; Azure DNS CNAME to custom.oryapis.com.
+  - Pattern B (self-hosted on AKS): AKS with Workload Identity, Azure Database for PostgreSQL Flexible Server (Zone-Redundant HA in production), optional Azure Cache for Redis.
+  - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
+  - Application Gateway Ingress Controller (AGIC) for HTTPS termination with a Key Vault-stored certificate.
+  - For Microsoft Entra ID identity provider configuration, see social-sign-in/microsoft and enterprise-sso/microsoft-entra-id (separate concerns from cloud deployment).
 oryMechanism:
   - standards
 status: active

@@ -2,16 +2,25 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: aws
-displayName: AWS Infrastructure
-vendor: AWS Infrastructure
+displayName: AWS
+vendor: Amazon Web Services
 category: cloud-infrastructure
 type: config
 maintainedBy: Community contributors
 description: >-
-  This guide covers deploying and integrating Ory with AWS infrastructure. While Ory Network is a managed cloud service
-  that handles the Ory stack, many organizations need to understand how their AWS-hosted applications connect to Ory
-  Network, and some choose to self-host Ory components on AWS using EKS, RDS, and ElastiCache. This document covers both
-  patterns.
+  Deployment patterns for running with Ory on AWS — both the managed Ory Network case (AWS app reaching out to
+  Ory over HTTPS) and the self-hosted case (Ory on EKS with RDS Postgres and optional ElastiCache). Not a
+  vendor integration in the registry sense; documentation of the AWS-side glue around standard Ory deployment.
+useCase: >-
+  An AWS-resident product team needs the AWS-specific configuration to either reach Ory Network from inside a
+  VPC, or to self-host the open-source Ory stack on EKS with the typical AWS managed services (RDS, ElastiCache,
+  ALB, ACM, Secrets Manager, Route 53).
+coreFunctionality: |-
+  - Pattern A (Ory Network from AWS): outbound HTTPS egress to *.oryapis.com; API key in AWS Secrets Manager (IAM-bound, not env vars); Route 53 CNAME to custom.oryapis.com for the custom auth domain.
+  - Pattern B (self-hosted on EKS): EKS cluster with --with-oidc, RDS PostgreSQL Multi-AZ for Kratos/Hydra/Keto datastores, optional ElastiCache Redis with at-rest + transit encryption.
+  - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
+  - AWS Load Balancer Controller (ALB Ingress) for HTTPS termination with an ACM certificate.
+  - No AWS-specific Ory docs page; the Ory self-hosted/operations pages cover the cloud-agnostic concerns.
 oryMechanism:
   - standards
 status: active

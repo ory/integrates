@@ -6,10 +6,19 @@ displayName: OpenTelemetry
 vendor: OpenTelemetry
 category: monitoring-observability
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Configure Ory Network's native OpenTelemetry (OTLP) export for traces, metrics, and logs. Includes OpenTelemetry
-  Collector configuration, pipeline setup, and downstream backend integration.
+  Ory natively supports OpenTelemetry across all products — listed as the first/recommended tracing backend
+  in the Ory observability docs. Self-hosted products ship OTLP via standard OTEL_EXPORTER_OTLP_* env vars;
+  Ory Network exports OTLP from the managed control plane via Project Settings → Telemetry.
+useCase: >-
+  An Ory customer wants traces, metrics, and (optionally) logs in their own observability backend without being
+  locked into a single vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
+coreFunctionality: |-
+  - Self-hosted: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES) on each Ory product.
+  - Ory Network: Console UI under Project Settings → Telemetry — set OTLP endpoint, pick grpc (4317) or http/protobuf (4318), add auth headers.
+  - Recommended pipeline: run an OpenTelemetry Collector in front of the final backend for batching, retries, sampling, and PII redaction in one place; swap backends (Tempo, Datadog, New Relic, Honeycomb, etc.) without touching Ory config.
+  - Sampling at the SDK / collector level (not backend-side) preserves head-of-trace context.
 oryMechanism:
   - standards
 status: active

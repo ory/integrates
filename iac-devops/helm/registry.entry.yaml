@@ -3,11 +3,23 @@
 
 name: helm
 displayName: Helm Charts
-vendor: Helm Charts
+vendor: Ory
 category: iac-devops
 type: config
-maintainedBy: Community contributors
-description: Official Helm charts for deploying Ory components on Kubernetes.
+maintainedBy: Ory Engineering
+description: >-
+  Officially maintained Helm charts for deploying the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper)
+  on Kubernetes. Source repo at github.com/ory/k8s; chart repo hosted at https://k8s.ory.sh/helm/charts.
+  Documented in the Hydra Helm chart guide on ory.com/docs.
+useCase: >-
+  A platform team wants the canonical, version-pinned way to deploy the open-source Ory stack on Kubernetes —
+  with the operational chrome (probes, HPA, PDB, ServiceMonitor, automigration jobs) already wired up.
+coreFunctionality: |-
+  - One chart per product: ory/kratos, ory/hydra, ory/keto, ory/oathkeeper. Repo: helm repo add ory https://k8s.ory.sh/helm/charts.
+  - Charts are marked "incubation" by the Ory team in the repo README — pin versions and review changelogs before upgrade.
+  - automigration job runs as a pre-install / pre-upgrade hook for safe DB schema changes.
+  - Built-in support for HPA, PodDisruptionBudget, Prometheus ServiceMonitor, and split public/admin ingress.
+  - Production: never expose the admin Service publicly; inject secrets via External Secrets Operator from a secret manager rather than committing them; use a managed Postgres (RDS, Cloud SQL, Azure DB), not in-cluster.
 oryMechanism:
   - standards
 status: active

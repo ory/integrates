@@ -2,14 +2,24 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: datadog
-displayName: DataDog
-vendor: DataDog
+displayName: Datadog
+vendor: Datadog
 category: monitoring-observability
 type: config
-maintainedBy: Community contributors
+maintainedBy: Ory Engineering
 description: >-
-  Monitor Ory Network authentication metrics in DataDog using OpenTelemetry (OTLP) export and Prometheus-format metrics
-  scraping. Includes dashboard concepts and alert rules for critical authentication metrics.
+  Monitor Ory in Datadog. Self-hosted Ory products natively support Datadog as a tracing backend (listed
+  alongside OpenTelemetry/Jaeger/etc. in the Ory tracing docs). Ory Network customers ingest via OpenTelemetry
+  (OTLP) — either to the Datadog Agent's OTLP receiver or directly to Datadog's OTLP intake.
+useCase: >-
+  An Ory customer running on Datadog wants identity-flow traces and metrics in the same pane of glass as the
+  rest of their app — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate
+  identity events with downstream service calls.
+coreFunctionality: |-
+  - Self-hosted: native Datadog tracing backend on each Ory product (set tracing provider to `datadog`, point at the agent's APM endpoint, typically localhost:8126). No OTLP collector needed.
+  - Ory Network: OTLP export, ingested either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports 4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
+  - Prometheus metrics on /metrics/prometheus (each Ory service); ingest via the Datadog Agent's OpenMetrics check.
+  - Documented in /self-hosted/operations/tracing (Datadog explicitly listed as a supported backend) and /self-hosted/operations/observability.
 oryMechanism:
   - standards
 status: active

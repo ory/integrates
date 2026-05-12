@@ -2,12 +2,23 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: pulumi
-displayName: Pulumi Provider
-vendor: Pulumi Provider
+displayName: Pulumi
+vendor: Pulumi
 category: iac-devops
 type: config
 maintainedBy: Community contributors
-description: Manage your Ory Network configuration as infrastructure-as-code using Pulumi in TypeScript, Go, or Python.
+description: >-
+  Pulumi-based infrastructure-as-code for Ory Network. There is NO official Ory Pulumi provider; this entry
+  documents the two community paths — bridging the official Terraform provider via pulumi-terraform-bridge,
+  or calling the Ory Network REST API from a Pulumi dynamic resource using the language SDK.
+useCase: >-
+  A platform team standardized on Pulumi (instead of Terraform) wants to manage Ory Network resources from the
+  same codebase and deployment pipeline as the rest of their infrastructure.
+coreFunctionality: |-
+  - NO official Ory Pulumi provider exists today.
+  - Recommended path: bridge the official ory/ory Terraform provider via pulumi-terraform-bridge to generate a Pulumi-callable SDK.
+  - Alternative: write a Pulumi `dynamic` provider that calls the Ory Network REST API using @ory/client (TypeScript) or ory-client (Go/Python). State diffing and CRUD logic is the implementer's responsibility.
+  - Escape hatch: keep Ory resources in Terraform via the official provider (iac-devops/terraform) and only use Pulumi for the rest.
 oryMechanism:
   - standards
 status: active
