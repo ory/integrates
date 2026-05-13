@@ -62,12 +62,6 @@ Each subdirectory under a category folder is one integration.
 | [`user-enrichment/`](user-enrichment) | User data enrichment |
 | [`webhook-infrastructure/`](webhook-infrastructure) | Webhook delivery infrastructure |
 
-Worked examples — start here when adding a new integration:
-
-- **Webhook**: [`crm/hubspot/`](crm/hubspot) — Express handler that syncs Ory identities to HubSpot contacts.
-- **Config**: [`enterprise-sso/okta/`](enterprise-sso/okta) — OIDC provider configuration with detailed Console steps.
-- **HTTP-event**: [`_examples/_template-http-event/`](_examples/_template-http-event) — template only (no shipped integration yet).
-
 ## Three integration types
 
 Every integration is one of:
@@ -88,7 +82,8 @@ A small handler that Ory Actions calls during a flow (registration, login, ident
     └── .env.example
 ```
 
-Template: [`_examples/_template-webhook/`](_examples/_template-webhook).
+- Template: [`_examples/_template-webhook/`](_examples/_template-webhook)
+- Reference example: [`crm/hubspot/`](crm/hubspot) — Express handler that syncs Ory identities to HubSpot contacts.
 
 ### Config (`type: config`)
 
@@ -101,7 +96,8 @@ Configuration in the Ory Console only. No webhook code. Most OIDC providers, SAM
 └── ory-console-steps.md
 ```
 
-Template: [`_examples/_template-config/`](_examples/_template-config).
+- Template: [`_examples/_template-config/`](_examples/_template-config)
+- Reference example: [`enterprise-sso/okta/`](enterprise-sso/okta) — OIDC provider configuration with detailed Console steps.
 
 ### HTTP event (`type: http-event`)
 
@@ -119,7 +115,8 @@ Consumer of Ory Network **Live Event Streams** (an Enterprise feature). Subscrib
     └── .env.example
 ```
 
-Template: [`_examples/_template-http-event/`](_examples/_template-http-event).
+- Template: [`_examples/_template-http-event/`](_examples/_template-http-event)
+- Reference example: none yet — only the template ships today.
 
 Live events are at-least-once with no ordering guarantees, so the template includes a sha256-of-body deduplication helper. For production, swap the in-memory store for Redis or DynamoDB.
 
