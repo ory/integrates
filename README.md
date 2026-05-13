@@ -140,12 +140,6 @@ Live events are at-least-once with no ordering guarantees, so the template inclu
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full contribution flow.
 
-## Native vs sample
-
-The integrations here are **interim**. As Ory products gain native first-class providers (OIDC providers in the Console, native CRM hooks, native analytics bridges), the corresponding integrations here move to historical reference and the docs page points at the native flow.
-
-If you have integration needs this repo doesn't cover, contact Ory directly — those needs are typically better served by native product features than by reference samples.
-
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
