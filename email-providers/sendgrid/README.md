@@ -5,7 +5,7 @@
 SendGrid (a Twilio company) is one of the most widely used transactional-email platforms — robust SMTP relay, HTTP API, and a generous free tier. **Documented directly in the Ory SMTP courier page.**
 
 **Type:** config (Kratos courier-spi over SMTP or HTTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-emails-smtp#sendgrid](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#sendgrid)
+**Docs page:** [ory.com/docs/integrates-with/email-providers/sendgrid](https://www.ory.com/docs/integrates-with/email-providers/sendgrid) — full guide: [ory.com/docs/kratos/emails-sms/sending-emails-smtp#sendgrid](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#sendgrid)
 
 The Ory docs page covers both SMTP and HTTP variants for SendGrid. Quick reference:
 

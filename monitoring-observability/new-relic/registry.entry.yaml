@@ -9,7 +9,7 @@ type: config
 maintainedBy: Community contributors
 description: >-
   Send Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard OpenTelemetry
-  exporter. No dedicated New Relic page on ory.com/docs; configures via the same OpenTelemetry path Ory
+  exporter. Documented at ory.com/docs/integrates-with/monitoring-observability/new-relic; configures via the same OpenTelemetry path Ory
   documents for self-hosted tracing.
 useCase: >-
   An Ory customer running New Relic wants identity-flow traces and metrics alongside the rest of their app's

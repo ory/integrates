@@ -19,7 +19,7 @@ coreFunctionality: |-
   - Stable user_id: use Ory's identity id (ctx.identity.id), NOT email — Amplitude identity merges break if user_id changes across email updates.
   - User properties: $set operations track trait changes without overwriting Amplitude-computed dimensions.
   - Rate limits: 1,000 events per HTTP request; high-volume products should batch in a small handler instead of one-event-per-call.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/cdp-analytics/amplitude.
 oryMechanism:
   - actions
 protocol:

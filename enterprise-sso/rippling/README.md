@@ -5,7 +5,7 @@
 Configure [Rippling](https://www.rippling.com) — the unified workforce platform combining HR, IT, and Finance — as a SAML 2.0 Identity Provider into Ory Polis. Less common as a pure SSO IdP than Okta or Entra ID, but a natural fit for organizations already using Rippling for HR/IT-driven access lifecycle (onboard / offboard / role-change events trigger access changes automatically).
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/rippling](https://www.ory.com/docs/polis/sso-providers/rippling)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/rippling](https://www.ory.com/docs/integrates-with/enterprise-sso/rippling) — full guide: [ory.com/docs/polis/sso-providers/rippling](https://www.ory.com/docs/polis/sso-providers/rippling)
 
 ## Setup
 

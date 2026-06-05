@@ -5,7 +5,7 @@
 Configure [OneLogin](https://www.onelogin.com) (One Identity) as a SAML 2.0 Identity Provider into Ory Polis. Common workforce IdP; competes in the same space as Okta and JumpCloud.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/onelogin](https://www.ory.com/docs/polis/sso-providers/onelogin)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/onelogin](https://www.ory.com/docs/integrates-with/enterprise-sso/onelogin) — full guide: [ory.com/docs/polis/sso-providers/onelogin](https://www.ory.com/docs/polis/sso-providers/onelogin)
 
 ## Setup
 

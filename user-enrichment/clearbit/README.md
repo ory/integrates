@@ -7,7 +7,7 @@
 Clearbit enriches identities with company and person data from an email address. This integration runs an async post-registration webhook that calls Clearbit's Combined API and writes the result to the identity's `metadata_admin` via the Ory Admin API.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/user-enrichment/clearbit](https://ory.com/docs/integrations/user-enrichment/clearbit)
+**Docs page:** [ory.com/docs/integrates-with/user-enrichment/clearbit](https://www.ory.com/docs/integrates-with/user-enrichment/clearbit)
 
 ## Use case
 
@@ -49,7 +49,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 4. Provision an admin API key for the handler (Ory Console → API Keys) and set `ORY_ADMIN_API_KEY` and `ORY_SDK_URL` in `.env`.
 
-Detailed setup, response shape, and migration guidance to FullContact or ZoomInfo: see the [docs page](https://ory.com/docs/integrations/user-enrichment/clearbit).
+Detailed setup, response shape, and migration guidance to FullContact or ZoomInfo: see the [docs page](https://ory.com/docs/integrates-with/user-enrichment/clearbit).
 
 ## Troubleshooting
 

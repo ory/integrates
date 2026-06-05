@@ -5,7 +5,7 @@
 <!-- One paragraph: what does this integration do? -->
 
 **Type:** http-event (consumer of Ory Network Live Events via HTTP POST)
-**Docs page:** [ory.com/docs/integrations/<your-integration>](https://ory.com/docs/integrations/)
+**Docs page:** [ory.com/docs/integrates-with/<your-integration>](https://ory.com/docs/integrates-with/)
 
 > Live event streams are an **Ory Network Enterprise** feature. This integration requires an Enterprise Ory Network contract. See the [Ory Network plans](https://www.ory.sh/pricing).
 

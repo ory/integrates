@@ -5,7 +5,7 @@
 [Zendesk](https://zendesk.com) is a customer-service platform that handles ticketing, live chat, and knowledge bases. This integration syncs Ory identities to Zendesk users so support agents see identity context (subscription plan, MFA status, risk score, recent sessions) in the agent sidebar, and so tickets correlate cleanly back to the user's Ory identity.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/support-helpdesk/zendesk](https://ory.com/docs/integrations/support-helpdesk/zendesk)
+**Docs page:** [ory.com/docs/integrates-with/support-helpdesk/zendesk](https://www.ory.com/docs/integrates-with/support-helpdesk/zendesk)
 
 ## Use case
 
@@ -50,7 +50,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 4. Set `ZENDESK_SIDEBAR_SECRET` to a separate long random value and configure your Zendesk sidebar app to send it as the `X-Zendesk-Secret` header.
 
-Sidebar app manifest, `iframe.html` source, agent-side rendering, and Zendesk app upload steps: see the [docs page](https://ory.com/docs/integrations/support-helpdesk/zendesk).
+Sidebar app manifest, `iframe.html` source, agent-side rendering, and Zendesk app upload steps: see the [docs page](https://ory.com/docs/integrates-with/support-helpdesk/zendesk).
 
 ## Troubleshooting
 

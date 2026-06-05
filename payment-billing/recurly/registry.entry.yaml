@@ -22,7 +22,7 @@ coreFunctionality: |-
   - account_code is the binding between systems — set to Ory identity id during account creation.
   - Subscription gating belongs in APPLICATION CODE reading metadata_public.recurly, NOT in the auth flow — Ory shouldn't block sign-in for churned subscribers; app redirects to billing page.
   - Recurly webhooks are at-least-once; handler must be idempotent (PATCH is naturally idempotent).
-  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/payment-billing/recurly, no first-party handler.
 oryMechanism:
   - actions
 protocol:

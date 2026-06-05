@@ -5,7 +5,7 @@
 Raw Kubernetes manifests for deploying the open-source Ory stack (Kratos, Hydra, Keto, Oathkeeper) without Helm — useful for teams using GitOps tools (Flux, ArgoCD) or that need fine-grained control over the manifests.
 
 **Type:** config (deployment pattern)
-**Docs page:** Per-product install guides on ory.com/docs:
+**Docs page:** [ory.com/docs/integrates-with/containerization/kubernetes](https://www.ory.com/docs/integrates-with/containerization/kubernetes)
 - [Kratos install](https://www.ory.com/docs/kratos/install)
 - [Hydra install](https://www.ory.com/docs/hydra/self-hosted/install)
 - [Keto install](https://www.ory.com/docs/keto/install)

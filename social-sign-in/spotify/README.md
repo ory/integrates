@@ -5,7 +5,7 @@
 Add Log in with Spotify as a social sign-in provider in Ory Network. Users sign in with their Spotify account; Ory maps Spotify's OAuth2 response (id, email, display name, country, product tier) to the identity schema. Common in music apps, entertainment platforms, and creator tools.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/spotify](https://www.ory.com/docs/kratos/social-signin/spotify)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/spotify](https://www.ory.com/docs/integrates-with/social-sign-in/spotify) — full guide: [ory.com/docs/kratos/social-signin/spotify](https://www.ory.com/docs/kratos/social-signin/spotify)
 
 ## Setup
 

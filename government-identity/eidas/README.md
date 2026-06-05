@@ -5,7 +5,7 @@
 [eIDAS](https://digital-strategy.ec.europa.eu/en/policies/eidas-regulation) is the EU regulation that lets a citizen of one member state authenticate to services in another using their national electronic ID (German Personalausweis, Italian SPID, Belgian eID, French FranceConnect, Spanish DNI, etc.). **Direct eIDAS node access requires government approval**; integration usually goes through a commercial broker that exposes eIDAS as standard OIDC.
 
 **Type:** config (generic OIDC provider in Kratos pointing at an eIDAS broker)
-**Docs page:** No dedicated Ory page. Configures via the [generic OIDC provider](https://www.ory.com/docs/kratos/social-signin/generic) path.
+**Docs page:** [ory.com/docs/integrates-with/government-identity/eidas](https://www.ory.com/docs/integrates-with/government-identity/eidas)
 
 ## How to integrate eIDAS
 

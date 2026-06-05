@@ -10,14 +10,14 @@ maintainedBy: Community contributors
 description: >-
   Sync user consent state from Osano (data-privacy platform — GDPR/CCPA/LGPD consent management, data
   discovery, vendor monitoring) into Ory Network identity metadata via a custom webhook + admin API client.
-  Also handles DSAR fulfillment (GDPR Art. 15/17/20) via the same handler. No first-party connector or Ory
-  docs page exists; integration is customer-implemented.
+  Also handles DSAR fulfillment (GDPR Art. 15/17/20) via the same handler. No first-party connector exists;
+  documented at ory.com/docs/integrates-with/consent-privacy/osano. Integration is customer-implemented.
 useCase: >-
   A regulated B2C product using Osano for consent and DSAR workflow orchestration wants Osano-tracked
   decisions visible alongside Ory identity records, with DSAR fulfillment wired to Ory as the identity
   source of truth.
 coreFunctionality: |-
-  - Osano → webhook → Ory admin API pattern. No first-party connector or Ory docs page.
+  - Osano → webhook → Ory admin API pattern. No first-party connector; documented at ory.com/docs/integrates-with/consent-privacy/osano.
   - Osano webhook configured under Subject Rights → Integrations; fires on consent and DSAR events with signed payloads.
   - Handler verifies signature, resolves the Ory identity by Osano user_id (matched to an identity trait or metadata_public.osano_user_id), PATCHes metadata_public.consent.osano with the consent record (purposes, timestamp, jurisdiction).
   - DSAR fulfillment: GET /admin/identities/{id} (Article 15 access), DELETE /admin/identities/{id} (Article 17 erasure), traits export (Article 20 portability).

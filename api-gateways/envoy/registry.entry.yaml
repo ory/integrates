@@ -1,0 +1,31 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: envoy
+displayName: Envoy
+vendor: Envoy Proxy (CNCF)
+category: api-gateways
+type: config
+maintainedBy: Community contributors
+description: >-
+  Validate Ory-issued JWTs or Kratos sessions at the Envoy proxy layer. Envoy's native `jwt_authn` HTTP filter
+  verifies Hydra-issued OAuth2 access tokens against Ory's JWKS before requests reach upstream; the `ext_authz`
+  filter delegates to Ory Oathkeeper or a small validator service for Kratos session-cookie checks. Documented at
+  ory.com/docs/integrates-with/api-gateways/envoy — standard token-at-the-edge pattern; the Ory side is just JWKS exposure or /sessions/whoami.
+useCase: >-
+  A team running Envoy (standalone, or as the data plane under a mesh / gateway) wants Ory-issued tokens
+  validated at the proxy so upstream services receive a trusted identity (or a 401 from the edge) without
+  re-validating every request themselves.
+coreFunctionality: |-
+  - Path A (Hydra JWTs): `jwt_authn` HTTP filter with a remote_jwks pointing at https://<project>.projects.oryapis.com/.well-known/jwks.json; set issuer to the Ory project URL and audiences to the API's audience. Envoy caches the JWKS and refreshes on the configured interval.
+  - Path B (Kratos sessions): `ext_authz` HTTP filter calls Ory Oathkeeper (or a small validator) which hits /sessions/whoami; on success Envoy forwards identity headers (X-User-Id, X-User-Email) upstream, on failure returns 401 at the edge.
+  - Verified JWT claims can be forwarded upstream via the filter's payload_in_metadata / forwarding settings for downstream authorization.
+  - Works the same whether Envoy is standalone, an Istio sidecar/gateway, or the data plane under a managed gateway.
+  - Tetrate Agent Router Enterprise (see agent-identity/tetrate) is built on Envoy AI Gateway and applies this pattern to AI-agent traffic.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/envoy; shape still being defined.
+oryMechanism:
+  - standards
+protocol:
+  - jwt
+  - rest-api
+status: active

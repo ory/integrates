@@ -22,7 +22,7 @@ coreFunctionality: |-
   - Use `unionid` (cross-app stable identifier under one Open Platform account) rather than `openid` (per-app) for the identity credential.
   - WeChat does NOT share email; identity schema must accommodate.
   - Operational prerequisites: Chinese business entity for Open Platform registration, ICP filing for the callback domain, and testing from within China for reliable connectivity.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/wechat.
 oryMechanism:
   - standards
 protocol:

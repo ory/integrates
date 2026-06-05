@@ -5,7 +5,7 @@
 [Google reCAPTCHA](https://developers.google.com/recaptcha) is a bot-protection service. **v2** issues a visible (or invisible) challenge and returns a pass/fail token; **v3** runs entirely in the background and returns a score from `0.0` (bot) to `1.0` (human). Ory Network natively integrates Cloudflare Turnstile but not reCAPTCHA, so this integration adds reCAPTCHA via a sync pre-flow Action webhook that validates the client-side token against Google's `siteverify` API and either lets the flow proceed or interrupts it with a user-facing message.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/fraud-bot-protection/recaptcha](https://ory.com/docs/integrations/fraud-bot-protection/recaptcha)
+**Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/recaptcha](https://www.ory.com/docs/integrates-with/fraud-bot-protection/recaptcha)
 
 ## Use case
 
@@ -45,7 +45,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 1. In the Ory Console, configure the Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml) (pre-registration and pre-login).
 2. The body template is [`jsonnet/verify.jsonnet`](jsonnet/verify.jsonnet).
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
-4. In your custom UI, load `recaptcha/api.js`, generate a token, and include it in `transient_payload.recaptcha_token` on the flow submission. A working browser snippet is in the [docs page](https://ory.com/docs/integrations/fraud-bot-protection/recaptcha).
+4. In your custom UI, load `recaptcha/api.js`, generate a token, and include it in `transient_payload.recaptcha_token` on the flow submission. A working browser snippet is in the [docs page](https://ory.com/docs/integrates-with/fraud-bot-protection/recaptcha).
 
 ## Troubleshooting
 

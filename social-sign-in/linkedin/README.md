@@ -5,7 +5,7 @@
 Add Sign In with LinkedIn as a social sign-in provider in Ory Network. LinkedIn migrated to OIDC-compliant authentication via its "Sign In with LinkedIn using OpenID Connect" product, returning standard `email`, `name`, and `picture` claims so the mapping is straightforward.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/linkedin](https://www.ory.com/docs/kratos/social-signin/linkedin)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/linkedin](https://www.ory.com/docs/integrates-with/social-sign-in/linkedin) — full guide: [ory.com/docs/kratos/social-signin/linkedin](https://www.ory.com/docs/kratos/social-signin/linkedin)
 
 ## Setup
 

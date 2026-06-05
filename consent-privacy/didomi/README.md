@@ -5,7 +5,7 @@
 [Didomi](https://www.didomi.io) is a consent management platform (CMP) — collects, stores, and manages user consent for data processing under GDPR / CCPA / ePrivacy. This integration syncs Didomi consent state into Ory Network identity metadata so downstream services can read consent decisions alongside identity data, and uses Ory's admin API to fulfill data-subject requests (DSARs).
 
 **Type:** config (Didomi-driven webhook + Ory admin API client — no first-party connector)
-**Docs page:** No dedicated Didomi page on ory.com/docs. Pattern is Didomi → custom webhook → Ory admin API.
+**Docs page:** [ory.com/docs/integrates-with/consent-privacy/didomi](https://www.ory.com/docs/integrates-with/consent-privacy/didomi)
 
 ## Setup outline
 

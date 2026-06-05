@@ -2,6 +2,8 @@
 
 Validate Ory Network session tokens and JWTs at Cloudflare's edge, before requests reach your origin server.
 
+**Docs page:** [ory.com/docs/integrates-with/edge-token-validation/cloudflare-workers](https://www.ory.com/docs/integrates-with/edge-token-validation/cloudflare-workers)
+
 ## Overview
 
 This integration deploys a Cloudflare Worker that intercepts incoming requests, validates Ory session cookies or Bearer JWTs against your Ory Network project, and forwards authenticated requests to your origin with enriched headers. Unauthenticated requests are rejected at the edge with zero load on your backend.

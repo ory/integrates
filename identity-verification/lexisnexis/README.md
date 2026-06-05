@@ -5,7 +5,7 @@
 [LexisNexis Risk Solutions](https://risk.lexisnexis.com) provides InstantID — a database-backed identity-verification API that scores name/address/SSN/DOB matches and returns NAS / NAP / CVI scores. Common in US financial-services and insurance flows where document scans are too high-friction. This integration runs InstantID synchronously from Ory Actions during registration and gates login on the stored verification status.
 
 **Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
-**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/lexisnexis](https://www.ory.com/docs/integrates-with/identity-verification/lexisnexis)
 
 ## Endpoints
 

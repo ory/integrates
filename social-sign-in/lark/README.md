@@ -5,7 +5,7 @@
 Add Lark (international) / Feishu (mainland China) as a social sign-in provider in Ory Network. Lark is ByteDance's enterprise communication platform — useful for B2B and APAC products that want sign-in via the workplace identity their users already have.
 
 **Type:** config (Ory CLI configuration)
-**Docs page:** [ory.com/docs/kratos/social-signin/lark](https://www.ory.com/docs/kratos/social-signin/lark)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/lark](https://www.ory.com/docs/integrates-with/social-sign-in/lark) — full guide: [ory.com/docs/kratos/social-signin/lark](https://www.ory.com/docs/kratos/social-signin/lark)
 
 ## Setup
 

@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-05-12T22:22:45Z
+  generated: 2026-06-05T19:54:31Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -39,6 +39,37 @@ integrations:
     protocol:
       - oauth2
       - rest-api
+  - name: tetrate
+    displayName: Tetrate Agent Router Enterprise
+    vendor: Tetrate
+    category: agent-identity
+    path: agent-identity/tetrate
+    type: config
+    maintainedBy: Community contributors
+    status: active
+    description: >-
+      Pair Tetrate Agent Router Enterprise (an enterprise AI gateway built on Envoy AI Gateway) with Ory for dynamic,
+      granular control over enterprise AI agents. Ory provides identity and authorization — Hydra issues OAuth2/OIDC
+      tokens for agents and Keto holds the fine-grained policies — while Tetrate enforces those policies on live traffic
+      when agents call models, tools, and enterprise services, down to parameter-level control over MCP tool calls.
+    useCase: >-
+      An enterprise running autonomous AI agents wants per-agent, per-tool, and per-parameter access control with
+      step-up authorization — e.g. an agent processes routine refunds automatically but must trigger an Ory approval
+      flow for larger amounts, or accesses standard records freely but needs elevated, short-lived access for sensitive
+      data.
+    coreFunctionality: |-
+      - Two-layer architecture: Ory is the authorization/policy layer (what an agent or user may access at the resource level); Tetrate Agent Router Enterprise is the network/gateway layer that enforces policy on live traffic.
+      - Agents are first-class identities authenticated through Ory; Hydra issues OAuth2/OIDC tokens via client_credentials.
+      - Authorization policies defined in Ory Keto; Tetrate evaluates each agent request (tool call + request parameters) against them at the point an agent invokes an MCP tool.
+      - Parameter-level enforcement: Tetrate can gate not just which tools an agent may use but which request parameters are allowed, based on Keto policies.
+      - Step-up auth: requests exceeding a risk threshold can pause, trigger an authentication/approval flow through Ory, and issue short-lived elevated access.
+      - Tetrate Agent Router Enterprise is built on Envoy AI Gateway — see api-gateways/envoy for the underlying Ory-token-at-the-edge pattern.
+      - Status: community/proposed — announced partnership (Tetrate + Ory, 2026); reference architecture more than turnkey product.
+    oryMechanism:
+      - standards
+    protocol:
+      - oauth2
+      - rest-api
   - name: apigee
     displayName: Google Apigee
     vendor: Google Cloud
@@ -49,8 +80,9 @@ integrations:
     status: active
     description: >-
       Validate Ory-issued JWTs at the Google Apigee gateway layer using Apigee's VerifyJWT policy in a SharedFlow,
-      fetching the JWKS from Ory Network's well-known endpoint. No dedicated Ory docs — standard JWT-at-the-edge
-      pattern; Ory side is just JWKS exposure.
+      fetching the JWKS from Ory Network's well-known endpoint. Documented at
+      ory.com/docs/integrates-with/api-gateways/apigee — standard JWT-at-the-edge pattern; Ory side is just JWKS
+      exposure.
     useCase: >-
       An enterprise API team running Apigee wants OAuth2 access tokens issued by Ory (Hydra) validated at the gateway
       layer so backend services don't need to re-validate every request.
@@ -60,7 +92,7 @@ integrations:
       - Apigee KVM holds per-environment audience values without redeploying the shared flow.
       - For claim-based authorization (per-scope or per-role checks), add an AssignMessage or JavaScript policy after VerifyJWT to inspect the JWT claims.
       - SharedFlow attached to the API proxy's PreFlow runs before every request.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/apigee.
     oryMechanism:
       - standards
     protocol:
@@ -76,7 +108,8 @@ integrations:
     description: >-
       Validate Ory-issued JWTs at the AWS API Gateway layer using a Lambda authorizer (REST API) or a native JWT
       authorizer (HTTP API). The Lambda authorizer fetches Ory's JWKS, verifies the token, and returns an IAM policy;
-      API Gateway caches the policy by token for ~300s. No dedicated Ory docs — universal pattern.
+      API Gateway caches the policy by token for ~300s. Documented at
+      ory.com/docs/integrates-with/api-gateways/aws-api-gateway — universal pattern.
     useCase: >-
       A team running APIs on AWS API Gateway wants Ory-issued OAuth2 access tokens validated at the gateway so backend
       services don't need to re-validate every request and can read the trusted `sub` from request context.
@@ -86,11 +119,41 @@ integrations:
       - Caching: REST uses authorizerResultTtlInSeconds (default 300s); HTTP uses resultsCacheTtlInSeconds. Tune for cold-start vs. revocation latency.
       - Use Lambda authorizer over native JWT when custom claim-based authorization logic is needed beyond signature/issuer/audience checks.
       - Cold start matters — keep the authorizer minimal; aws-jwt-verify is a lean JWKS library.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/aws-api-gateway.
     oryMechanism:
       - standards
     protocol:
       - jwt
+  - name: envoy
+    displayName: Envoy
+    vendor: Envoy Proxy (CNCF)
+    category: api-gateways
+    path: api-gateways/envoy
+    type: config
+    maintainedBy: Community contributors
+    status: active
+    description: >-
+      Validate Ory-issued JWTs or Kratos sessions at the Envoy proxy layer. Envoy's native `jwt_authn` HTTP filter
+      verifies Hydra-issued OAuth2 access tokens against Ory's JWKS before requests reach upstream; the `ext_authz`
+      filter delegates to Ory Oathkeeper or a small validator service for Kratos session-cookie checks. Documented at
+      ory.com/docs/integrates-with/api-gateways/envoy — standard token-at-the-edge pattern; the Ory side is just JWKS
+      exposure or /sessions/whoami.
+    useCase: >-
+      A team running Envoy (standalone, or as the data plane under a mesh / gateway) wants Ory-issued tokens validated
+      at the proxy so upstream services receive a trusted identity (or a 401 from the edge) without re-validating every
+      request themselves.
+    coreFunctionality: |-
+      - Path A (Hydra JWTs): `jwt_authn` HTTP filter with a remote_jwks pointing at https://<project>.projects.oryapis.com/.well-known/jwks.json; set issuer to the Ory project URL and audiences to the API's audience. Envoy caches the JWKS and refreshes on the configured interval.
+      - Path B (Kratos sessions): `ext_authz` HTTP filter calls Ory Oathkeeper (or a small validator) which hits /sessions/whoami; on success Envoy forwards identity headers (X-User-Id, X-User-Email) upstream, on failure returns 401 at the edge.
+      - Verified JWT claims can be forwarded upstream via the filter's payload_in_metadata / forwarding settings for downstream authorization.
+      - Works the same whether Envoy is standalone, an Istio sidecar/gateway, or the data plane under a managed gateway.
+      - Tetrate Agent Router Enterprise (see agent-identity/tetrate) is built on Envoy AI Gateway and applies this pattern to AI-agent traffic.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/envoy; shape still being defined.
+    oryMechanism:
+      - standards
+    protocol:
+      - jwt
+      - rest-api
   - name: kong
     displayName: Kong API Gateway
     vendor: Kong
@@ -102,7 +165,8 @@ integrations:
     description: >-
       Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's stock `jwt`
       plugin (or jwt-signer / jwt-keycloak community plugins for JWKS auto-refresh); session validation via
-      request-transformer + pre-function calling /sessions/whoami. No dedicated Ory docs — universal pattern.
+      request-transformer + pre-function calling /sessions/whoami. Documented at
+      ory.com/docs/integrates-with/api-gateways/kong — universal pattern.
     useCase: >-
       A team running APIs behind Kong wants Ory-issued OAuth2 access tokens (Hydra) or Kratos session cookies validated
       at the gateway so backend services don't need to re-validate every request.
@@ -112,7 +176,7 @@ integrations:
       - Kong Enterprise's OIDC plugin handles Path A automatically with JWKS auto-discovery.
       - Caching: cache whoami response per session cookie via Kong's proxy-cache plugin or a Redis-backed custom cache to avoid hammering Ory.
       - Rate-limit at the gateway keyed by the validated `sub` claim — Kong's rate-limiting plugin is the cleanest pattern.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/kong.
     oryMechanism:
       - standards
     protocol:
@@ -168,7 +232,7 @@ integrations:
       - Stable user_id: use Ory's identity id (ctx.identity.id), NOT email — Amplitude identity merges break if user_id changes across email updates.
       - User properties: $set operations track trait changes without overwriting Amplitude-computed dimensions.
       - Rate limits: 1,000 events per HTTP request; high-volume products should batch in a small handler instead of one-event-per-call.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/cdp-analytics/amplitude.
     oryMechanism:
       - actions
     protocol:
@@ -220,7 +284,7 @@ integrations:
       - $insert_id for deduplication: set to Ory's flow id so retries don't double-count events.
       - ip=0 disables Mixpanel's IP geolocation when the request comes from your server, not the user.
       - User-property updates via /engage endpoint with $set operations for trait-change tracking.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/cdp-analytics/mixpanel.
     oryMechanism:
       - actions
     protocol:
@@ -246,7 +310,7 @@ integrations:
       - user_identities.customer_id = Ory identity id; mParticle's identity-resolution rules can layer on top.
       - environment field: set to "development" for non-prod Ory projects so events don't pollute prod data.
       - mParticle's value is the routing layer — for a single destination you might skip mParticle and ingest directly; for multi-destination, integration pays off quickly.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/cdp-analytics/mparticle.
     oryMechanism:
       - actions
     protocol:
@@ -300,7 +364,7 @@ integrations:
       - Pattern B (self-hosted on EKS): EKS cluster with --with-oidc, RDS PostgreSQL Multi-AZ for Kratos/Hydra/Keto datastores, optional ElastiCache Redis with at-rest + transit encryption.
       - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
       - AWS Load Balancer Controller (ALB Ingress) for HTTPS termination with an ACM certificate.
-      - No AWS-specific Ory docs page; the Ory self-hosted/operations pages cover the cloud-agnostic concerns.
+      - Documented at ory.com/docs/integrates-with/cloud-infrastructure/aws; the Ory self-hosted/operations pages cover the cloud-agnostic concerns.
     oryMechanism:
       - standards
     protocol:
@@ -367,8 +431,9 @@ integrations:
     status: active
     description: >-
       Pull identity and access management evidence from Ory Network into Drata for automated compliance monitoring (SOC
-      2, ISO 27001, HIPAA, PCI DSS, GDPR). No dedicated Ory docs or first-party Drata connector exists; integration via
-      Drata's Generic Custom Connector polling the Ory admin API on a schedule.
+      2, ISO 27001, HIPAA, PCI DSS, GDPR). No first-party Drata connector exists; documented at
+      ory.com/docs/integrates-with/compliance-audit/drata; integration via Drata's Generic Custom Connector polling the
+      Ory admin API on a schedule.
     useCase: >-
       An Ory Network customer pursuing or maintaining SOC 2 / ISO 27001 / similar compliance wants Drata to auto-collect
       IAM evidence from Ory rather than running manual evidence-gathering each audit cycle.
@@ -378,7 +443,7 @@ integrations:
       - JML controls map to identity create / update / deactivate timestamps.
       - Privileged access: OAuth2 clients with admin scopes can be flagged.
       - MFA enforcement: flag identities without TOTP/WebAuthn credentials where policy requires it.
-      - Status: community/proposed — no dedicated ory/docs page; implementation lives in Drata's custom-connector layer.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/compliance-audit/drata; implementation lives in Drata's custom-connector layer.
     oryMechanism:
       - standards
     protocol:
@@ -393,8 +458,9 @@ integrations:
     status: active
     description: >-
       Pull identity and access management evidence from Ory Network into Vanta for automated compliance monitoring (SOC
-      2, ISO 27001, HIPAA, etc.). No dedicated Ory docs or first-party Vanta connector exists; integration via Vanta's
-      Custom Integration / API integration polling the Ory admin API on a schedule.
+      2, ISO 27001, HIPAA, etc.). No first-party Vanta connector exists; documented at
+      ory.com/docs/integrates-with/compliance-audit/vanta; integration via Vanta's Custom Integration / API integration
+      polling the Ory admin API on a schedule.
     useCase: >-
       An Ory Network customer pursuing or maintaining SOC 2 / ISO 27001 / similar compliance wants Vanta to auto-collect
       IAM evidence from Ory rather than running manual evidence-gathering each audit cycle.
@@ -405,7 +471,7 @@ integrations:
       - Termination controls: deactivation timestamps close the loop on offboarding evidence.
       - MFA enforcement: flag identities without TOTP/WebAuthn where policy requires it.
       - Password policy: validate against Ory project config minimum-complexity rules.
-      - Status: community/proposed — no dedicated ory/docs page; implementation lives in Vanta's custom-integration layer.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/compliance-audit/vanta; implementation lives in Vanta's custom-integration layer.
     oryMechanism:
       - standards
     protocol:
@@ -421,13 +487,13 @@ integrations:
     description: >-
       Sync user consent state from Didomi (consent management platform — GDPR/CCPA/ePrivacy) into Ory Network identity
       metadata via a custom webhook + admin API client. Also handles DSAR fulfillment (GDPR Art. 15/17) via the same
-      handler against Ory's admin API. No first-party connector or Ory docs page exists; integration is
-      customer-implemented.
+      handler against Ory's admin API. No first-party connector; documented at
+      ory.com/docs/integrates-with/consent-privacy/didomi; integration is customer-implemented.
     useCase: >-
       A regulated B2C product using Didomi for cookie/consent banners wants the consent decisions visible alongside Ory
       identity records so downstream services can respect consent decisions without separate Didomi lookups.
     coreFunctionality: |-
-      - Didomi → webhook → Ory admin API pattern. No first-party connector or Ory docs page.
+      - Didomi → webhook → Ory admin API pattern. No first-party connector; documented at ory.com/docs/integrates-with/consent-privacy/didomi.
       - Didomi webhook configured under Consent Notice → Webhooks; fires on consent events with HMAC-signed payloads.
       - Handler verifies HMAC, resolves the Ory identity by Didomi user_id (matched to an identity trait or metadata_public.didomi_user_id), PATCHes metadata_public.consent.didomi with the consent record.
       - DSAR fulfillment (GDPR Article 15 access / 17 erasure): GET /admin/identities/{id} for access; DELETE /admin/identities/{id} for erasure. 30-day statutory window — design for reliable processing.
@@ -477,13 +543,13 @@ integrations:
     description: >-
       Sync user consent state from Osano (data-privacy platform — GDPR/CCPA/LGPD consent management, data discovery,
       vendor monitoring) into Ory Network identity metadata via a custom webhook + admin API client. Also handles DSAR
-      fulfillment (GDPR Art. 15/17/20) via the same handler. No first-party connector or Ory docs page exists;
-      integration is customer-implemented.
+      fulfillment (GDPR Art. 15/17/20) via the same handler. No first-party connector exists; documented at
+      ory.com/docs/integrates-with/consent-privacy/osano. Integration is customer-implemented.
     useCase: >-
       A regulated B2C product using Osano for consent and DSAR workflow orchestration wants Osano-tracked decisions
       visible alongside Ory identity records, with DSAR fulfillment wired to Ory as the identity source of truth.
     coreFunctionality: |-
-      - Osano → webhook → Ory admin API pattern. No first-party connector or Ory docs page.
+      - Osano → webhook → Ory admin API pattern. No first-party connector; documented at ory.com/docs/integrates-with/consent-privacy/osano.
       - Osano webhook configured under Subject Rights → Integrations; fires on consent and DSAR events with signed payloads.
       - Handler verifies signature, resolves the Ory identity by Osano user_id (matched to an identity trait or metadata_public.osano_user_id), PATCHes metadata_public.consent.osano with the consent record (purposes, timestamp, jurisdiction).
       - DSAR fulfillment: GET /admin/identities/{id} (Article 15 access), DELETE /admin/identities/{id} (Article 17 erasure), traits export (Article 20 portability).
@@ -590,7 +656,7 @@ integrations:
       - Dataverse auth via Microsoft Entra ID OAuth2 client credentials (Server-to-Server app registration with delegated/application permission for the Dataverse environment).
       - Region-aware: the Dataverse endpoint is per-environment (https://<env>.crm.dynamics.com/api/data/v9.2).
       - Async (response.ignore: true) — handler returns 200 to Ory immediately; Dataverse calls run in the background.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/crm/microsoft-dynamics-365.
     oryMechanism:
       - actions
     protocol:
@@ -644,7 +710,7 @@ integrations:
       - Lead vs Contact: start with Lead; promote to Contact via Salesforce-side automation, not Ory.
       - Edition matters — Connected Apps + Permission Sets require Salesforce Enterprise edition or higher.
       - Daily API call limits vary by edition; high-volume signup flows may need batch creation rather than per-event calls.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/crm/salesforce.
     oryMechanism:
       - actions
     protocol:
@@ -688,8 +754,8 @@ integrations:
     description: >-
       Use CockroachDB as the primary datastore for self-hosted Ory components (Kratos, Hydra, Keto, Oathkeeper) via its
       PostgreSQL wire-protocol compatibility. Right choice for deployments needing geographic distribution or HA beyond
-      a single Postgres node. No dedicated Ory docs — same DSN format Ory uses for Postgres works for Cockroach with
-      Cockroach-aware tuning.
+      a single Postgres node. Documented at ory.com/docs/integrates-with/data-persistence/cockroachdb — same DSN format
+      Ory uses for Postgres works for Cockroach with Cockroach-aware tuning.
     useCase: >-
       A self-hosted Ory deployment needs multi-region survivability, horizontal scalability beyond a single Postgres
       node, or strong consistency under geographic distribution — and is willing to tune for Cockroach's
@@ -700,7 +766,7 @@ integrations:
       - FK-heavy schema: expect some 40001 retry errors under high concurrency; clients should retry transactions per Cockroach's standard pattern.
       - UUID PKs (good — distribute across nodes) vs SERIAL (would hot-shard) — verify no Ory product version uses SERIAL.
       - Serverless tier has request-per-second limits unsuitable for production identity workloads; use Self-hosted (Dedicated) tier.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/data-persistence/cockroachdb.
     oryMechanism:
       - standards
     protocol:
@@ -871,7 +937,8 @@ integrations:
     description: >-
       Provision identities from Workday into Ory Network via SCIM 2.0. Workday is the most widely deployed enterprise
       HCM and the source of truth for employee data in many enterprises; wiring Workday → Ory keeps Ory's identity store
-      in lock-step with HR ground truth. No dedicated Ory docs page — Workday's SCIM connector is not turnkey.
+      in lock-step with HR ground truth. Documented at ory.com/docs/integrates-with/directory-sync/workday-scim —
+      Workday's SCIM connector is not turnkey.
     useCase: >-
       A large enterprise where Workday is the system of record for employee lifecycle wants Ory identities to be created
       / updated / disabled in response to HR events (hire, promotion, termination) automatically — without the workforce
@@ -882,7 +949,7 @@ integrations:
       - Pattern B: deploy a mid-tier connector (Tools4ever HelloID, Saviynt, or a custom service) that pulls Workday REST/SOAP and pushes to Ory's SCIM endpoint.
       - Pattern C (most common in practice): provision Workday → Okta/Entra via the IdP's native Workday connector, then Okta/Entra → Ory via the existing SCIM integration. Avoids touching Workday directly.
       - Ory side is a standard SCIM 2.0 endpoint with bearer-token auth, accepting Users and Groups; endpoint URL and token come from the directory-sync setup-link.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/directory-sync/workday-scim.
     oryMechanism:
       - directory-sync
     protocol:
@@ -899,7 +966,8 @@ integrations:
     description: >-
       Validate Ory Network session tokens and JWTs at the Akamai EdgeWorkers V8-isolate runtime before requests hit
       origin. Same shape as the canonical edge-token-validation/cloudflare-workers reference, adapted to EdgeWorkers'
-      httpRequest API and EdgeKV caching. No dedicated Ory docs.
+      httpRequest API and EdgeKV caching. Documented at
+      ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers.
     useCase: >-
       A team running Akamai for CDN + edge security wants Ory session / JWT validation at the edge so origin receives a
       trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request to origin.
@@ -911,7 +979,7 @@ integrations:
       - CPU budget ~50ms wall-clock — JWKS verification fits comfortably; whoami calls eat into this.
       - Wired via Akamai Property Manager attaching the EdgeWorker to a behavior on the relevant hostname/path.
       - Reference implementation: edge-token-validation/cloudflare-workers (same pattern, different runtime).
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers.
     oryMechanism:
       - standards
     protocol:
@@ -956,7 +1024,7 @@ integrations:
     description: >-
       Validate Ory Network session tokens and JWTs at the Fastly Compute@Edge WASM runtime before requests hit origin.
       Same shape as the canonical edge-token-validation/cloudflare-workers reference, compiled to WASM with Fastly's
-      host backends API and KV Store. No dedicated Ory docs.
+      host backends API and KV Store. Documented at ory.com/docs/integrates-with/edge-token-validation/fastly-compute.
     useCase: >-
       A team running Fastly for CDN + edge compute wants Ory session / JWT validation at the edge so origin receives a
       trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request.
@@ -968,7 +1036,7 @@ integrations:
       - Edge dictionaries for non-secret config (Ory project URL, audience IDs); edge secrets for JWKS pinning / service tokens.
       - On valid: inject X-User-Id header; on invalid: synthesize 401 at the edge.
       - Rust is the most performant; JavaScript (via Quick.js) is the easiest path porting from the Cloudflare reference.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/fastly-compute.
     oryMechanism:
       - standards
     protocol:
@@ -1011,8 +1079,9 @@ integrations:
     status: active
     description: >-
       Use Brevo (formerly Sendinblue) as the SMTP or HTTP courier for Ory Network transactional emails. EU-headquartered
-      vendor with strong GDPR posture, exposing both an SMTP relay and a REST v3 transactional-email API. No dedicated
-      section in the Ory docs; configures as a generic SMTP courier (or HTTP courier for the REST variant).
+      vendor with strong GDPR posture, exposing both an SMTP relay and a REST v3 transactional-email API. Documented at
+      ory.com/docs/integrates-with/email-providers/brevo; configures as a generic SMTP courier (or HTTP courier for the
+      REST variant).
     useCase: >-
       An Ory Network customer with EU data-residency or GDPR concerns wants a EU-headquartered email vendor for identity
       emails, in addition to or instead of US-based providers like SendGrid or Mailgun.
@@ -1044,7 +1113,7 @@ integrations:
       An Ory Network customer already using Mailchimp for marketing wants identity emails (verification, recovery, MFA)
       sent from the same vendor account so reputation, billing, and analytics stay consolidated.
     coreFunctionality: |-
-      - Configured via Kratos's SMTP courier (no code) — no dedicated section in Ory docs; uses the generic SMTP courier path.
+      - Configured via Kratos's SMTP courier (no code) — documented at ory.com/docs/integrates-with/email-providers/mailchimp-transactional; uses the generic SMTP courier path.
       - Connection URI: smtps://apikey:<API_KEY>@smtp.mandrillapp.com:465 — username is any string (apikey is conventional); password is the Mandrill API key.
       - Mandrill is a PAID add-on to Mailchimp requiring a transactional email block purchase.
       - Domain verification (SPF include:spf.mandrillapp.com + DKIM TXT) is mandatory for production sending.
@@ -1143,8 +1212,9 @@ integrations:
     status: active
     description: >-
       Use SparkPost as the SMTP or HTTP courier for Ory Network transactional emails. Enterprise-grade transactional
-      email platform (now part of Bird/MessageBird) with strong delivery analytics and per-region (US vs EU) hosting. No
-      dedicated section in the Ory docs; configures as a generic SMTP or HTTP courier.
+      email platform (now part of Bird/MessageBird) with strong delivery analytics and per-region (US vs EU) hosting.
+      Documented at ory.com/docs/integrates-with/email-providers/sparkpost; configures as a generic SMTP or HTTP
+      courier.
     useCase: >-
       An Ory Network customer with high transactional email volume and stringent deliverability requirements wants
       enterprise-grade tooling and per-region (US vs EU) hosting for data-residency.
@@ -1194,8 +1264,9 @@ integrations:
     status: active
     description: >-
       Configure CyberArk Identity (the SSO/identity portion of the CyberArk platform — distinct from CyberArk's PAM
-      product) as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. No dedicated docs; configures via the
-      Polis generic SAML or generic OIDC provider walkthrough.
+      product) as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. Documented at
+      ory.com/docs/integrates-with/enterprise-sso/cyberark-identity; configures via the Polis generic SAML or generic
+      OIDC provider walkthrough.
     useCase: >-
       An enterprise customer running CyberArk Identity as their workforce IdP needs Ory-protected applications to
       consume CyberArk-issued sessions instead of standing up a separate identity store.
@@ -1204,7 +1275,7 @@ integrations:
       - CyberArk side: create a Custom SAML App (or Custom OIDC App), paste in Polis SP metadata, map outbound attributes (email, firstname, lastname, groups).
       - Group-based access stays on the CyberArk side; Ory only sees the authentication result and released attributes.
       - PAM-specific REST integration (privileged sessions, credential rotation) is out of scope — separate work item.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/cyberark-identity.
     oryMechanism:
       - standards
     protocol:
@@ -1220,8 +1291,9 @@ integrations:
     status: active
     description: >-
       Configure ForgeRock Access Management (now part of Ping Identity following the 2023 acquisition) as an upstream
-      SAML 2.0 or OIDC identity provider in Ory Polis. No dedicated docs; configures via the Polis generic SAML or
-      generic OIDC walkthrough.
+      SAML 2.0 or OIDC identity provider in Ory Polis. Documented at
+      ory.com/docs/integrates-with/enterprise-sso/forgerock-am; configures via the Polis generic SAML or generic OIDC
+      walkthrough.
     useCase: >-
       An enterprise running ForgeRock AM (or the rebranded Ping Identity Platform) as their workforce IdP wants
       Ory-protected applications to consume ForgeRock-issued sessions instead of standing up a separate identity store.
@@ -1230,7 +1302,7 @@ integrations:
       - ForgeRock side: SAML entity under Realms → Applications → Federation, or OAuth 2.0 client under OAuth 2.0 → Clients.
       - SP-initiated only — Polis does not consume IdP-initiated SAML assertions; configure the ForgeRock side accordingly.
       - OIDC supports openid / profile / email / groups; group claims may need a custom scope mapper depending on AM version.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/forgerock-am.
     oryMechanism:
       - standards
     protocol:
@@ -1325,8 +1397,8 @@ integrations:
     description: >-
       Configure HID Global Identity Services as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. HID unifies
       physical (badge readers, smart cards, mobile credentials) and digital identity, common in government, healthcare,
-      financial services, and manufacturing. No dedicated docs; configures via the Polis generic SAML or generic OIDC
-      walkthrough.
+      financial services, and manufacturing. Documented at ory.com/docs/integrates-with/enterprise-sso/hid-global;
+      configures via the Polis generic SAML or generic OIDC walkthrough.
     useCase: >-
       An enterprise running HID Global as their unified physical + digital identity provider wants Ory-protected
       applications to consume the same authenticated sessions used for facility access and certificate-based workforce
@@ -1336,7 +1408,7 @@ integrations:
       - HID side: SAML 2.0 or OIDC application with attribute release for email, firstName, lastName, plus group claims as needed.
       - HID's certificate-based auth (PIV / CAC / smart card) enforced at the HID IdP layer; Ory consumes the resulting session.
       - Step-up to physical badge / token for high-value flows is configured as an HID policy that triggers re-auth before releasing the assertion to Polis.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/hid-global.
     oryMechanism:
       - standards
     protocol:
@@ -1352,7 +1424,8 @@ integrations:
     status: active
     description: >-
       Configure IBM Security Verify (IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or OIDC identity
-      provider in Ory Polis. No dedicated docs; configures via the Polis generic SAML or generic OIDC walkthrough.
+      provider in Ory Polis. Documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify; configures
+      via the Polis generic SAML or generic OIDC walkthrough.
     useCase: >-
       An enterprise running IBM Security Verify (Verify Cloud SaaS or Verify Access on-prem) as their workforce IdP
       wants Ory-protected applications to consume IBM-issued sessions instead of standing up a separate identity store.
@@ -1361,7 +1434,7 @@ integrations:
       - Same federation flows for both Verify Cloud (SaaS) and Verify Access (on-prem) — difference is administration location.
       - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Polis consumes the resulting authenticated assertion.
       - Passkey / FIDO2 enforcement configured in IBM Verify's policy engine; Ory consumes the assurance level reported in the assertion.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify.
     oryMechanism:
       - standards
     protocol:
@@ -1403,8 +1476,9 @@ integrations:
     description: >-
       Configure Keycloak — the open-source CNCF-graduated identity and access management server — as an upstream OIDC
       (preferred) or SAML 2.0 identity provider in Ory Polis. Common when an enterprise self-hosts their IdP for
-      control, data residency, or vendor-lock-in avoidance. No dedicated docs; configures via the Polis generic OIDC or
-      generic SAML walkthrough.
+      control, data residency, or vendor-lock-in avoidance. Documented at
+      ory.com/docs/integrates-with/enterprise-sso/keycloak; configures via the Polis generic OIDC or generic SAML
+      walkthrough.
     useCase: >-
       An enterprise running a self-hosted Keycloak as their workforce IdP wants Ory-protected applications to consume
       Keycloak-issued sessions instead of standing up a separate identity store.
@@ -1414,7 +1488,7 @@ integrations:
       - Issuer URL pattern: https://<keycloak-host>/realms/<realm-name>; Polis uses /.well-known/openid-configuration automatically.
       - Group claims released via a Group Membership mapper on the client's dedicated client scope — must be added explicitly.
       - Self-hosted: pin both Keycloak and Polis library versions; test upgrades against staging since Keycloak's protocol responses occasionally change in major releases.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/keycloak.
     oryMechanism:
       - standards
     protocol:
@@ -1642,7 +1716,8 @@ integrations:
     description: >-
       Bot and fraud prevention via Arkose Labs's adaptive enforcement challenges (invisible scoring escalating to
       interactive puzzles on risk). Wired into Ory via an Ory Action on registration.before / login.before with
-      can_interrupt, verifying the Arkose token from the client SDK. No dedicated Ory docs page.
+      can_interrupt, verifying the Arkose token from the client SDK. Documented at
+      ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs.
     useCase: >-
       A high-value B2C product (financial, gaming, marketplace) needs strong bot defense at signup and login — more
       friction-sensitive than reCAPTCHA but more capable against sophisticated automation.
@@ -1652,7 +1727,7 @@ integrations:
       - Arkose tokens are one-time-use — handler must not retry verify with the same token.
       - Use a per-flow token (don't reuse across registration and login).
       - Adaptive challenges escalate per-risk; pick challenge type per-flow risk profile via Arkose's game configuration.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs.
     oryMechanism:
       - actions
     protocol:
@@ -1705,7 +1780,7 @@ integrations:
       - Tokens are one-time-use and expire ~5 minutes after issue.
       - Free with no per-call limit — practical default for new projects.
       - Optional remoteip field in siteverify enables IP-binding check; pass the client IP through the reverse proxy.
-      - Status: community/proposed — no dedicated ory/docs page; same pattern as hCaptcha / reCAPTCHA / Arkose.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile; same pattern as hCaptcha / reCAPTCHA / Arkose.
     oryMechanism:
       - actions
     protocol:
@@ -1732,7 +1807,7 @@ integrations:
       - Tokens are one-time-use and expire 2 minutes after issue.
       - hCaptcha API contract is nearly identical to reCAPTCHA — easy migration between the two.
       - Enterprise tier adds adaptive risk scoring and invisible challenges; verify endpoint shape unchanged.
-      - Status: community/proposed — no dedicated ory/docs page; same pattern as Turnstile / reCAPTCHA / Arkose.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha; same pattern as Turnstile / reCAPTCHA / Arkose.
     oryMechanism:
       - actions
     protocol:
@@ -1789,7 +1864,7 @@ integrations:
       - Both flows authenticated via a single server-side API Key.
       - User IDs must be stable across sessions — Sift's model is keyed on user_id.
       - Sift's value is longitudinal — single events have limited signal; payoff grows over time as the model learns the user base.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/sift.
     oryMechanism:
       - actions
     protocol:
@@ -1897,7 +1972,7 @@ integrations:
       - Jsonnet mapper extracts personal number (Swedish personnummer / Norwegian fødselsnummer), name, and country (broker reports identityscheme like sebankid / nobankid).
       - PSD2 Strong Customer Authentication (SCA) satisfied; eIDAS Substantial (NO mobile) or High (SE, NO hardware).
       - Personal numbers are sensitive PII — prefer metadata_admin over metadata_public.
-      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/bankid; configures via the generic OIDC path once a broker is chosen.
     oryMechanism:
       - standards
     protocol:
@@ -1923,7 +1998,7 @@ integrations:
       - Common brokers: Signicat (pan-EU), Criipto (Nordic + EU), IDnow, yes.com (DE).
       - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token; Jsonnet maps to identity metadata for downstream policy. Substantial roughly maps to Ory aal1; High to aal2.
       - Per-country eID schemes vary in user experience (card reader for DE Personalausweis, mobile app for FR FranceConnect, etc.) — the broker abstracts this.
-      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/eidas; configures via the generic OIDC path once a broker is chosen.
     oryMechanism:
       - standards
     protocol:
@@ -1951,7 +2026,7 @@ integrations:
       - dateOfBirth is sensitive PII — prefer metadata_admin storage; if only age check is needed, request the is18OrOlder flag instead.
       - BSN (Dutch citizen service number) is NOT returned by default — requires Dutch government approval for the BSN scope.
       - Suitable for PSD2 SCA where the bank login itself acts as the strong-customer-authentication factor.
-      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/idin; configures via the generic OIDC path once a broker is chosen.
     oryMechanism:
       - standards
     protocol:
@@ -2016,8 +2091,9 @@ integrations:
     description: >-
       Officially maintained Terraform provider for managing Ory Network resources as infrastructure-as-code — identity
       schemas, OAuth2 clients, project configuration, identities, organizations, permissions, and webhooks. Source at
-      github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory`. Targets Ory Network only
-      — does not manage self-hosted Ory deployments.
+      github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory` and on the OpenTofu
+      registry (search.opentofu.org/provider/ory/ory) under the same source — works with `tofu` as well as `terraform`.
+      Targets Ory Network only — does not manage self-hosted Ory deployments.
     useCase: >-
       A platform team running Ory Network wants their identity and OAuth2 configuration in Git (not the Console) for
       code review, drift detection, and per-environment (dev/staging/prod) reproducibility.
@@ -2109,7 +2185,7 @@ integrations:
       - Scopes drive what's verified — `openid` for identity, plus scopes like `military`, `nurse`, `teacher` for verified group claims (require ID.me application review per scope).
       - Redirect URI: https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback/id-me.
       - Kratos Jsonnet maps standard OIDC claims plus ID.me-specific group/verification claims to identity traits / metadata.
-      - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC provider path.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/identity-verification/id-me; configures via the generic OIDC provider path.
     oryMechanism:
       - standards
     protocol:
@@ -2394,8 +2470,8 @@ integrations:
     status: active
     description: >-
       Send Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard OpenTelemetry exporter.
-      No dedicated New Relic page on ory.com/docs; configures via the same OpenTelemetry path Ory documents for
-      self-hosted tracing.
+      Documented at ory.com/docs/integrates-with/monitoring-observability/new-relic; configures via the same
+      OpenTelemetry path Ory documents for self-hosted tracing.
     useCase: >-
       An Ory customer running New Relic wants identity-flow traces and metrics alongside the rest of their app's
       observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate identity
@@ -2482,7 +2558,7 @@ integrations:
       - account_code is the binding between systems — set to Ory identity id during account creation.
       - Subscription gating belongs in APPLICATION CODE reading metadata_public.recurly, NOT in the auth flow — Ory shouldn't block sign-in for churned subscribers; app redirects to billing page.
       - Recurly webhooks are at-least-once; handler must be idempotent (PATCH is naturally idempotent).
-      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/payment-billing/recurly, no first-party handler.
     oryMechanism:
       - actions
     protocol:
@@ -2539,7 +2615,7 @@ integrations:
       - Index pattern: logs-ory-* with an ILM policy for retention + tier transitions per compliance window.
       - Detection rules: pre-built Elastic Security Detection Engine rules (brute force, impossible travel, credential stuffing) target ECS-mapped events without custom rule authoring.
       - For Fleet-managed deployments, package as a custom Elastic Integration and ship via the Fleet UI.
-      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/siem-security-analytics/elastic-siem, no first-party handler.
     oryMechanism:
       - actions
     protocol:
@@ -2565,7 +2641,7 @@ integrations:
       - KQL analytics rules in Sentinel query OryEvents_CL for detection logic; Logic Apps playbooks automate response.
       - Data Collector API is being deprecated in favor of the Logs Ingestion API + DCRs (Data Collection Rules) — new deployments should target the newer API; watch the deprecation timeline.
       - Alternative: use Logic Apps as the intermediary — single Logic App receives the Ory Action webhook and posts to Sentinel, removing the need for custom handler code.
-      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/siem-security-analytics/microsoft-sentinel, no first-party handler.
     oryMechanism:
       - actions
     protocol:
@@ -2607,7 +2683,7 @@ integrations:
     description: >-
       Ingest Ory Network identity events into Sumo Logic (log management + Cloud SIEM) via an HTTP Source on a Hosted
       Collector — the simplest ingest path of any SIEM. Ory Action POSTs directly to the tokenized HTTP Source URL; no
-      webhook handler needed. No dedicated Ory docs.
+      webhook handler needed. Documented at ory.com/docs/integrates-with/siem-security-analytics/sumo-logic.
     useCase: >-
       A security team running Sumo Logic wants Ory identity events in Sumo with the lowest setup friction — Sumo's HTTP
       Source accepts unauthenticated POSTs to a unique tokenized URL, so the Ory Action can post directly without a
@@ -2619,7 +2695,7 @@ integrations:
       - Cloud SIEM: parse events into Sumo's normalized schema via Field Extraction Rule (FER) or parsing job to enable out-of-the-box detection rules (credential stuffing, brute force, impossible travel).
       - Body Jsonnet on each Ory Action emits the relevant event fields as JSON; Sumo auto-parses.
       - For high-volume products, set retention + partition rules in Sumo to manage cost.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/siem-security-analytics/sumo-logic.
     oryMechanism:
       - actions
     protocol:
@@ -2869,7 +2945,7 @@ integrations:
       - Issuer URL: https://oauth.battle.net (global identity; regional aliases also resolve here).
       - Standard scopes: openid (basic identity); add `wow.profile` / `sc2.profile` etc. for game-specific data.
       - Default Jsonnet maps battle_tag, sub, email when present.
-      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/battle-net; contributions welcome.
     oryMechanism:
       - standards
     protocol:
@@ -2943,7 +3019,7 @@ integrations:
       - Standard scopes: openid, basic_profile.
       - Default Jsonnet maps sub (Epic Account ID), preferred_username, email when present.
       - Epic Games Developer Portal manages client provisioning; the EOS application client is what backs OAuth.
-      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/epic-games; contributions welcome.
     oryMechanism:
       - standards
     protocol:
@@ -3093,7 +3169,7 @@ integrations:
       - Issuer URL: https://kauth.kakao.com.
       - Standard scopes: openid, profile_nickname, account_email; Kakao requires explicit scope opt-in for email and other PII fields on the app's "Consent Items" screen.
       - Client Secret must be explicitly enabled under the app's Security settings (it's optional for Kakao apps by default).
-      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/kakao; contributions welcome.
     oryMechanism:
       - standards
     protocol:
@@ -3217,7 +3293,7 @@ integrations:
       - Authorization endpoint: https://nid.naver.com/oauth2.0/authorize; Token endpoint: https://nid.naver.com/oauth2.0/token; Profile API: https://openapi.naver.com/v1/nid/me.
       - Default Jsonnet maps response.id (Naver user id), response.email, response.nickname.
       - Configured at the Naver Developers Console (developers.naver.com/apps).
-      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/naver; contributions welcome.
     oryMechanism:
       - standards
     protocol:
@@ -3363,7 +3439,7 @@ integrations:
       - Alternative: implement Steam OpenID 2.0 in your backend and create/lookup identities via the Kratos Admin API, bypassing the social-signin subsystem.
       - Steam does NOT share email; design the identity schema to use the 64-bit Steam ID as the credential identifier.
       - A Steam Web API key (from steamcommunity.com/dev/apikey) is needed to fetch profile data via GetPlayerSummaries; profile visibility may be restricted.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/steam.
     oryMechanism:
       - standards
     protocol:
@@ -3414,7 +3490,7 @@ integrations:
       - Authorization endpoint: https://www.tiktok.com/v2/auth/authorize; Token: https://open.tiktokapis.com/v2/oauth/token/; Profile: https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name.
       - Default Jsonnet maps data.user.open_id, display_name, and email (when the email scope is granted).
       - Scopes opt-in: `user.info.basic` is base; `user.info.email` is a separately approved scope and may require TikTok app review.
-      - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/tiktok; contributions welcome.
     oryMechanism:
       - standards
     protocol:
@@ -3515,7 +3591,7 @@ integrations:
       - Use `unionid` (cross-app stable identifier under one Open Platform account) rather than `openid` (per-app) for the identity credential.
       - WeChat does NOT share email; identity schema must accommodate.
       - Operational prerequisites: Chinese business entity for Open Platform registration, ICP filing for the callback domain, and testing from within China for reliable connectivity.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/wechat.
     oryMechanism:
       - standards
     protocol:
@@ -3591,7 +3667,7 @@ integrations:
       - response.ignore: true — Freshdesk availability never blocks user flows.
       - 409 Conflict from POST means the contact already exists by email — handler should treat as success.
       - For Ory identity context shown inside Freshdesk tickets, consider a Freshdesk Marketplace App calling Ory's admin API — separate integration, not covered here.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/support-helpdesk/freshdesk.
     oryMechanism:
       - actions
     protocol:
@@ -3620,7 +3696,7 @@ integrations:
       - Intercom Messenger identity verification: HMAC `user_hash` shared secret prevents spoofing of authenticated chat sessions; configure in Intercom security settings.
       - Tracking events ("user verified email", etc.) uses Events API (POST /events), not contact updates.
       - Rate limits 10K calls/minute (Pro+) — generous for signup-rate flows.
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/support-helpdesk/intercom.
     oryMechanism:
       - actions
     protocol:
@@ -3700,7 +3776,7 @@ integrations:
       - Per-resolved-record billing — configure FullContact's multi-field resolution to avoid wasting credits.
       - DSAR / right-to-be-forgotten: FullContact API supports a delete call; wire to your DSAR flow.
       - SDK: native fetch + @ory/client for admin PATCH.
-      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/user-enrichment/fullcontact, no first-party handler.
     oryMechanism:
       - actions
     protocol:
@@ -3727,7 +3803,7 @@ integrations:
       - Licensing is the long pole — Enrich API is a paid add-on requiring a sales conversation.
       - For intent signals (pricing page visits, whitepaper downloads), pair with ZoomInfo's intent product — separate API, not covered here.
       - Per-resolved-record billing; configure conservative match thresholds.
-      - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/user-enrichment/zoominfo, no first-party handler.
     oryMechanism:
       - actions
     protocol:
@@ -3759,7 +3835,7 @@ integrations:
       - Transformations reshape the Ory payload to match handler schema without touching either side.
       - Must pass through X-Webhook-Secret header so handler signature verification still works.
       - Compare with webhook-infrastructure/svix — similar product, different positioning (Svix is outbound webhooks; Hookdeck is inbound reliability).
-      - Status: community/proposed — no dedicated ory/docs page.
+      - Status: community/proposed — documented at ory.com/docs/integrates-with/webhook-infrastructure/hookdeck.
     oryMechanism:
       - standards
     protocol:

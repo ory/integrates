@@ -5,7 +5,7 @@
 [Amplitude](https://amplitude.com) is a product-analytics platform. This integration sends Ory authentication events (registration / login / verification / MFA) into Amplitude and syncs identity-trait changes as user properties so product analysts see the full identity lifecycle in their dashboards.
 
 **Type:** webhook (Ory Action POSTs directly to Amplitude HTTP V2 API — no handler needed)
-**Docs page:** No dedicated Amplitude page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/cdp-analytics/amplitude](https://www.ory.com/docs/integrates-with/cdp-analytics/amplitude)
 
 ## How it works
 

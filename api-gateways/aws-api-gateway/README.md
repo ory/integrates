@@ -5,7 +5,7 @@
 [AWS API Gateway](https://aws.amazon.com/api-gateway/) — managed REST/HTTP/WebSocket gateway. Validate Ory-issued JWTs at the gateway layer using a **Lambda authorizer** (formerly "custom authorizer") that calls Ory's JWKS endpoint, before requests reach backend services.
 
 **Type:** config (Lambda authorizer + API Gateway config — small code in the authorizer)
-**Docs page:** No dedicated AWS API Gateway page on ory.com/docs. Standard JWT-at-the-edge pattern.
+**Docs page:** [ory.com/docs/integrates-with/api-gateways/aws-api-gateway](https://www.ory.com/docs/integrates-with/api-gateways/aws-api-gateway)
 
 ## Pattern
 

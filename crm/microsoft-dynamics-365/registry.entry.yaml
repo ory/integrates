@@ -21,7 +21,7 @@ coreFunctionality: |-
   - Dataverse auth via Microsoft Entra ID OAuth2 client credentials (Server-to-Server app registration with delegated/application permission for the Dataverse environment).
   - Region-aware: the Dataverse endpoint is per-environment (https://<env>.crm.dynamics.com/api/data/v9.2).
   - Async (response.ignore: true) — handler returns 200 to Ory immediately; Dataverse calls run in the background.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/crm/microsoft-dynamics-365.
 oryMechanism:
   - actions
 protocol:

@@ -5,7 +5,7 @@
 [Freshdesk](https://www.freshworks.com/freshdesk/) is a customer support platform (ticketing, collaboration, automation). This integration syncs Ory identities into Freshdesk Contacts so support agents see Ory identity context (verification state, MFA enrollment, recent activity) when handling tickets.
 
 **Type:** config (Ory Action calls Freshdesk REST API — wiring is Action config + Jsonnet, no first-party handler ships here)
-**Docs page:** No dedicated Freshdesk page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/support-helpdesk/freshdesk](https://www.ory.com/docs/integrates-with/support-helpdesk/freshdesk)
 
 ## How it works
 

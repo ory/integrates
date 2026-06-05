@@ -5,7 +5,7 @@
 Brevo (formerly Sendinblue) is a European email and marketing platform with strong GDPR posture. Wire it up as an Ory Network email courier when you want EU-hosted infrastructure or need Brevo-side analytics on identity-driven email.
 
 **Type:** config (Kratos courier-spi over SMTP or HTTP — no webhook code)
-**Docs page:** No dedicated section in the Ory docs; configures as a [generic SMTP courier](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#your-own-server) (or as an HTTP courier for the REST variant).
+**Docs page:** [ory.com/docs/integrates-with/email-providers/brevo](https://www.ory.com/docs/integrates-with/email-providers/brevo) — full guide: [ory.com/docs/kratos/emails-sms/sending-emails-smtp#brevo](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#brevo)
 
 ## How it works
 

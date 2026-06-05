@@ -5,7 +5,7 @@
 [Duo Security](https://duo.com) (a Cisco company) is a market-leading enterprise MFA platform with strong push and passcode flows. This integration sends a Duo push challenge from an Ory Action webhook on login, polls Duo for the user's response, and returns the verdict so Ory can step up authentication or fail the flow.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/mfa/duo-security](https://ory.com/docs/integrations/mfa/duo-security)
+**Docs page:** [ory.com/docs/integrates-with/mfa/duo-security](https://www.ory.com/docs/integrates-with/mfa/duo-security)
 
 ## Use case
 
@@ -51,7 +51,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 4. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 5. Make sure Ory's webhook total timeout is ≥ `DUO_POLL_DEADLINE_SECONDS` + headroom; the long-poll is intentionally slow.
 
-Duo Auth API onboarding, ipaddr/risk signal extensions, and step-up enforcement strategies: see the [docs page](https://ory.com/docs/integrations/mfa/duo-security).
+Duo Auth API onboarding, ipaddr/risk signal extensions, and step-up enforcement strategies: see the [docs page](https://ory.com/docs/integrates-with/mfa/duo-security).
 
 ## Troubleshooting
 

@@ -5,7 +5,7 @@
 [HubSpot](https://hubspot.com) is a CRM, marketing, and sales platform. This integration syncs Ory identities to HubSpot CRM contacts via an Ory Action webhook — on registration or profile update, the handler creates the corresponding HubSpot contact, or PATCHes the existing one on `409 Existing ID:` so the sync is idempotent.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/crm/hubspot](https://ory.com/docs/integrations/crm/hubspot)
+**Docs page:** [ory.com/docs/integrates-with/crm/hubspot](https://www.ory.com/docs/integrates-with/crm/hubspot) — full guide: [ory.com/docs/actions/integrations/hubspot](https://www.ory.com/docs/actions/integrations/hubspot)
 
 ## Use case
 
@@ -47,7 +47,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet).
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
-Private app provisioning, custom-property setup, and HubSpot workflow patterns: see the [docs page](https://ory.com/docs/integrations/crm/hubspot).
+Private app provisioning, custom-property setup, and HubSpot workflow patterns: see the [docs page](https://ory.com/docs/integrates-with/crm/hubspot).
 
 ## Troubleshooting
 

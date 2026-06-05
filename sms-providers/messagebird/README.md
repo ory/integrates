@@ -5,7 +5,7 @@
 MessageBird (rebranded as Bird) is a European cloud-communications platform — strong coverage in EU/APAC and a common alternative to US-based SMS providers for products with EU regulatory or residency concerns.
 
 **Type:** config (Kratos courier-spi over HTTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-sms](https://www.ory.com/docs/kratos/emails-sms/sending-sms)
+**Docs page:** [ory.com/docs/integrates-with/sms-providers/messagebird](https://www.ory.com/docs/integrates-with/sms-providers/messagebird) — full guide: [ory.com/docs/kratos/emails-sms/sending-sms#messagebird-bird](https://www.ory.com/docs/kratos/emails-sms/sending-sms#messagebird-bird)
 
 The Ory docs page covers the SMS courier configuration in general. MessageBird-specific values:
 

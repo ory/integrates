@@ -5,7 +5,7 @@
 Official Helm charts for deploying the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper) on Kubernetes. Charts live in [github.com/ory/k8s](https://github.com/ory/k8s); the chart repo is hosted at `https://k8s.ory.sh/helm/charts`.
 
 **Type:** config (deployment via Helm — no source code in this directory)
-**Docs page:** [ory.com/docs/hydra/self-hosted/kubernetes-helm-chart](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart) (Hydra-specific guide; the same patterns apply to the other charts).
+**Docs page:** [ory.com/docs/integrates-with/iac-devops/helm](https://www.ory.com/docs/integrates-with/iac-devops/helm) — full guide: [ory.com/docs/hydra/self-hosted/kubernetes-helm-chart](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 
 | Chart | Component | Source |
 | --- | --- | --- |

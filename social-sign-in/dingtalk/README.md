@@ -5,7 +5,7 @@
 Add DingTalk (钉钉) as a social sign-in provider in Ory Network. DingTalk is Alibaba's enterprise communication platform — common for mainland-China and APAC enterprise products that want sign-in via the workplace identity their users already have.
 
 **Type:** config (Ory CLI configuration)
-**Docs page:** [ory.com/docs/kratos/social-signin/dingtalk](https://www.ory.com/docs/kratos/social-signin/dingtalk)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/dingtalk](https://www.ory.com/docs/integrates-with/social-sign-in/dingtalk) — full guide: [ory.com/docs/kratos/social-signin/dingtalk](https://www.ory.com/docs/kratos/social-signin/dingtalk)
 
 ## Setup
 

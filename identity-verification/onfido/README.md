@@ -5,7 +5,7 @@
 [Onfido](https://onfido.com) is a global identity-verification platform — document, biometric, motion, and database checks composed via configurable workflows. This integration creates an Onfido applicant + workflow run from Ory Actions during registration, consumes Onfido's HMAC-signed callback when the workflow finishes, and gates login on the stored verification status.
 
 **Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
-**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/onfido](https://www.ory.com/docs/integrates-with/identity-verification/onfido)
 
 ## Endpoints
 

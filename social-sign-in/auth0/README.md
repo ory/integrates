@@ -5,7 +5,7 @@
 Add an Auth0 tenant as an upstream OIDC provider in Ory Network. Useful for migrations from Auth0 to Ory (run them side-by-side, federate Auth0 users into Ory until the cutover) or for products that already issue identities through Auth0 and want to layer Ory's flows on top.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/auth0](https://www.ory.com/docs/kratos/social-signin/auth0)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/auth0](https://www.ory.com/docs/integrates-with/social-sign-in/auth0) — full guide: [ory.com/docs/kratos/social-signin/auth0](https://www.ory.com/docs/kratos/social-signin/auth0)
 
 ## Setup
 

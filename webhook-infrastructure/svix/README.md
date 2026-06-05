@@ -5,7 +5,7 @@
 [Svix](https://svix.com) is a managed webhook-delivery platform that handles fan-out, retries, signing, delivery monitoring, and replay. This integration routes Ory identity-flow events through Svix so multiple downstream consumers (CRM, billing, analytics, your customers' webhooks) can subscribe to Ory events with operational guarantees Ory itself doesn't provide directly.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/webhook-infrastructure/svix](https://ory.com/docs/integrations/webhook-infrastructure/svix)
+**Docs page:** [ory.com/docs/integrates-with/webhook-infrastructure/svix](https://www.ory.com/docs/integrates-with/webhook-infrastructure/svix)
 
 ## Use case
 
@@ -50,7 +50,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 1. In the Ory Console, configure the five Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml).
 2. The body template is [`jsonnet/event.jsonnet`](jsonnet/event.jsonnet) — shared by all five hooks.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
-4. Register the five event types in Svix (one-time) and add consumer endpoints — covered in the [docs page](https://ory.com/docs/integrations/webhook-infrastructure/svix).
+4. Register the five event types in Svix (one-time) and add consumer endpoints — covered in the [docs page](https://ory.com/docs/integrates-with/webhook-infrastructure/svix).
 
 ## Troubleshooting
 

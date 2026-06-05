@@ -5,7 +5,7 @@
 Postmark is a transactional-only email service known for industry-leading deliverability and speed (often seconds). The transactional-only policy keeps shared IP reputation high — well-suited for identity verification/recovery/MFA emails where time-to-inbox matters. **Documented directly in the Ory SMTP courier page.**
 
 **Type:** config (Kratos courier-spi over SMTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-emails-smtp#postmark](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#postmark)
+**Docs page:** [ory.com/docs/integrates-with/email-providers/postmark](https://www.ory.com/docs/integrates-with/email-providers/postmark) — full guide: [ory.com/docs/kratos/emails-sms/sending-emails-smtp#postmark](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#postmark)
 
 | Setting | Value |
 | --- | --- |

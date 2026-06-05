@@ -25,7 +25,7 @@ coreFunctionality: |-
   - Transformations reshape the Ory payload to match handler schema without touching either side.
   - Must pass through X-Webhook-Secret header so handler signature verification still works.
   - Compare with webhook-infrastructure/svix — similar product, different positioning (Svix is outbound webhooks; Hookdeck is inbound reliability).
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/webhook-infrastructure/hookdeck.
 oryMechanism:
   - standards
 protocol:

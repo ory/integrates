@@ -5,7 +5,7 @@
 [IBM Security Verify](https://www.ibm.com/products/verify-identity) is IBM's cloud-delivered identity and access management platform. It exposes standard OIDC and SAML 2.0 endpoints for federation. Configure as an upstream IdP in Ory Network so IBM-managed enterprise identities can sign in to Ory-protected applications.
 
 **Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
-**Docs page:** No dedicated IBM page on ory.com/docs. Configures via:
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify](https://www.ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify)
 - [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml).
 - [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc).
 

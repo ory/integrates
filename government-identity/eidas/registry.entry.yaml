@@ -20,7 +20,7 @@ coreFunctionality: |-
   - Common brokers: Signicat (pan-EU), Criipto (Nordic + EU), IDnow, yes.com (DE).
   - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token; Jsonnet maps to identity metadata for downstream policy. Substantial roughly maps to Ory aal1; High to aal2.
   - Per-country eID schemes vary in user experience (card reader for DE Personalausweis, mobile app for FR FranceConnect, etc.) — the broker abstracts this.
-  - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/eidas; configures via the generic OIDC path once a broker is chosen.
 oryMechanism:
   - standards
 protocol:

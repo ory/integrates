@@ -5,7 +5,7 @@
 Ory natively supports OpenTelemetry. Self-hosted products list it as the first supported tracing backend in the Ory observability docs; Ory Network exports OTLP for traces, metrics, and logs.
 
 **Type:** config (instrumentation — no source code in this directory)
-**Docs page:**
+**Docs page:** [ory.com/docs/integrates-with/monitoring-observability/opentelemetry](https://www.ory.com/docs/integrates-with/monitoring-observability/opentelemetry)
 - [Self-hosted distributed tracing](https://www.ory.com/docs/self-hosted/operations/tracing) (OpenTelemetry is the recommended backend)
 - [Self-hosted observability (Prometheus metrics)](https://www.ory.com/docs/self-hosted/operations/observability)
 - [Kratos tracing guide](https://www.ory.com/docs/kratos/guides/tracing)

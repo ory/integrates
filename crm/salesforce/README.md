@@ -7,7 +7,7 @@ Sync Ory identities to Salesforce as **Leads or Contacts** via Ory Actions webho
 > This is the **CRM-side** Salesforce integration (registry name: `salesforce-crm`). For Salesforce as a **sign-in provider**, see [`social-sign-in/salesforce`](../../social-sign-in/salesforce/) — different integration, different audience.
 
 **Type:** config (Ory Action wiring + Jsonnet body — no first-party webhook handler ships here)
-**Docs page:** No dedicated Salesforce CRM page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/crm/salesforce](https://www.ory.com/docs/integrates-with/crm/salesforce)
 
 ## How it works
 

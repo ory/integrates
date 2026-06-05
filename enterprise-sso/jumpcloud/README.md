@@ -5,7 +5,7 @@
 Configure [JumpCloud](https://jumpcloud.com) — the cloud directory platform — as a SAML 2.0 Identity Provider into Ory Polis. JumpCloud is the modern alternative to on-prem Active Directory and a common workforce IdP for organizations without legacy AD.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/jumpcloud](https://www.ory.com/docs/polis/sso-providers/jumpcloud)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/jumpcloud](https://www.ory.com/docs/integrates-with/enterprise-sso/jumpcloud) — full guide: [ory.com/docs/polis/sso-providers/jumpcloud](https://www.ory.com/docs/polis/sso-providers/jumpcloud)
 
 ## Setup
 

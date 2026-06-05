@@ -23,7 +23,7 @@ coreFunctionality: |-
   - Both flows authenticated via a single server-side API Key.
   - User IDs must be stable across sessions — Sift's model is keyed on user_id.
   - Sift's value is longitudinal — single events have limited signal; payoff grows over time as the model learns the user base.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/sift.
 oryMechanism:
   - actions
 protocol:

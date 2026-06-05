@@ -6,7 +6,7 @@
 WeChat (微信) is the dominant Chinese super-app. WeChat's "OAuth" flow is **non-standard**: it uses `appid`/`secret` instead of `client_id`/`client_secret`, has separate authorization endpoints for web QR-code login vs in-app, and never returns an `id_token`. Kratos's stock OIDC and OAuth2 providers won't work directly without help.
 
 **Type:** config (architectural pattern, not a turnkey provider)
-**Docs page:** No dedicated Ory page (WeChat is not natively supported).
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/wechat](https://www.ory.com/docs/integrates-with/social-sign-in/wechat)
 
 ## How to integrate WeChat
 

@@ -18,7 +18,7 @@ coreFunctionality: |-
   - Issuer URL: https://oauth.battle.net (global identity; regional aliases also resolve here).
   - Standard scopes: openid (basic identity); add `wow.profile` / `sc2.profile` etc. for game-specific data.
   - Default Jsonnet maps battle_tag, sub, email when present.
-  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/battle-net; contributions welcome.
 oryMechanism:
   - standards
 protocol:

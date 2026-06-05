@@ -5,7 +5,7 @@
 WhatsApp does not provide a standard OAuth/OIDC login flow, so "WhatsApp login" in practice means **passwordless OTP delivered through WhatsApp**. This integration uses the same Kratos `courier-spi` HTTP channel that backs Twilio / MessageBird / etc., and routes the OTP through the [WhatsApp Business Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api/) using a pre-approved AUTHENTICATION-category template.
 
 **Type:** webhook (Kratos courier HTTP target — *variant of the webhook pattern*)
-**Docs page:** [ory.com/docs/integrations/sms-providers/whatsapp](https://ory.com/docs/integrations/sms-providers/whatsapp)
+**Docs page:** [ory.com/docs/integrates-with/sms-providers/whatsapp](https://www.ory.com/docs/integrates-with/sms-providers/whatsapp)
 
 :::info Courier variant, not an Ory Action
 This integration is configured via Kratos's `courier.channels` (not `selfservice.flows.<flow>.after.hooks`). The handler shape is the same as a regular Ory webhook — Express + Node + `X-Webhook-Secret` — but the configuration file is `kratos-courier.yaml`, not `ory-actions.yaml`.
@@ -65,7 +65,7 @@ This is a **courier**, not an Ory Action. Use the snippet in [`kratos-courier.ya
 
 Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `x-webhook-secret` value declared in the Kratos courier config.
 
-WhatsApp Business pricing, template-approval gotchas, and try-WA / fallback-SMS patterns: see the [docs page](https://ory.com/docs/integrations/sms-providers/whatsapp).
+WhatsApp Business pricing, template-approval gotchas, and try-WA / fallback-SMS patterns: see the [docs page](https://ory.com/docs/integrates-with/sms-providers/whatsapp).
 
 ## Troubleshooting
 

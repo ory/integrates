@@ -21,7 +21,7 @@ coreFunctionality: |-
   - KQL analytics rules in Sentinel query OryEvents_CL for detection logic; Logic Apps playbooks automate response.
   - Data Collector API is being deprecated in favor of the Logs Ingestion API + DCRs (Data Collection Rules) — new deployments should target the newer API; watch the deprecation timeline.
   - Alternative: use Logic Apps as the intermediary — single Logic App receives the Ory Action webhook and posts to Sentinel, removing the need for custom handler code.
-  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/siem-security-analytics/microsoft-sentinel, no first-party handler.
 oryMechanism:
   - actions
 protocol:

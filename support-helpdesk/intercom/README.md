@@ -5,7 +5,7 @@
 [Intercom](https://www.intercom.com) is a customer messaging platform — live chat, product tours, support inbox. This integration syncs Ory identities into Intercom Contacts so chat / support / lifecycle messaging is identity-aware (and so the Intercom Messenger can authenticate users against Ory data).
 
 **Type:** config (Ory Action calls Intercom REST API — wiring is Action config + Jsonnet, no first-party handler ships here)
-**Docs page:** No dedicated Intercom page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/support-helpdesk/intercom](https://www.ory.com/docs/integrates-with/support-helpdesk/intercom)
 
 ## How it works
 

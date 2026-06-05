@@ -5,7 +5,7 @@
 [CockroachDB](https://www.cockroachlabs.com) is a distributed SQL database — horizontal scalability, strong consistency, multi-region survivability, with PostgreSQL wire-protocol compatibility. Ory components (Kratos, Hydra, Keto, Oathkeeper) use PostgreSQL as the primary datastore, so CockroachDB is a viable backend for deployments needing geographic distribution or high-availability that exceeds what a single Postgres can deliver.
 
 **Type:** config (DSN substitution + Cockroach-aware tuning — no source code)
-**Docs page:** No dedicated CockroachDB page on ory.com/docs. Ory's [self-hosted deployment overview](https://www.ory.com/docs/self-hosted/deployment) covers Postgres-compatible backends generically; the same DSN format works for Cockroach.
+**Docs page:** [ory.com/docs/integrates-with/data-persistence/cockroachdb](https://www.ory.com/docs/integrates-with/data-persistence/cockroachdb)
 
 ## Pattern
 

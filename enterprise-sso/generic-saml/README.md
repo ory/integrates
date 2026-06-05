@@ -7,7 +7,7 @@ Configure **any** SAML 2.0-compliant Identity Provider into Ory Polis as the SAM
 > Mirrored under [`generic-protocols/generic-saml`](../../generic-protocols/generic-saml/) — same source page on ory.com/docs.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/generic-saml](https://www.ory.com/docs/polis/sso-providers/generic-saml)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/generic-saml](https://www.ory.com/docs/integrates-with/enterprise-sso/generic-saml) — full guide: [ory.com/docs/polis/sso-providers/generic-saml](https://www.ory.com/docs/polis/sso-providers/generic-saml)
 
 ## When to use
 

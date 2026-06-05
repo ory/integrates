@@ -7,7 +7,7 @@ Configure any SAML 2.0-compliant Identity Provider with Ory. SAML support in Ory
 > Same source page as [`enterprise-sso/generic-saml`](../../enterprise-sso/generic-saml/) — categorization choice.
 
 **Type:** config (no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/generic-saml](https://www.ory.com/docs/polis/sso-providers/generic-saml)
+**Docs page:** [ory.com/docs/integrates-with/generic-protocols/generic-saml](https://www.ory.com/docs/integrates-with/generic-protocols/generic-saml) — full guide: [ory.com/docs/polis/sso-providers/generic-saml](https://www.ory.com/docs/polis/sso-providers/generic-saml)
 
 ## When to use
 

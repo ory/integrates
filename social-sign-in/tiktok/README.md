@@ -5,7 +5,7 @@
 Add Login with TikTok as a social sign-in provider in Ory Network. Useful for consumer media products, creator tools, and short-form video adjacent apps where TikTok is the audience graph.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/generic](https://www.ory.com/docs/kratos/social-signin/generic) (no TikTok-specific page yet — TikTok configures cleanly as a generic OAuth2 provider)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/tiktok](https://www.ory.com/docs/integrates-with/social-sign-in/tiktok)
 
 ## Setup
 

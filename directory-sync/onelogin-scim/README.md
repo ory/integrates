@@ -5,7 +5,7 @@
 Automatic user provisioning and deprovisioning from OneLogin (One Identity) into Ory Network / Ory Polis via SCIM 2.0. Pair with [`enterprise-sso/onelogin`](../../enterprise-sso/onelogin/) for the federated sign-in side.
 
 **Type:** config (SCIM endpoint configuration — no webhook code)
-**Docs page:** [ory.com/docs/polis/directory-sync/providers/onelogin](https://www.ory.com/docs/polis/directory-sync/providers/onelogin)
+**Docs page:** [ory.com/docs/integrates-with/directory-sync/onelogin-scim](https://www.ory.com/docs/integrates-with/directory-sync/onelogin-scim) — full guide: [ory.com/docs/polis/directory-sync/providers/onelogin](https://www.ory.com/docs/polis/directory-sync/providers/onelogin)
 
 ## Setup
 

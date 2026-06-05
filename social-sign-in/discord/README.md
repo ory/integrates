@@ -5,7 +5,7 @@
 Add Discord as a social sign-in provider in Ory Network. Users sign in with their Discord account; Ory maps Discord's OAuth2 response (username, email, avatar, guild/server membership) to the identity schema. Common in gaming, community, and creator-facing products.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/discord](https://www.ory.com/docs/kratos/social-signin/discord)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/discord](https://www.ory.com/docs/integrates-with/social-sign-in/discord) — full guide: [ory.com/docs/kratos/social-signin/discord](https://www.ory.com/docs/kratos/social-signin/discord)
 
 ## Setup
 

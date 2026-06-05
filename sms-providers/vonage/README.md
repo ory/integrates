@@ -5,7 +5,7 @@
 Vonage (formerly Nexmo) is a global cloud-communications platform with strong EMEA/APAC carrier coverage — a common alternative to Twilio for products with significant international user bases.
 
 **Type:** config (Kratos courier-spi over HTTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-sms](https://www.ory.com/docs/kratos/emails-sms/sending-sms)
+**Docs page:** [ory.com/docs/integrates-with/sms-providers/vonage](https://www.ory.com/docs/integrates-with/sms-providers/vonage) — full guide: [ory.com/docs/kratos/emails-sms/sending-sms#vonage-nexmo](https://www.ory.com/docs/kratos/emails-sms/sending-sms#vonage-nexmo)
 
 The Ory docs page covers the SMS courier configuration in general. Vonage-specific values:
 

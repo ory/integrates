@@ -5,7 +5,7 @@
 Plivo is a cloud-communications platform with direct carrier connections in 190+ countries — a common pick when SMS unit economics matter. Mentioned alongside Twilio in the Ory SMS docs as a supported HTTP courier target.
 
 **Type:** config (Kratos courier-spi over HTTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-sms](https://www.ory.com/docs/kratos/emails-sms/sending-sms)
+**Docs page:** [ory.com/docs/integrates-with/sms-providers/plivo](https://www.ory.com/docs/integrates-with/sms-providers/plivo) — full guide: [ory.com/docs/kratos/emails-sms/sending-sms#plivo](https://www.ory.com/docs/kratos/emails-sms/sending-sms#plivo)
 
 The Ory docs page covers the SMS courier configuration in general. Plivo-specific values:
 

@@ -5,7 +5,7 @@
 [Keycloak](https://www.keycloak.org) is the open-source identity and access management server (originally Red Hat / now CNCF graduated). Speaks SAML 2.0, OIDC, and OAuth 2.0. Common choice for enterprises that need a self-hosted IdP — full control of the infrastructure, data residency, no vendor lock-in.
 
 **Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
-**Docs page:** No dedicated Keycloak page on ory.com/docs. Configures via:
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/keycloak](https://www.ory.com/docs/integrates-with/enterprise-sso/keycloak)
 - [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc) (recommended — Keycloak's OIDC support is first-class).
 - [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml) (when SAML is required by policy).
 

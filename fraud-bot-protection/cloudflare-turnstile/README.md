@@ -5,7 +5,7 @@
 [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/) is a non-interactive CAPTCHA alternative — invisible challenge using browser signals, ML, and proof-of-work, no visual puzzle in most cases. Free, privacy-preserving, and good UX.
 
 **Type:** webhook (Ory Action verifies the Turnstile token from the client) — code in customer's webhook handler
-**Docs page:** No dedicated Turnstile page on ory.com/docs. Pattern is universal — client widget + Ory Action calling Turnstile's `siteverify` endpoint.
+**Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile](https://www.ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile)
 
 ## How it works
 

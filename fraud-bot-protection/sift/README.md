@@ -5,7 +5,7 @@
 [Sift](https://sift.com) is a digital trust & safety platform — real-time fraud detection and account-abuse prevention via ML scoring of user events. Returns an abuse score per event so you can decide allow / review / block.
 
 **Type:** webhook (Ory Action posts events + reads scores) — code in customer's webhook handler
-**Docs page:** No dedicated Sift page on ory.com/docs. Pattern is Ory Action emitting events to Sift's `/events` API plus optionally reading scores via `/v205/users/{id}/score`.
+**Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/sift](https://www.ory.com/docs/integrates-with/fraud-bot-protection/sift)
 
 ## How it works
 

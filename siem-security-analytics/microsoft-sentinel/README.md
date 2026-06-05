@@ -5,7 +5,7 @@
 [Microsoft Sentinel](https://learn.microsoft.com/en-us/azure/sentinel/) is a cloud-native SIEM + SOAR on Azure. Ingest Ory identity events into Sentinel via the **Azure Log Analytics Data Collector API**, enabling KQL hunts and automated Logic Apps playbooks.
 
 **Type:** webhook (Ory Action → handler → Log Analytics ingest) — wiring is Ory Action config + customer-implemented handler
-**Docs page:** No dedicated Sentinel page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/siem-security-analytics/microsoft-sentinel](https://www.ory.com/docs/integrates-with/siem-security-analytics/microsoft-sentinel)
 
 ## How it works
 

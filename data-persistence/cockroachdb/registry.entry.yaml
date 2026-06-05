@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Use CockroachDB as the primary datastore for self-hosted Ory components (Kratos, Hydra, Keto, Oathkeeper)
   via its PostgreSQL wire-protocol compatibility. Right choice for deployments needing geographic distribution
-  or HA beyond a single Postgres node. No dedicated Ory docs — same DSN format Ory uses for Postgres works
+  or HA beyond a single Postgres node. Documented at ory.com/docs/integrates-with/data-persistence/cockroachdb — same DSN format Ory uses for Postgres works
   for Cockroach with Cockroach-aware tuning.
 useCase: >-
   A self-hosted Ory deployment needs multi-region survivability, horizontal scalability beyond a single
@@ -22,7 +22,7 @@ coreFunctionality: |-
   - FK-heavy schema: expect some 40001 retry errors under high concurrency; clients should retry transactions per Cockroach's standard pattern.
   - UUID PKs (good — distribute across nodes) vs SERIAL (would hot-shard) — verify no Ory product version uses SERIAL.
   - Serverless tier has request-per-second limits unsuitable for production identity workloads; use Self-hosted (Dedicated) tier.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/data-persistence/cockroachdb.
 oryMechanism:
   - standards
 protocol:

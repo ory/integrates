@@ -5,7 +5,7 @@
 Configure [Auth0](https://auth0.com) as a SAML 2.0 Identity Provider into Ory Polis (the SAML SP). Common for organizations whose workforce identities live in Auth0 but who want Ory Network as the customer-facing identity layer with B2B SSO.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/auth0](https://www.ory.com/docs/polis/sso-providers/auth0)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/auth0-saml](https://www.ory.com/docs/integrates-with/enterprise-sso/auth0-saml) — full guide: [ory.com/docs/polis/sso-providers/auth0](https://www.ory.com/docs/polis/sso-providers/auth0)
 
 ## Setup
 

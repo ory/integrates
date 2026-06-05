@@ -5,7 +5,7 @@
 [Jumio](https://www.jumio.com) is a high-assurance identity-verification platform — Document + Selfie + Face Match — common in regulated industries (financial services, healthcare, gambling, crypto). This integration starts a Jumio workflow from Ory Actions during registration, consumes Jumio's HMAC-signed callback when the workflow finishes, and gates login on the stored verification status.
 
 **Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
-**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/jumio](https://www.ory.com/docs/integrates-with/identity-verification/jumio)
 
 ## Endpoints
 

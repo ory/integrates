@@ -5,7 +5,7 @@
 Add Sign in with Slack as a social sign-in provider in Ory Network. Slack's "Sign in with Slack" OIDC flow returns the user's identity plus their Slack workspace (team) membership, which makes it a natural sign-in option for B2B products where workspace membership signals access.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/slack](https://www.ory.com/docs/kratos/social-signin/slack)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/slack](https://www.ory.com/docs/integrates-with/social-sign-in/slack) — full guide: [ory.com/docs/kratos/social-signin/slack](https://www.ory.com/docs/kratos/social-signin/slack)
 
 ## Setup
 

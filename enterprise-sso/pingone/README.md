@@ -5,7 +5,7 @@
 Configure [PingOne](https://www.pingidentity.com/en/platform/capabilities/single-sign-on.html) — Ping Identity's cloud-based identity platform — as a SAML 2.0 Identity Provider into Ory Polis. Common in regulated industries (financial services, healthcare, government) where Ping's compliance posture and governance features matter.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/pingone](https://www.ory.com/docs/polis/sso-providers/pingone)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/pingone](https://www.ory.com/docs/integrates-with/enterprise-sso/pingone) — full guide: [ory.com/docs/polis/sso-providers/pingone](https://www.ory.com/docs/polis/sso-providers/pingone)
 
 ## Setup
 

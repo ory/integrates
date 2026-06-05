@@ -5,7 +5,7 @@
 Add Google as a social sign-in provider in Ory Network. Google is the most widely-recognized OIDC provider; users sign in with their existing Google account (consumer Gmail or Google Workspace) and Ory maps the returned claims to the identity schema.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/google](https://www.ory.com/docs/kratos/social-signin/google)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/google](https://www.ory.com/docs/integrates-with/social-sign-in/google) — full guide: [ory.com/docs/kratos/social-signin/google](https://www.ory.com/docs/kratos/social-signin/google)
 
 ## Setup
 

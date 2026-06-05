@@ -5,7 +5,7 @@
 Add UAE PASS as a social sign-in provider in Ory Network. UAE PASS is the United Arab Emirates' official digital identity platform — required for products serving UAE residents and the natural choice for any consumer app operating in the UAE.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/uaepass](https://www.ory.com/docs/kratos/social-signin/uaepass)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/uaepass](https://www.ory.com/docs/integrates-with/social-sign-in/uaepass) — full guide: [ory.com/docs/kratos/social-signin/uaepass](https://www.ory.com/docs/kratos/social-signin/uaepass)
 
 ## Setup
 

@@ -7,7 +7,7 @@ Sync newly registered Ory Network users into a Mailchimp **audience** (subscribe
 > This is the **marketing** Mailchimp integration. For sending transactional emails (verification, password reset, OTP) via Mandrill, see [`email-providers/mailchimp-transactional`](../../email-providers/mailchimp-transactional/).
 
 **Type:** webhook (Ory Actions on registration)
-**Docs page:** [ory.com/docs/actions/integrations/mailchimp](https://www.ory.com/docs/actions/integrations/mailchimp)
+**Docs page:** [ory.com/docs/integrates-with/cdp-analytics/mailchimp](https://www.ory.com/docs/integrates-with/cdp-analytics/mailchimp) — full guide: [ory.com/docs/actions/integrations/mailchimp](https://www.ory.com/docs/actions/integrations/mailchimp)
 
 ## How it works
 

@@ -16,7 +16,7 @@ useCase: >-
   An Ory Network customer already using Mailchimp for marketing wants identity emails (verification, recovery,
   MFA) sent from the same vendor account so reputation, billing, and analytics stay consolidated.
 coreFunctionality: |-
-  - Configured via Kratos's SMTP courier (no code) — no dedicated section in Ory docs; uses the generic SMTP courier path.
+  - Configured via Kratos's SMTP courier (no code) — documented at ory.com/docs/integrates-with/email-providers/mailchimp-transactional; uses the generic SMTP courier path.
   - Connection URI: smtps://apikey:<API_KEY>@smtp.mandrillapp.com:465 — username is any string (apikey is conventional); password is the Mandrill API key.
   - Mandrill is a PAID add-on to Mailchimp requiring a transactional email block purchase.
   - Domain verification (SPF include:spf.mandrillapp.com + DKIM TXT) is mandatory for production sending.

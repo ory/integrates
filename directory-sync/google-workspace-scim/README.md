@@ -5,7 +5,7 @@
 Automatic user provisioning and deprovisioning from Google Workspace into Ory Network via SCIM 2.0. Users created or deactivated in Workspace's directory propagate to Ory automatically — no manual user management.
 
 **Type:** config (SCIM endpoint configuration — no webhook code)
-**Docs page:**
+**Docs page:** [ory.com/docs/integrates-with/directory-sync/google-workspace-scim](https://www.ory.com/docs/integrates-with/directory-sync/google-workspace-scim)
 - Ory Network (managed): [ory.com/docs/kratos/manage-identities/scim/google-workspace](https://www.ory.com/docs/kratos/manage-identities/scim/google-workspace)
 - Ory Polis (self-hosted): [ory.com/docs/polis/directory-sync/providers/google](https://www.ory.com/docs/polis/directory-sync/providers/google)
 

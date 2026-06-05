@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's stock
   `jwt` plugin (or jwt-signer / jwt-keycloak community plugins for JWKS auto-refresh); session validation via
-  request-transformer + pre-function calling /sessions/whoami. No dedicated Ory docs — universal pattern.
+  request-transformer + pre-function calling /sessions/whoami. Documented at ory.com/docs/integrates-with/api-gateways/kong — universal pattern.
 useCase: >-
   A team running APIs behind Kong wants Ory-issued OAuth2 access tokens (Hydra) or Kratos session cookies
   validated at the gateway so backend services don't need to re-validate every request.
@@ -20,7 +20,7 @@ coreFunctionality: |-
   - Kong Enterprise's OIDC plugin handles Path A automatically with JWKS auto-discovery.
   - Caching: cache whoami response per session cookie via Kong's proxy-cache plugin or a Redis-backed custom cache to avoid hammering Ory.
   - Rate-limit at the gateway keyed by the validated `sub` claim — Kong's rate-limiting plugin is the cleanest pattern.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/kong.
 oryMechanism:
   - standards
 protocol:

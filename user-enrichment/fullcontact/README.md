@@ -5,7 +5,7 @@
 [FullContact](https://www.fullcontact.com) is a person/company data enrichment platform — resolves identity fragments (email, phone, social handle) into unified profiles. This integration enriches Ory identities post-registration with demographic, firmographic, and social data so downstream services can personalize and qualify leads without asking for extra form fields.
 
 **Type:** webhook (Ory Action → handler → FullContact API → Ory admin patch) — wiring is Ory Action config + customer-implemented handler
-**Docs page:** No dedicated FullContact page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/user-enrichment/fullcontact](https://www.ory.com/docs/integrates-with/user-enrichment/fullcontact)
 
 ## How it works
 

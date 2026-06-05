@@ -22,7 +22,7 @@ coreFunctionality: |-
   - dateOfBirth is sensitive PII — prefer metadata_admin storage; if only age check is needed, request the is18OrOlder flag instead.
   - BSN (Dutch citizen service number) is NOT returned by default — requires Dutch government approval for the BSN scope.
   - Suitable for PSD2 SCA where the bank login itself acts as the strong-customer-authentication factor.
-  - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/idin; configures via the generic OIDC path once a broker is chosen.
 oryMechanism:
   - standards
 protocol:

@@ -5,7 +5,7 @@
 Add Microsoft as a social sign-in provider in Ory Network. The Microsoft identity platform covers both consumer Microsoft accounts (Outlook, Xbox, Hotmail) and organizational accounts (Microsoft Entra ID / Azure AD), so the integration works for both B2C and B2B flows.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/microsoft](https://www.ory.com/docs/kratos/social-signin/microsoft)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/microsoft](https://www.ory.com/docs/integrates-with/social-sign-in/microsoft) — full guide: [ory.com/docs/kratos/social-signin/microsoft](https://www.ory.com/docs/kratos/social-signin/microsoft)
 
 ## Setup
 

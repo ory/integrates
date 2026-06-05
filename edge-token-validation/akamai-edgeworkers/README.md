@@ -5,7 +5,7 @@
 [Akamai EdgeWorkers](https://www.akamai.com/products/serverless-computing-edgeworkers) is Akamai's V8-isolate serverless runtime. Validate Ory Network session tokens and JWTs at the Akamai edge so requests never round-trip to origin when the token is invalid, and so origin services receive a trusted `X-User-Id` header.
 
 **Type:** session-validation (edge token validation pattern — see [`edge-token-validation/cloudflare-workers`](../cloudflare-workers/) for the canonical reference implementation)
-**Docs page:** No dedicated Akamai EdgeWorkers page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers](https://www.ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers)
 
 ## Pattern
 

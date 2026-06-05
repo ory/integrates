@@ -10,7 +10,7 @@ Configure any OpenID Connect-compliant Identity Provider with Ory. OIDC shows up
 > Same source page as [`enterprise-sso/generic-oidc`](../../enterprise-sso/generic-oidc/) — categorization choice.
 
 **Type:** config (no webhook code)
-**Docs page:**
+**Docs page:** [ory.com/docs/integrates-with/generic-protocols/generic-oidc](https://www.ory.com/docs/integrates-with/generic-protocols/generic-oidc)
 - Kratos generic OIDC: [ory.com/docs/kratos/social-signin/generic](https://www.ory.com/docs/kratos/social-signin/generic)
 - Polis generic OIDC: [ory.com/docs/polis/sso-providers/generic-oidc](https://www.ory.com/docs/polis/sso-providers/generic-oidc)
 

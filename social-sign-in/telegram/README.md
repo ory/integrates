@@ -5,7 +5,7 @@
 [Telegram](https://core.telegram.org/widgets/login) does not implement OAuth 2.0 or OIDC. It provides a **Login Widget** that posts an HMAC-SHA256-signed payload to a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot token and returns the verified profile so applications can call the Ory Admin API to upsert the matching identity and issue a session.
 
 **Type:** webhook (HTTP bridge called by your application)
-**Docs page:** [ory.com/docs/integrations/social-sign-in/telegram](https://ory.com/docs/integrations/social-sign-in/telegram)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/telegram](https://www.ory.com/docs/integrates-with/social-sign-in/telegram)
 
 ## Use case
 
@@ -45,7 +45,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 This integration runs **outside** the Ory Action webhook path; Telegram → your app → bridge → your app → Ory Admin API. There is no Ory Action hook to register — your application calls the bridge directly.
 
-Embedding the Login Widget, identity-schema fields for Telegram traits, and session-bootstrap patterns: see the [docs page](https://ory.com/docs/integrations/social-sign-in/telegram).
+Embedding the Login Widget, identity-schema fields for Telegram traits, and session-bootstrap patterns: see the [docs page](https://ory.com/docs/integrates-with/social-sign-in/telegram).
 
 ## Troubleshooting
 

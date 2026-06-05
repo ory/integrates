@@ -5,7 +5,7 @@
 [Recurly](https://recurly.com) is a subscription management and billing platform. This integration provides **bidirectional sync**: Ory → Recurly to create accounts at signup; Recurly → Ory to surface subscription state (active / churned / past due) on the identity so application code can gate features by subscription tier without a separate Recurly lookup.
 
 **Type:** webhook (two Ory Actions + a Recurly webhook handler — wiring is Ory Action config + customer-implemented handler)
-**Docs page:** No dedicated Recurly page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/payment-billing/recurly](https://www.ory.com/docs/integrates-with/payment-billing/recurly)
 
 ## How it works
 

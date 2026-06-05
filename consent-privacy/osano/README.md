@@ -5,7 +5,7 @@
 [Osano](https://www.osano.com) is a data-privacy platform — consent management, data discovery, vendor monitoring for GDPR / CCPA / LGPD compliance. This integration syncs Osano consent state into Ory Network identity metadata and handles data-subject requests (DSARs) via Ory's admin API.
 
 **Type:** config (Osano-driven webhook + Ory admin API client — no first-party connector)
-**Docs page:** No dedicated Osano page on ory.com/docs. Pattern is Osano → custom webhook → Ory admin API.
+**Docs page:** [ory.com/docs/integrates-with/consent-privacy/osano](https://www.ory.com/docs/integrates-with/consent-privacy/osano)
 
 ## Setup outline
 

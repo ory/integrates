@@ -5,7 +5,7 @@
 SparkPost (a Bird/MessageBird company) is an enterprise-grade transactional email platform with strong delivery analytics and deliverability tooling — a fit for high-volume identity emails with stringent deliverability requirements.
 
 **Type:** config (Kratos courier-spi over SMTP or HTTP — no webhook code)
-**Docs page:** No dedicated section in the Ory docs; configures as a [generic SMTP courier](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#your-own-server) (or as an HTTP courier for the REST Transmissions API).
+**Docs page:** [ory.com/docs/integrates-with/email-providers/sparkpost](https://www.ory.com/docs/integrates-with/email-providers/sparkpost) — full guide: [ory.com/docs/kratos/emails-sms/sending-emails-smtp#sparkpost](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#sparkpost)
 
 ## How it works
 

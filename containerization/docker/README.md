@@ -5,7 +5,7 @@
 Run the open-source Ory stack locally or in containerized deployments using the official Docker images at `oryd/kratos`, `oryd/hydra`, `oryd/keto`, `oryd/oathkeeper`. This directory captures the standard `docker-compose.yml` for the full self-hosted stack.
 
 **Type:** config (deployment pattern)
-**Docs page:** Per-product install guides:
+**Docs page:** [ory.com/docs/integrates-with/containerization/docker](https://www.ory.com/docs/integrates-with/containerization/docker)
 - [Kratos install](https://www.ory.com/docs/kratos/install)
 - [Hydra install](https://www.ory.com/docs/hydra/self-hosted/install) and [Hydra quickstart](https://www.ory.com/docs/hydra/self-hosted/quickstart) (Docker Compose-based)
 - [Keto install](https://www.ory.com/docs/keto/install)

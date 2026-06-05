@@ -5,7 +5,7 @@
 Twilio Programmable SMS is the most widely deployed cloud SMS platform — extensive carrier coverage, well-documented REST API, and the **canonical example used in the Ory SMS docs**.
 
 **Type:** config (Kratos courier-spi over HTTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-sms](https://www.ory.com/docs/kratos/emails-sms/sending-sms)
+**Docs page:** [ory.com/docs/integrates-with/sms-providers/twilio](https://www.ory.com/docs/integrates-with/sms-providers/twilio) — full guide: [ory.com/docs/kratos/emails-sms/sending-sms#twilio](https://www.ory.com/docs/kratos/emails-sms/sending-sms#twilio)
 
 The Ory docs page walks through the SMS courier configuration end-to-end using Twilio as the example. Twilio-specific values:
 

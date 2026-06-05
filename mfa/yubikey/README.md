@@ -5,7 +5,7 @@
 YubiKey is a hardware security key from Yubico — supports WebAuthn / FIDO2 / U2F. **Ory Network natively supports WebAuthn / FIDO2 as a multi-factor authentication method**, so YubiKey registration and use is built-in — no integration code required, just enable WebAuthn in your project's MFA configuration.
 
 **Type:** config (Ory Console MFA configuration — no webhook code)
-**Docs page:** [ory.com/docs/kratos/mfa/webauthn-fido-yubikey](https://www.ory.com/docs/kratos/mfa/webauthn-fido-yubikey)
+**Docs page:** [ory.com/docs/integrates-with/mfa/yubikey](https://www.ory.com/docs/integrates-with/mfa/yubikey) — full guide: [ory.com/docs/kratos/mfa/webauthn-fido-yubikey](https://www.ory.com/docs/kratos/mfa/webauthn-fido-yubikey)
 
 ## Setup
 

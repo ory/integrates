@@ -3,6 +3,7 @@
 Send `identify` and `track` calls to Segment when users register or log in via Ory. Uses Ory Actions webhooks to call Segment's HTTP Tracking API.
 
 **Platform:** Ory Network (managed cloud)
+**Docs page:** [ory.com/docs/integrates-with/cdp-analytics/segment](https://www.ory.com/docs/integrates-with/cdp-analytics/segment) — full guide: [ory.com/docs/actions/integrations/segment](https://www.ory.com/docs/actions/integrations/segment)
 
 ---
 

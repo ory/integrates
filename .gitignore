@@ -44,3 +44,6 @@ Thumbs.db
 **/assets/*.mp4
 **/assets/*.mkv
 **/assets/*.webm
+
+# Claude working docs — local handoff/reference artifacts, not part of the repo
+.claude/docs/

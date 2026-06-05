@@ -5,7 +5,7 @@
 [Traefik](https://traefik.io) is a cloud-native reverse proxy and load balancer with native integrations for Docker, Kubernetes, and other orchestrators. This integration uses Traefik's **ForwardAuth middleware** plus a small Ory session validator to authenticate every inbound request before it reaches your backend. The validator exchanges the user's session cookie or token for an `/sessions/whoami` lookup against Ory and converts the result into headers (`X-User-Id`, `X-User-Email`, `X-Auth-AAL`, etc.) that Traefik attaches to the upstream request.
 
 **Type:** session-validation (Traefik ForwardAuth target — *not* an Ory Action webhook)
-**Docs page:** [ory.com/docs/integrations/api-gateways/traefik](https://ory.com/docs/integrations/api-gateways/traefik)
+**Docs page:** [ory.com/docs/integrates-with/api-gateways/traefik](https://www.ory.com/docs/integrates-with/api-gateways/traefik)
 
 ## Use case
 
@@ -58,7 +58,7 @@ The middleware is set up to copy these headers from the auth response into the u
 - `X-Auth-AAL` — Authenticator Assurance Level (`aal1` / `aal2`).
 - `X-User-Metadata` — JSON-stringified `identity.metadata_public` (when present and non-empty).
 
-Detailed setup with Kubernetes, sidecar deployments, and the JWKS-based alternative (for pure JWT validation without round-tripping Ory): see the [docs page](https://ory.com/docs/integrations/api-gateways/traefik).
+Detailed setup with Kubernetes, sidecar deployments, and the JWKS-based alternative (for pure JWT validation without round-tripping Ory): see the [docs page](https://ory.com/docs/integrates-with/api-gateways/traefik).
 
 ## Troubleshooting
 

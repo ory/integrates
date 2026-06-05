@@ -67,6 +67,7 @@ pip install launchdarkly-server-sdk
 ### Step 2: Create SDK Wrapper with Ory Context
 
 **Node.js SDK wrapper:**
+**Docs page:** [ory.com/docs/integrates-with/feature-flags/launchdarkly](https://www.ory.com/docs/integrates-with/feature-flags/launchdarkly)
 
 ```javascript
 const LaunchDarkly = require("@launchdarkly/node-server-sdk");

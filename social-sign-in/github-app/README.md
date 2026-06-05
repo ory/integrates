@@ -5,7 +5,7 @@
 Sign in with a **GitHub App** (not the older OAuth Apps flow). GitHub Apps offer fine-grained, per-repository permissions, per-installation rate limits, and JWT-based server-to-server authentication for acting as the app itself. Use this variant when your product needs to act on a GitHub installation's behalf — read repos, open PRs, post checks — in addition to identifying the user.
 
 **Type:** config (Ory CLI configuration; no webhook code in this directory)
-**Docs page:** [ory.com/docs/kratos/social-signin/github](https://www.ory.com/docs/kratos/social-signin/github)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/github-app](https://www.ory.com/docs/integrates-with/social-sign-in/github-app)
 
 This is a **variant of the standard GitHub provider** — the OIDC flow is identical (Ory uses `provider: github` under a different `id`), but on the GitHub side you register a **GitHub App** instead of an OAuth App so you also get installation tokens.
 

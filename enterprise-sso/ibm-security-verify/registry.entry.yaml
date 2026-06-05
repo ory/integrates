@@ -9,7 +9,7 @@ type: config
 maintainedBy: Community contributors
 description: >-
   Configure IBM Security Verify (IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or OIDC identity
-  provider in Ory Polis. No dedicated docs; configures via the Polis generic SAML or generic OIDC walkthrough.
+  provider in Ory Polis. Documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify; configures via the Polis generic SAML or generic OIDC walkthrough.
 useCase: >-
   An enterprise running IBM Security Verify (Verify Cloud SaaS or Verify Access on-prem) as their workforce IdP
   wants Ory-protected applications to consume IBM-issued sessions instead of standing up a separate identity
@@ -19,7 +19,7 @@ coreFunctionality: |-
   - Same federation flows for both Verify Cloud (SaaS) and Verify Access (on-prem) — difference is administration location.
   - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Polis consumes the resulting authenticated assertion.
   - Passkey / FIDO2 enforcement configured in IBM Verify's policy engine; Ory consumes the assurance level reported in the assertion.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify.
 oryMechanism:
   - standards
 protocol:

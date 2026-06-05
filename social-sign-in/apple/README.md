@@ -5,7 +5,7 @@
 Add Sign in with Apple as a social sign-in provider in Ory Network. Apple uses a privacy-focused OAuth2 flow with **Hide My Email** relay addresses and requires JWT-signed client assertions (Apple Team ID + Private Key) rather than a plain client secret. Required for iOS apps that offer any third-party social login per App Store guidelines.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/apple](https://www.ory.com/docs/kratos/social-signin/apple)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/apple](https://www.ory.com/docs/integrates-with/social-sign-in/apple) — full guide: [ory.com/docs/kratos/social-signin/apple](https://www.ory.com/docs/kratos/social-signin/apple)
 
 ## Setup
 

@@ -18,7 +18,7 @@ coreFunctionality: |-
   - Issuer URL: https://kauth.kakao.com.
   - Standard scopes: openid, profile_nickname, account_email; Kakao requires explicit scope opt-in for email and other PII fields on the app's "Consent Items" screen.
   - Client Secret must be explicitly enabled under the app's Security settings (it's optional for Kakao apps by default).
-  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/kakao; contributions welcome.
 oryMechanism:
   - standards
 protocol:

@@ -5,7 +5,7 @@
 [Microsoft Dynamics 365](https://www.microsoft.com/en-us/dynamics-365) is an enterprise CRM and ERP platform. This integration syncs Ory identities to Dynamics 365 Contact records via the Dataverse Web API (OData v4) using an Ory Action webhook. When a user registers or updates their profile, the handler creates or upserts the corresponding Dynamics Contact keyed by an `ory_identity_id` alternate key.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/crm/microsoft-dynamics-365](https://ory.com/docs/integrations/crm/microsoft-dynamics-365)
+**Docs page:** [ory.com/docs/integrates-with/crm/microsoft-dynamics-365](https://www.ory.com/docs/integrates-with/crm/microsoft-dynamics-365)
 
 ## Use case
 
@@ -49,7 +49,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). The default destructures `name.first`, `name.last`, and `phone` from traits — adjust if your identity schema uses different keys.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
-Entra app registration, Dynamics application-user setup, and alternate-key indexing: see the [docs page](https://ory.com/docs/integrations/crm/microsoft-dynamics-365).
+Entra app registration, Dynamics application-user setup, and alternate-key indexing: see the [docs page](https://ory.com/docs/integrates-with/crm/microsoft-dynamics-365).
 
 ## Troubleshooting
 

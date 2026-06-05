@@ -5,7 +5,7 @@
 [Aadhaar](https://uidai.gov.in) is India's biometric identity system administered by UIDAI — a 12-digit identifier issued to over 1.3 billion residents, backed by biometric (fingerprint, iris) and demographic data. **Not natively supported by Ory** — UIDAI restricts direct API access to licensed Authentication Service Agencies (ASA) and Authentication User Agencies (AUA). This integration goes through a licensed third-party provider.
 
 **Type:** config (architectural pattern via Ory Actions webhook to a licensed eKYC provider)
-**Docs page:** No dedicated Ory page (Aadhaar is not natively supported).
+**Docs page:** [ory.com/docs/integrates-with/government-identity/aadhaar](https://www.ory.com/docs/integrates-with/government-identity/aadhaar)
 
 ## How to integrate Aadhaar
 

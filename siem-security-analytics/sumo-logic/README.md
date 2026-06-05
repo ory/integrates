@@ -5,7 +5,7 @@
 [Sumo Logic](https://www.sumologic.com/) is a cloud-native machine-data analytics platform — log management, Cloud SIEM, observability. Ingest Ory identity events into Sumo Logic via an **HTTP Source** on a Hosted Collector — the simplest ingest path of any SIEM.
 
 **Type:** webhook (Ory Action POSTs directly to Sumo HTTP Source — no handler needed)
-**Docs page:** No dedicated Sumo Logic page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/siem-security-analytics/sumo-logic](https://www.ory.com/docs/integrates-with/siem-security-analytics/sumo-logic)
 
 ## How it works
 

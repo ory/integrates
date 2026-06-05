@@ -9,7 +9,7 @@ type: config
 maintainedBy: Community contributors
 description: >-
   Configure ForgeRock Access Management (now part of Ping Identity following the 2023 acquisition) as an upstream
-  SAML 2.0 or OIDC identity provider in Ory Polis. No dedicated docs; configures via the Polis generic SAML or
+  SAML 2.0 or OIDC identity provider in Ory Polis. Documented at ory.com/docs/integrates-with/enterprise-sso/forgerock-am; configures via the Polis generic SAML or
   generic OIDC walkthrough.
 useCase: >-
   An enterprise running ForgeRock AM (or the rebranded Ping Identity Platform) as their workforce IdP wants
@@ -20,7 +20,7 @@ coreFunctionality: |-
   - ForgeRock side: SAML entity under Realms → Applications → Federation, or OAuth 2.0 client under OAuth 2.0 → Clients.
   - SP-initiated only — Polis does not consume IdP-initiated SAML assertions; configure the ForgeRock side accordingly.
   - OIDC supports openid / profile / email / groups; group claims may need a custom scope mapper depending on AM version.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/forgerock-am.
 oryMechanism:
   - standards
 protocol:

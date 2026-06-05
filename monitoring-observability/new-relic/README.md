@@ -5,7 +5,7 @@
 New Relic ingests OpenTelemetry over OTLP/HTTP. Ory products (self-hosted Kratos / Hydra / Keto / Oathkeeper, plus Ory Network's exported telemetry) emit OTel traces and metrics that New Relic consumes directly.
 
 **Type:** config (instrumentation — no source code in this directory)
-**Docs page:** No dedicated New Relic page on ory.com/docs. Configures via the standard [OpenTelemetry path](../opentelemetry/), which Ory documents in [self-hosted distributed tracing](https://www.ory.com/docs/self-hosted/operations/tracing).
+**Docs page:** [ory.com/docs/integrates-with/monitoring-observability/new-relic](https://www.ory.com/docs/integrates-with/monitoring-observability/new-relic)
 
 | Setting | Value |
 | --- | --- |

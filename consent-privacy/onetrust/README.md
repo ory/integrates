@@ -5,7 +5,7 @@
 [OneTrust](https://onetrust.com) is a privacy, security, and governance platform for managing consent, fulfilling Data Subject Requests (DSRs), and maintaining compliance with GDPR, CCPA, LGPD, and PIPA. This integration writes a consent receipt to OneTrust on every registration and exposes a DSR callback endpoint that lets OneTrust's Privacy Rights Automation workflow delete, export, or rectify identities in Ory.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/consent-privacy/onetrust](https://ory.com/docs/integrations/consent-privacy/onetrust)
+**Docs page:** [ory.com/docs/integrates-with/consent-privacy/onetrust](https://www.ory.com/docs/integrates-with/consent-privacy/onetrust)
 
 ## Use case
 
@@ -50,7 +50,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 4. In OneTrust's Privacy Rights Automation workflow, add a webhook step pointing at `https://your-handler.example.com/onetrust/dsr` with `X-OneTrust-Secret: <value of ONETRUST_DSR_SECRET>`.
 
-Identity-schema consent fields, OneTrust Purpose ID mapping, and DSR workflow wiring: see the [docs page](https://ory.com/docs/integrations/consent-privacy/onetrust).
+Identity-schema consent fields, OneTrust Purpose ID mapping, and DSR workflow wiring: see the [docs page](https://ory.com/docs/integrates-with/consent-privacy/onetrust).
 
 ## Troubleshooting
 

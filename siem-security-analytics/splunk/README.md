@@ -5,7 +5,7 @@
 [Splunk](https://splunk.com) is a security information and event management (SIEM) and operational-intelligence platform. This integration forwards Ory identity-flow events (registration, login, recovery, settings) to Splunk's HTTP Event Collector (HEC), shaped to the Common Information Model (CIM) Authentication data model so search, dashboards, and alerts work without per-event extraction.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/siem-security-analytics/splunk](https://ory.com/docs/integrations/siem-security-analytics/splunk)
+**Docs page:** [ory.com/docs/integrates-with/siem-security-analytics/splunk](https://www.ory.com/docs/integrates-with/siem-security-analytics/splunk)
 
 ## Use case
 
@@ -51,7 +51,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 2. The body template is [`jsonnet/event.jsonnet`](jsonnet/event.jsonnet) — shared by all four hooks.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 
-CIM field mapping, sample SPL detections (credential stuffing, impossible travel, MFA adoption), and Live Event Streams (Enterprise) variant: see the [docs page](https://ory.com/docs/integrations/siem-security-analytics/splunk).
+CIM field mapping, sample SPL detections (credential stuffing, impossible travel, MFA adoption), and Live Event Streams (Enterprise) variant: see the [docs page](https://ory.com/docs/integrates-with/siem-security-analytics/splunk).
 
 ## Troubleshooting
 

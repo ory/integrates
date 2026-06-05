@@ -5,7 +5,7 @@
 Configure [Microsoft Entra ID](https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id) (formerly Azure Active Directory) as a SAML 2.0 Identity Provider into Ory Polis. Entra ID is the default IdP for organizations on Microsoft 365 / Azure — the most common enterprise SSO integration alongside Google Workspace.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/azure](https://www.ory.com/docs/polis/sso-providers/azure) (filename is the historical `azure` — Microsoft renamed Azure AD to Entra ID in 2023; the docs page covers the same product).
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/microsoft-entra-id](https://www.ory.com/docs/integrates-with/enterprise-sso/microsoft-entra-id) — full guide: [ory.com/docs/polis/sso-providers/azure](https://www.ory.com/docs/polis/sso-providers/azure)
 
 ## Setup
 

@@ -6,7 +6,7 @@
 Steam by Valve uses **OpenID 2.0** (the legacy spec from 2007), not OAuth 2.0 or OIDC. Ory Kratos's social sign-in subsystem only speaks OAuth 2.0 / OIDC, so Steam **cannot be configured directly** as a Kratos provider. A bridge component is required.
 
 **Type:** config (architectural pattern, not a turnkey provider)
-**Docs page:** No dedicated Ory page (Steam is not natively supported).
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/steam](https://www.ory.com/docs/integrates-with/social-sign-in/steam)
 
 ## How to integrate Steam
 

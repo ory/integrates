@@ -5,7 +5,7 @@
 [CyberArk Identity](https://www.cyberark.com/products/identity/) (the SSO and identity portion of the CyberArk platform — distinct from CyberArk's PAM product) exposes standard SAML 2.0 and OIDC endpoints for federation. Configure as an upstream IdP in Ory Network so CyberArk-managed enterprise identities can sign in to Ory-protected applications.
 
 **Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
-**Docs page:** No dedicated CyberArk page on ory.com/docs. Configures via:
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/cyberark-identity](https://www.ory.com/docs/integrates-with/enterprise-sso/cyberark-identity)
 - [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml) (recommended for enterprise SSO).
 - [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc) if your CyberArk app is configured for OIDC.
 

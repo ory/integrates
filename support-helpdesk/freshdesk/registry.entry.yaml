@@ -21,7 +21,7 @@ coreFunctionality: |-
   - response.ignore: true — Freshdesk availability never blocks user flows.
   - 409 Conflict from POST means the contact already exists by email — handler should treat as success.
   - For Ory identity context shown inside Freshdesk tickets, consider a Freshdesk Marketplace App calling Ory's admin API — separate integration, not covered here.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/support-helpdesk/freshdesk.
 oryMechanism:
   - actions
 protocol:

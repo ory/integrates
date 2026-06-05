@@ -5,6 +5,7 @@
 > **Status:** No official Ory Pulumi provider. This directory documents the two community paths to managing Ory Network with Pulumi.
 
 **Type:** config (IaC — no source code in this directory)
+**Docs page:** [ory.com/docs/integrates-with/iac-devops/pulumi](https://www.ory.com/docs/integrates-with/iac-devops/pulumi)
 
 ## How to use Pulumi with Ory Network
 

@@ -5,7 +5,7 @@
 [Okta Verify](https://www.okta.com/products/multi-factor-authentication/) is Okta's first-party MFA app supporting push notifications and TOTP. This integration sends an Okta Verify push from an Ory Action webhook on login, polls Okta for the user's response, and returns the verdict so Ory can step up authentication or fail the flow.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/mfa/okta-verify](https://ory.com/docs/integrations/mfa/okta-verify)
+**Docs page:** [ory.com/docs/integrates-with/mfa/okta-verify](https://www.ory.com/docs/integrates-with/mfa/okta-verify)
 
 ## Use case
 
@@ -53,7 +53,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 4. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 5. Make sure Ory's webhook total timeout is ≥ `OKTA_POLL_DEADLINE_SECONDS` + headroom.
 
-Token rotation, fallback factor flows, and "no factor enrolled" branching: see the [docs page](https://ory.com/docs/integrations/mfa/okta-verify).
+Token rotation, fallback factor flows, and "no factor enrolled" branching: see the [docs page](https://ory.com/docs/integrates-with/mfa/okta-verify).
 
 ## Troubleshooting
 

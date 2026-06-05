@@ -7,7 +7,7 @@ Mailchimp Transactional (formerly Mandrill) is the transactional email service b
 > This is the **transactional / courier** integration. For syncing newly registered users into a Mailchimp **marketing audience** via Ory Actions, see [`cdp-analytics/mailchimp`](../../cdp-analytics/mailchimp/).
 
 **Type:** config (Kratos courier-spi over SMTP — no webhook code)
-**Docs page:** No dedicated section in the Ory docs; configures as a [generic SMTP courier](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#your-own-server).
+**Docs page:** [ory.com/docs/integrates-with/email-providers/mailchimp-transactional](https://www.ory.com/docs/integrates-with/email-providers/mailchimp-transactional) — full guide: [ory.com/docs/actions/integrations/mailchimp](https://www.ory.com/docs/actions/integrations/mailchimp) · SMTP recipe: [ory.com/docs/kratos/emails-sms/sending-emails-smtp#mailchimp-transactional-mandrill](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#mailchimp-transactional-mandrill)
 
 | Setting | Value |
 | --- | --- |

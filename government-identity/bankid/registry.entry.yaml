@@ -23,7 +23,7 @@ coreFunctionality: |-
   - Jsonnet mapper extracts personal number (Swedish personnummer / Norwegian fødselsnummer), name, and country (broker reports identityscheme like sebankid / nobankid).
   - PSD2 Strong Customer Authentication (SCA) satisfied; eIDAS Substantial (NO mobile) or High (SE, NO hardware).
   - Personal numbers are sensitive PII — prefer metadata_admin over metadata_public.
-  - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC path once a broker is chosen.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/bankid; configures via the generic OIDC path once a broker is chosen.
 oryMechanism:
   - standards
 protocol:

@@ -5,7 +5,7 @@
 [Equifax](https://www.equifax.com) is a global credit bureau that provides credit-anchored identity verification through its Digital Identity Trust APIs. This integration calls Equifax from an Ory Action webhook during registration to verify the user's identity attributes against credit-bureau data and returns a decision plus trust score so Ory's post-flow Action can gate the flow.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/identity-verification/equifax](https://ory.com/docs/integrations/identity-verification/equifax)
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/equifax](https://www.ory.com/docs/integrates-with/identity-verification/equifax)
 
 ## Use case
 
@@ -49,7 +49,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 3. Keep `response.parse: true` and `response.ignore: false` so Ory consumes Equifax's verdict.
 4. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 
-Detailed setup, identity-schema extensions for KYC fields, and per-product Equifax scopes: see the [docs page](https://ory.com/docs/integrations/identity-verification/equifax).
+Detailed setup, identity-schema extensions for KYC fields, and per-product Equifax scopes: see the [docs page](https://ory.com/docs/integrates-with/identity-verification/equifax).
 
 ## Troubleshooting
 

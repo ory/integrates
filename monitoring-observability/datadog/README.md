@@ -5,7 +5,7 @@
 Monitor Ory in Datadog. Self-hosted Ory products (Kratos, Hydra, Keto, Oathkeeper) **natively support Datadog as a tracing backend** — listed alongside OpenTelemetry, Jaeger, Elastic APM, Zipkin, and Instana in the Ory observability docs. Ory Network customers ingest Datadog via OpenTelemetry (OTLP) export.
 
 **Type:** config (instrumentation — no source code in this directory)
-**Docs page:**
+**Docs page:** [ory.com/docs/integrates-with/monitoring-observability/datadog](https://www.ory.com/docs/integrates-with/monitoring-observability/datadog)
 - [Self-hosted distributed tracing](https://www.ory.com/docs/self-hosted/operations/tracing) (lists Datadog as a first-class tracing backend)
 - [Self-hosted observability (Prometheus metrics)](https://www.ory.com/docs/self-hosted/operations/observability)
 

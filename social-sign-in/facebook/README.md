@@ -5,7 +5,7 @@
 Add Facebook as a social sign-in provider in Ory Network. Users sign in with their Facebook account; Ory fetches profile data from Facebook's Graph API (Facebook doesn't issue an OIDC id_token) and maps it to the identity schema.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/facebook](https://www.ory.com/docs/kratos/social-signin/facebook)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/facebook](https://www.ory.com/docs/integrates-with/social-sign-in/facebook) — full guide: [ory.com/docs/kratos/social-signin/facebook](https://www.ory.com/docs/kratos/social-signin/facebook)
 
 ## Setup
 

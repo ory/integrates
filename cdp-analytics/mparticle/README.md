@@ -5,7 +5,7 @@
 [mParticle](https://www.mparticle.com) is a customer data platform (CDP). This integration sends Ory identity and authentication events into mParticle via the Events API for server-to-server integration. From mParticle, events fan out to downstream destinations (analytics, marketing, advertising platforms) without re-implementing each integration.
 
 **Type:** webhook (Ory Action POSTs directly to mParticle Events API — no handler needed)
-**Docs page:** No dedicated mParticle page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/cdp-analytics/mparticle](https://www.ory.com/docs/integrates-with/cdp-analytics/mparticle)
 
 ## How it works
 

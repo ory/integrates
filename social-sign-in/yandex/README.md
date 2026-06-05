@@ -5,7 +5,7 @@
 Add Yandex as a social sign-in provider in Ory Network. Yandex is the dominant Russian search and services portal — common for products serving Russian-language consumers and CIS markets.
 
 **Type:** config (Ory CLI configuration)
-**Docs page:** [ory.com/docs/kratos/social-signin/yandex](https://www.ory.com/docs/kratos/social-signin/yandex)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/yandex](https://www.ory.com/docs/integrates-with/social-sign-in/yandex) — full guide: [ory.com/docs/kratos/social-signin/yandex](https://www.ory.com/docs/kratos/social-signin/yandex)
 
 ## Setup
 

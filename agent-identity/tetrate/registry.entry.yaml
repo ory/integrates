@@ -1,0 +1,34 @@
+# This file is the source of truth for this integration's registry metadata.
+# Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
+
+name: tetrate
+displayName: Tetrate Agent Router Enterprise
+vendor: Tetrate
+category: agent-identity
+type: config
+maintainedBy: Community contributors
+description: >-
+  Pair Tetrate Agent Router Enterprise (an enterprise AI gateway built on Envoy AI Gateway) with Ory for
+  dynamic, granular control over enterprise AI agents. Ory provides identity and authorization — Hydra issues
+  OAuth2/OIDC tokens for agents and Keto holds the fine-grained policies — while Tetrate enforces those
+  policies on live traffic when agents call models, tools, and enterprise services, down to parameter-level
+  control over MCP tool calls.
+useCase: >-
+  An enterprise running autonomous AI agents wants per-agent, per-tool, and per-parameter access control with
+  step-up authorization — e.g. an agent processes routine refunds automatically but must trigger an Ory
+  approval flow for larger amounts, or accesses standard records freely but needs elevated, short-lived access
+  for sensitive data.
+coreFunctionality: |-
+  - Two-layer architecture: Ory is the authorization/policy layer (what an agent or user may access at the resource level); Tetrate Agent Router Enterprise is the network/gateway layer that enforces policy on live traffic.
+  - Agents are first-class identities authenticated through Ory; Hydra issues OAuth2/OIDC tokens via client_credentials.
+  - Authorization policies defined in Ory Keto; Tetrate evaluates each agent request (tool call + request parameters) against them at the point an agent invokes an MCP tool.
+  - Parameter-level enforcement: Tetrate can gate not just which tools an agent may use but which request parameters are allowed, based on Keto policies.
+  - Step-up auth: requests exceeding a risk threshold can pause, trigger an authentication/approval flow through Ory, and issue short-lived elevated access.
+  - Tetrate Agent Router Enterprise is built on Envoy AI Gateway — see api-gateways/envoy for the underlying Ory-token-at-the-edge pattern.
+  - Status: community/proposed — announced partnership (Tetrate + Ory, 2026); reference architecture more than turnkey product.
+oryMechanism:
+  - standards
+protocol:
+  - oauth2
+  - rest-api
+status: active

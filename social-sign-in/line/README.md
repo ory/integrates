@@ -5,7 +5,7 @@
 Add LINE Login as a social sign-in provider in Ory Network. LINE is the dominant messaging app in Japan, Taiwan, and Thailand — the natural sign-in option for consumer products targeting users in those markets.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/line](https://www.ory.com/docs/kratos/social-signin/line)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/line](https://www.ory.com/docs/integrates-with/social-sign-in/line) — full guide: [ory.com/docs/kratos/social-signin/line](https://www.ory.com/docs/kratos/social-signin/line)
 
 ## Setup
 

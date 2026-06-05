@@ -21,7 +21,7 @@ coreFunctionality: |-
   - Tokens are one-time-use and expire 2 minutes after issue.
   - hCaptcha API contract is nearly identical to reCAPTCHA — easy migration between the two.
   - Enterprise tier adds adaptive risk scoring and invisible challenges; verify endpoint shape unchanged.
-  - Status: community/proposed — no dedicated ory/docs page; same pattern as Turnstile / reCAPTCHA / Arkose.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha; same pattern as Turnstile / reCAPTCHA / Arkose.
 oryMechanism:
   - actions
 protocol:

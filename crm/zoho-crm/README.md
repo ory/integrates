@@ -5,7 +5,7 @@
 [Zoho CRM](https://www.zoho.com/crm/) contact sync from Ory Network via Ory Actions webhooks. When a user registers (or updates their profile) in an Ory-powered application, this handler upserts the corresponding Zoho Contact keyed by email.
 
 **Type:** webhook (Ory Action — code in [`webhook/`](./webhook/))
-**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
+**Docs page:** [ory.com/docs/integrates-with/crm/zoho-crm](https://www.ory.com/docs/integrates-with/crm/zoho-crm)
 
 ## Endpoints
 

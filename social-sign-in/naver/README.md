@@ -5,7 +5,7 @@
 Add Naver Login as a social sign-in provider in Ory Network. Naver is South Korea's largest search portal — a complementary sign-in option to Kakao for products targeting Korean users.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/generic](https://www.ory.com/docs/kratos/social-signin/generic) (no Naver-specific page yet — Naver is OAuth 2.0 and configures as a generic provider)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/naver](https://www.ory.com/docs/integrates-with/social-sign-in/naver)
 
 ## Setup
 

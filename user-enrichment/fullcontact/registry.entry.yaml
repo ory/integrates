@@ -21,7 +21,7 @@ coreFunctionality: |-
   - Per-resolved-record billing — configure FullContact's multi-field resolution to avoid wasting credits.
   - DSAR / right-to-be-forgotten: FullContact API supports a delete call; wire to your DSAR flow.
   - SDK: native fetch + @ory/client for admin PATCH.
-  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/user-enrichment/fullcontact, no first-party handler.
 oryMechanism:
   - actions
 protocol:

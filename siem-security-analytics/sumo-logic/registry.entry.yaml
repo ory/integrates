@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Ingest Ory Network identity events into Sumo Logic (log management + Cloud SIEM) via an HTTP Source on a
   Hosted Collector — the simplest ingest path of any SIEM. Ory Action POSTs directly to the tokenized HTTP
-  Source URL; no webhook handler needed. No dedicated Ory docs.
+  Source URL; no webhook handler needed. Documented at ory.com/docs/integrates-with/siem-security-analytics/sumo-logic.
 useCase: >-
   A security team running Sumo Logic wants Ory identity events in Sumo with the lowest setup friction —
   Sumo's HTTP Source accepts unauthenticated POSTs to a unique tokenized URL, so the Ory Action can post
@@ -22,7 +22,7 @@ coreFunctionality: |-
   - Cloud SIEM: parse events into Sumo's normalized schema via Field Extraction Rule (FER) or parsing job to enable out-of-the-box detection rules (credential stuffing, brute force, impossible travel).
   - Body Jsonnet on each Ory Action emits the relevant event fields as JSON; Sumo auto-parses.
   - For high-volume products, set retention + partition rules in Sumo to manage cost.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/siem-security-analytics/sumo-logic.
 oryMechanism:
   - actions
 protocol:

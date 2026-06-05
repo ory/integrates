@@ -5,7 +5,7 @@
 Add Patreon as a social sign-in provider in Ory Network. Useful for creator-economy products and member-only platforms — Patreon's OAuth response includes the user's identity plus their pledge / membership data, which downstream code can use to gate access.
 
 **Type:** config (Ory CLI configuration)
-**Docs page:** [ory.com/docs/kratos/social-signin/patreon](https://www.ory.com/docs/kratos/social-signin/patreon)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/patreon](https://www.ory.com/docs/integrates-with/social-sign-in/patreon) — full guide: [ory.com/docs/kratos/social-signin/patreon](https://www.ory.com/docs/kratos/social-signin/patreon)
 
 ## Setup
 

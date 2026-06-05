@@ -5,7 +5,7 @@
 Automatic user provisioning and deprovisioning from Microsoft Entra ID (formerly Azure AD) into Ory Network / Ory Polis via SCIM 2.0. Pair with [`enterprise-sso/microsoft-entra-id`](../../enterprise-sso/microsoft-entra-id/) for the federated sign-in side.
 
 **Type:** config (SCIM endpoint configuration — no webhook code)
-**Docs page:**
+**Docs page:** [ory.com/docs/integrates-with/directory-sync/microsoft-scim](https://www.ory.com/docs/integrates-with/directory-sync/microsoft-scim)
 - Ory Network (managed): [ory.com/docs/kratos/manage-identities/scim/ms-entra](https://www.ory.com/docs/kratos/manage-identities/scim/ms-entra)
 - Ory Polis (self-hosted): [ory.com/docs/polis/directory-sync/providers/azure](https://www.ory.com/docs/polis/directory-sync/providers/azure)
 

@@ -5,7 +5,7 @@
 Deployment patterns for running with Ory on Azure. **Not a vendor integration** — Ory Network is reached over HTTPS like any SaaS, and self-hosted Ory products run on standard Kubernetes (AKS) or Azure Container Apps with Azure Database for PostgreSQL. This directory captures the Azure-side glue.
 
 **Type:** config (deployment pattern)
-**Docs page:** No Azure-specific Ory page. Relevant Ory docs:
+**Docs page:** [ory.com/docs/integrates-with/cloud-infrastructure/azure](https://www.ory.com/docs/integrates-with/cloud-infrastructure/azure)
 - [Self-hosted Ory deployment overview](https://www.ory.com/docs/self-hosted/deployment)
 - [Hydra Helm chart guide](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 - For Microsoft Entra ID social sign-in / enterprise SSO see [`social-sign-in/microsoft`](../../social-sign-in/microsoft/) and [`enterprise-sso/microsoft-entra-id`](../../enterprise-sso/microsoft-entra-id/).

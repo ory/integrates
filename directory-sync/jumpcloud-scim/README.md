@@ -5,7 +5,7 @@
 Automatic user provisioning and deprovisioning from JumpCloud into Ory Network / Ory Polis via SCIM 2.0. Pair with [`enterprise-sso/jumpcloud`](../../enterprise-sso/jumpcloud/) for the federated sign-in side.
 
 **Type:** config (SCIM endpoint configuration — no webhook code)
-**Docs page:** [ory.com/docs/polis/directory-sync/providers/jumpcloud](https://www.ory.com/docs/polis/directory-sync/providers/jumpcloud)
+**Docs page:** [ory.com/docs/integrates-with/directory-sync/jumpcloud-scim](https://www.ory.com/docs/integrates-with/directory-sync/jumpcloud-scim) — full guide: [ory.com/docs/polis/directory-sync/providers/jumpcloud](https://www.ory.com/docs/polis/directory-sync/providers/jumpcloud)
 
 ## Setup
 

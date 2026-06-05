@@ -5,7 +5,7 @@
 Deployment patterns for running on AWS with Ory. This is **not a vendor integration** — Ory Network is reached over HTTPS like any SaaS, and self-hosted Ory products run on standard Kubernetes (EKS) with RDS Postgres and (optionally) ElastiCache. This directory captures the two common patterns and the AWS-side glue.
 
 **Type:** config (deployment pattern)
-**Docs page:** No AWS-specific Ory page. Relevant Ory docs:
+**Docs page:** [ory.com/docs/integrates-with/cloud-infrastructure/aws](https://www.ory.com/docs/integrates-with/cloud-infrastructure/aws)
 - [Self-hosted Ory deployment overview](https://www.ory.com/docs/self-hosted/deployment)
 - [Hydra Helm chart guide](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 - [Self-hosted operations: scalability, observability, tracing](https://www.ory.com/docs/self-hosted/operations/scalability)

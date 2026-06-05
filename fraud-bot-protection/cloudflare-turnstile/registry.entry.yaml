@@ -20,7 +20,7 @@ coreFunctionality: |-
   - Tokens are one-time-use and expire ~5 minutes after issue.
   - Free with no per-call limit — practical default for new projects.
   - Optional remoteip field in siteverify enables IP-binding check; pass the client IP through the reverse proxy.
-  - Status: community/proposed — no dedicated ory/docs page; same pattern as hCaptcha / reCAPTCHA / Arkose.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile; same pattern as hCaptcha / reCAPTCHA / Arkose.
 oryMechanism:
   - actions
 protocol:

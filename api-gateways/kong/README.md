@@ -5,7 +5,7 @@
 [Kong Gateway](https://konghq.com/) is a cloud-native API gateway — traffic management, auth, rate limiting, observability. Validate Ory-issued JWTs or session tokens at the gateway using Kong's **jwt** plugin (for OAuth2 access tokens from Hydra) or a custom plugin (for Kratos session validation).
 
 **Type:** config (Kong plugin configuration — no webhook code)
-**Docs page:** No dedicated Kong page on ory.com/docs. Standard JWT-at-the-edge pattern; the Ory side is just JWKS exposure or `/sessions/whoami`.
+**Docs page:** [ory.com/docs/integrates-with/api-gateways/kong](https://www.ory.com/docs/integrates-with/api-gateways/kong)
 
 ## Two paths
 

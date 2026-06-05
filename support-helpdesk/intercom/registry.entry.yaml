@@ -23,7 +23,7 @@ coreFunctionality: |-
   - Intercom Messenger identity verification: HMAC `user_hash` shared secret prevents spoofing of authenticated chat sessions; configure in Intercom security settings.
   - Tracking events ("user verified email", etc.) uses Events API (POST /events), not contact updates.
   - Rate limits 10K calls/minute (Pro+) — generous for signup-rate flows.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/support-helpdesk/intercom.
 oryMechanism:
   - actions
 protocol:

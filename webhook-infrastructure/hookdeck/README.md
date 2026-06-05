@@ -5,7 +5,7 @@
 [Hookdeck](https://hookdeck.com) is a webhook reliability layer — managed ingestion, automatic retries, rate limiting, replay, and observability. Route Ory Network Actions through Hookdeck instead of directly to your handler so transient handler failures don't lose events and so you get a queryable event store of every Ory webhook delivery.
 
 **Type:** config (Ory Action URL points at Hookdeck; Hookdeck forwards to your handler — no webhook code on the Ory side)
-**Docs page:** No dedicated Hookdeck page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/webhook-infrastructure/hookdeck](https://www.ory.com/docs/integrates-with/webhook-infrastructure/hookdeck)
 
 ## How it works
 

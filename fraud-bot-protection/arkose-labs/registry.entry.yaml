@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Bot and fraud prevention via Arkose Labs's adaptive enforcement challenges (invisible scoring escalating to
   interactive puzzles on risk). Wired into Ory via an Ory Action on registration.before / login.before with
-  can_interrupt, verifying the Arkose token from the client SDK. No dedicated Ory docs page.
+  can_interrupt, verifying the Arkose token from the client SDK. Documented at ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs.
 useCase: >-
   A high-value B2C product (financial, gaming, marketplace) needs strong bot defense at signup and login —
   more friction-sensitive than reCAPTCHA but more capable against sophisticated automation.
@@ -20,7 +20,7 @@ coreFunctionality: |-
   - Arkose tokens are one-time-use — handler must not retry verify with the same token.
   - Use a per-flow token (don't reuse across registration and login).
   - Adaptive challenges escalate per-risk; pick challenge type per-flow risk profile via Arkose's game configuration.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs.
 oryMechanism:
   - actions
 protocol:

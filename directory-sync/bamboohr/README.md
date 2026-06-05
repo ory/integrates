@@ -5,7 +5,7 @@
 [BambooHR](https://bamboohr.com) is an HRIS popular with SMB and mid-market companies. This integration enriches Ory identities with employee data from BambooHR via an Ory Action webhook on login or registration, returning `{ employed, employee_id, job_title, department, hire_date }` so a post-flow Action can gate access on employment status or write the fields into identity metadata.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/directory-sync/bamboohr](https://ory.com/docs/integrations/directory-sync/bamboohr)
+**Docs page:** [ory.com/docs/integrates-with/directory-sync/bamboohr](https://www.ory.com/docs/integrates-with/directory-sync/bamboohr)
 
 ## Use case
 
@@ -47,7 +47,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 3. Keep `response.parse: true` and `response.ignore: false` so Ory consumes the enrichment payload.
 4. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
-Off-boarded-employee gating, role-based attribute mapping, and saved-report lookups for large directories: see the [docs page](https://ory.com/docs/integrations/directory-sync/bamboohr).
+Off-boarded-employee gating, role-based attribute mapping, and saved-report lookups for large directories: see the [docs page](https://ory.com/docs/integrates-with/directory-sync/bamboohr).
 
 ## Troubleshooting
 

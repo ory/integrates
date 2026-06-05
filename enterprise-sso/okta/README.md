@@ -5,7 +5,7 @@
 Configure [Okta](https://www.okta.com) as a SAML 2.0 (preferred for B2B SSO) or OIDC Identity Provider into Ory Polis. Okta is the dominant cloud workforce identity platform — a near-default option in most enterprise SSO conversations.
 
 **Type:** config (Polis SAML or OIDC connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/okta](https://www.ory.com/docs/polis/sso-providers/okta)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/okta](https://www.ory.com/docs/integrates-with/enterprise-sso/okta) — full guide: [ory.com/docs/polis/sso-providers/okta](https://www.ory.com/docs/polis/sso-providers/okta)
 
 ## Setup
 

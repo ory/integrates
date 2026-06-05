@@ -9,8 +9,8 @@ type: config
 maintainedBy: Community contributors
 description: >-
   Use Brevo (formerly Sendinblue) as the SMTP or HTTP courier for Ory Network transactional emails. EU-headquartered
-  vendor with strong GDPR posture, exposing both an SMTP relay and a REST v3 transactional-email API. No dedicated
-  section in the Ory docs; configures as a generic SMTP courier (or HTTP courier for the REST variant).
+  vendor with strong GDPR posture, exposing both an SMTP relay and a REST v3 transactional-email API. Documented at
+  ory.com/docs/integrates-with/email-providers/brevo; configures as a generic SMTP courier (or HTTP courier for the REST variant).
 useCase: >-
   An Ory Network customer with EU data-residency or GDPR concerns wants a EU-headquartered email vendor for
   identity emails, in addition to or instead of US-based providers like SendGrid or Mailgun.

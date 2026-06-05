@@ -5,7 +5,7 @@
 [Socure](https://socure.com) is an ML-based identity verification platform with strong fraud detection and KYC coverage. This integration calls Socure ID+ from an Ory Action webhook during registration and (optionally) consumes Socure's async result callback to write the final decision back to the identity.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/identity-verification/socure](https://ory.com/docs/integrations/identity-verification/socure)
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/socure](https://www.ory.com/docs/integrates-with/identity-verification/socure)
 
 ## Use case
 
@@ -47,7 +47,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 4. For the async callback path, configure the callback URL and signing secret in Socure Admin → Webhooks, and put the same secret in `SOCURE_CALLBACK_SECRET`. Optionally set `ORY_SDK_URL` and `ORY_ADMIN_API_KEY` to enable the metadata write-back.
 
-Identity-schema extensions for KYC fields, Socure module configuration, and per-module decision interpretation: see the [docs page](https://ory.com/docs/integrations/identity-verification/socure).
+Identity-schema extensions for KYC fields, Socure module configuration, and per-module decision interpretation: see the [docs page](https://ory.com/docs/integrates-with/identity-verification/socure).
 
 ## Troubleshooting
 

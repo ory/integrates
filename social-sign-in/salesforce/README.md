@@ -5,7 +5,7 @@
 Add Salesforce as a social sign-in provider in Ory Network. Useful for B2B products integrated into the Salesforce ecosystem — sales reps and admins sign in with their existing Salesforce account, and the access token can be reused to call Salesforce APIs.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/salesforce](https://www.ory.com/docs/kratos/social-signin/salesforce)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/salesforce](https://www.ory.com/docs/integrates-with/social-sign-in/salesforce) — full guide: [ory.com/docs/kratos/social-signin/salesforce](https://www.ory.com/docs/kratos/social-signin/salesforce)
 
 ## Setup
 

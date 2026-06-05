@@ -2,6 +2,8 @@
 
 > **Maintained by:** Community contributors
 
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/gbg-acuant](https://www.ory.com/docs/integrates-with/identity-verification/gbg-acuant)
+
 ## Overview
 
 GBG (which acquired Acuant) is a global identity verification provider with deep document and biometric coverage. This integration calls the GBG identity verification API from an Ory Actions webhook during registration to verify document + selfie evidence, and returns the GBG decision so Ory can gate the registration flow.

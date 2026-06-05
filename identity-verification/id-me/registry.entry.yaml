@@ -22,7 +22,7 @@ coreFunctionality: |-
   - Scopes drive what's verified — `openid` for identity, plus scopes like `military`, `nurse`, `teacher` for verified group claims (require ID.me application review per scope).
   - Redirect URI: https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback/id-me.
   - Kratos Jsonnet maps standard OIDC claims plus ID.me-specific group/verification claims to identity traits / metadata.
-  - Status: community/proposed — no dedicated ory/docs page; configures via the generic OIDC provider path.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/identity-verification/id-me; configures via the generic OIDC provider path.
 oryMechanism:
   - standards
 protocol:

@@ -18,7 +18,7 @@ coreFunctionality: |-
   - Authorization endpoint: https://nid.naver.com/oauth2.0/authorize; Token endpoint: https://nid.naver.com/oauth2.0/token; Profile API: https://openapi.naver.com/v1/nid/me.
   - Default Jsonnet maps response.id (Naver user id), response.email, response.nickname.
   - Configured at the Naver Developers Console (developers.naver.com/apps).
-  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/naver; contributions welcome.
 oryMechanism:
   - standards
 protocol:

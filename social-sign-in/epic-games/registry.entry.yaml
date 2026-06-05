@@ -19,7 +19,7 @@ coreFunctionality: |-
   - Standard scopes: openid, basic_profile.
   - Default Jsonnet maps sub (Epic Account ID), preferred_username, email when present.
   - Epic Games Developer Portal manages client provisioning; the EOS application client is what backs OAuth.
-  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/epic-games; contributions welcome.
 oryMechanism:
   - standards
 protocol:

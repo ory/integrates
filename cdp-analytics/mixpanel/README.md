@@ -5,7 +5,7 @@
 [Mixpanel](https://mixpanel.com) is a product-analytics platform. This integration sends Ory authentication events (registration / login / verification / MFA) into Mixpanel via the Ingestion API so product analysts see identity events in funnels and retention dashboards.
 
 **Type:** webhook (Ory Action POSTs directly to Mixpanel Ingestion API — no handler needed)
-**Docs page:** No dedicated Mixpanel page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/cdp-analytics/mixpanel](https://www.ory.com/docs/integrates-with/cdp-analytics/mixpanel)
 
 ## How it works
 

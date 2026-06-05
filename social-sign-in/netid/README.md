@@ -5,7 +5,7 @@
 Add NetID as a social sign-in provider in Ory Network. NetID is the European single sign-in alliance backed by Mediahuis, RTL, and ProSiebenSat.1 — common for German and EU consumer media products that want a privacy-respecting, GDPR-aligned sign-in option.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/netid](https://www.ory.com/docs/kratos/social-signin/netid)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/netid](https://www.ory.com/docs/integrates-with/social-sign-in/netid) — full guide: [ory.com/docs/kratos/social-signin/netid](https://www.ory.com/docs/kratos/social-signin/netid)
 
 ## Setup
 

@@ -21,7 +21,7 @@ coreFunctionality: |-
   - user_identities.customer_id = Ory identity id; mParticle's identity-resolution rules can layer on top.
   - environment field: set to "development" for non-prod Ory projects so events don't pollute prod data.
   - mParticle's value is the routing layer — for a single destination you might skip mParticle and ingest directly; for multi-destination, integration pays off quickly.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/cdp-analytics/mparticle.
 oryMechanism:
   - actions
 protocol:

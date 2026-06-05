@@ -5,7 +5,7 @@
 Configure on-premises **Microsoft Active Directory Federation Services (AD FS)** as a SAML 2.0 Identity Provider into Ory Polis. Common path for enterprises maintaining on-prem Active Directory who want SSO to cloud apps without migrating to Entra ID.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/microsoft-adfs](https://www.ory.com/docs/polis/sso-providers/microsoft-adfs)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/microsoft-adfs](https://www.ory.com/docs/integrates-with/enterprise-sso/microsoft-adfs) — full guide: [ory.com/docs/polis/sso-providers/microsoft-adfs](https://www.ory.com/docs/polis/sso-providers/microsoft-adfs)
 
 ## Setup
 

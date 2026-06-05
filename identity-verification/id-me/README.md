@@ -7,7 +7,7 @@
 ID.me also offers **verified group claims** (Military, First Responder, Student, Teacher, Government Employee, Nurse, etc.) — useful for verified-discount and access-gating use cases.
 
 **Type:** config (Ory CLI / generic OIDC provider — no webhook code)
-**Docs page:** No dedicated Ory page. Configures via the [generic OIDC provider](https://www.ory.com/docs/kratos/social-signin/generic) path.
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/id-me](https://www.ory.com/docs/integrates-with/identity-verification/id-me)
 
 ## Setup
 

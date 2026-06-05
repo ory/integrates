@@ -5,7 +5,7 @@
 [BankID](https://www.bankid.com) is the high-assurance electronic identity used in Sweden and Norway — issued by banks, eIDAS Substantial/High assurance, and the de-facto authentication for banking, public services, and healthcare in those markets. **Direct BankID API access is restricted to licensed providers**; integration goes through an OIDC broker that wraps BankID for general use.
 
 **Type:** config (generic OIDC provider in Kratos pointing at a BankID broker)
-**Docs page:** No dedicated Ory page. Configures via the [generic OIDC provider](https://www.ory.com/docs/kratos/social-signin/generic) path.
+**Docs page:** [ory.com/docs/integrates-with/government-identity/bankid](https://www.ory.com/docs/integrates-with/government-identity/bankid)
 
 ## How to integrate BankID
 

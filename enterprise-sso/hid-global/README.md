@@ -5,7 +5,7 @@
 [HID Global](https://www.hidglobal.com) provides trusted identity solutions across both physical (badge readers, smart cards, mobile credentials) and digital (SSO, MFA, certificate-based authentication) identity. Common in government, healthcare, financial services, and manufacturing where physical-facility access and digital-application access need a unified identity.
 
 **Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
-**Docs page:** No dedicated HID page on ory.com/docs. Configures via:
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/hid-global](https://www.ory.com/docs/integrates-with/enterprise-sso/hid-global)
 - [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml).
 - [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc).
 

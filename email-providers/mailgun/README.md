@@ -5,7 +5,7 @@
 Mailgun is a developer-focused transactional email service with strong deliverability tooling — automatic suppression management, detailed event logs, built-in validation. **Documented directly in the Ory SMTP courier page.**
 
 **Type:** config (Kratos courier-spi over SMTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-emails-smtp#mailgun](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#mailgun)
+**Docs page:** [ory.com/docs/integrates-with/email-providers/mailgun](https://www.ory.com/docs/integrates-with/email-providers/mailgun) — full guide: [ory.com/docs/kratos/emails-sms/sending-emails-smtp#mailgun](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#mailgun)
 
 | Setting | Value |
 | --- | --- |

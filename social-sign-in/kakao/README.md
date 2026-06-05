@@ -5,7 +5,7 @@
 Add Kakao Login as a social sign-in provider in Ory Network. Kakao is the dominant identity and messaging platform in South Korea — the natural sign-in option for consumer products targeting Korean users.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/generic](https://www.ory.com/docs/kratos/social-signin/generic) (no Kakao-specific page yet — Kakao is OIDC-compliant and configures cleanly as a generic OIDC provider)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/kakao](https://www.ory.com/docs/integrates-with/social-sign-in/kakao)
 
 ## Setup
 

@@ -5,7 +5,7 @@
 Add Battle.net (Blizzard) as a social sign-in provider in Ory Network. Useful for gaming products targeting Blizzard's player base — World of Warcraft, Overwatch, Hearthstone, Diablo, etc.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/generic](https://www.ory.com/docs/kratos/social-signin/generic) (no Battle.net-specific page yet — Battle.net is OIDC-compliant and configures cleanly as a generic OIDC provider)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/battle-net](https://www.ory.com/docs/integrates-with/social-sign-in/battle-net)
 
 ## Setup
 

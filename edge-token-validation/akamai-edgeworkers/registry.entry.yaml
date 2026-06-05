@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Validate Ory Network session tokens and JWTs at the Akamai EdgeWorkers V8-isolate runtime before requests
   hit origin. Same shape as the canonical edge-token-validation/cloudflare-workers reference, adapted to
-  EdgeWorkers' httpRequest API and EdgeKV caching. No dedicated Ory docs.
+  EdgeWorkers' httpRequest API and EdgeKV caching. Documented at ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers.
 useCase: >-
   A team running Akamai for CDN + edge security wants Ory session / JWT validation at the edge so origin
   receives a trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request
@@ -23,7 +23,7 @@ coreFunctionality: |-
   - CPU budget ~50ms wall-clock — JWKS verification fits comfortably; whoami calls eat into this.
   - Wired via Akamai Property Manager attaching the EdgeWorker to a behavior on the relevant hostname/path.
   - Reference implementation: edge-token-validation/cloudflare-workers (same pattern, different runtime).
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers.
 oryMechanism:
   - standards
 protocol:

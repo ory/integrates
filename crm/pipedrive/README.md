@@ -5,7 +5,7 @@
 [Pipedrive](https://pipedrive.com) is a sales-focused CRM with a contact-and-activity timeline as its central abstraction. This integration syncs Ory identities to Pipedrive persons on registration and profile updates, and logs a login activity to the person's timeline on every login so sales has a real-time view of customer engagement.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/crm/pipedrive](https://ory.com/docs/integrations/crm/pipedrive)
+**Docs page:** [ory.com/docs/integrates-with/crm/pipedrive](https://www.ory.com/docs/integrates-with/crm/pipedrive)
 
 ## Use case
 

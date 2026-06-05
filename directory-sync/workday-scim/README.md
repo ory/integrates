@@ -5,7 +5,7 @@
 Provision identities from [Workday](https://www.workday.com) (one of the most widely deployed enterprise HCM systems) into Ory Network via SCIM 2.0. Workday is the source of truth for employee data in many enterprises — wiring Workday → Ory keeps Ory's identity store in lock-step with HR ground truth without bespoke integration code.
 
 **Type:** config (SCIM endpoint configuration — no webhook code)
-**Docs page:** No dedicated Workday page on ory.com/docs. The Ory side is a standard SCIM 2.0 endpoint — Workday connects to it like any other SCIM consumer.
+**Docs page:** [ory.com/docs/integrates-with/directory-sync/workday-scim](https://www.ory.com/docs/integrates-with/directory-sync/workday-scim)
 
 ## Setup outline
 

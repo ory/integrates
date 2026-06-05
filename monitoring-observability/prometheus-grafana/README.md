@@ -5,7 +5,7 @@
 Every Ory service exposes a Prometheus-compatible metrics endpoint at `/metrics/prometheus`. Documented in the Ory self-hosted observability docs as the recommended metrics path.
 
 **Type:** config (scrape + dashboard — no source code in this directory)
-**Docs page:** [Self-hosted observability](https://www.ory.com/docs/self-hosted/operations/observability)
+**Docs page:** [ory.com/docs/integrates-with/monitoring-observability/prometheus-grafana](https://www.ory.com/docs/integrates-with/monitoring-observability/prometheus-grafana)
 
 | Service | Default metrics endpoint |
 | --- | --- |

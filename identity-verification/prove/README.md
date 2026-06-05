@@ -5,7 +5,7 @@
 [Prove](https://www.prove.com) (formerly Payfone) is a phone-anchored identity platform — telecom signals, SIM-swap detection, identity prefill, and continuous phone-ownership verification. This integration calls Prove from Ory Actions across three lifecycle points: pre-registration lookup (prefill), post-registration enrollment, and per-login validation.
 
 **Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
-**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/prove](https://www.ory.com/docs/integrates-with/identity-verification/prove)
 
 ## Endpoints
 

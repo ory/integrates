@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Provision identities from Workday into Ory Network via SCIM 2.0. Workday is the most widely deployed
   enterprise HCM and the source of truth for employee data in many enterprises; wiring Workday → Ory keeps
-  Ory's identity store in lock-step with HR ground truth. No dedicated Ory docs page — Workday's SCIM
+  Ory's identity store in lock-step with HR ground truth. Documented at ory.com/docs/integrates-with/directory-sync/workday-scim — Workday's SCIM
   connector is not turnkey.
 useCase: >-
   A large enterprise where Workday is the system of record for employee lifecycle wants Ory identities to be
@@ -22,7 +22,7 @@ coreFunctionality: |-
   - Pattern B: deploy a mid-tier connector (Tools4ever HelloID, Saviynt, or a custom service) that pulls Workday REST/SOAP and pushes to Ory's SCIM endpoint.
   - Pattern C (most common in practice): provision Workday → Okta/Entra via the IdP's native Workday connector, then Okta/Entra → Ory via the existing SCIM integration. Avoids touching Workday directly.
   - Ory side is a standard SCIM 2.0 endpoint with bearer-token auth, accepting Users and Groups; endpoint URL and token come from the directory-sync setup-link.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/directory-sync/workday-scim.
 oryMechanism:
   - directory-sync
 protocol:

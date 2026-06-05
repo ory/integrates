@@ -5,7 +5,7 @@
 Configure [Google Workspace](https://workspace.google.com) (formerly G Suite) as a SAML Identity Provider into Ory Polis. One of the most common enterprise SSO integrations — most workforce identities already live in Workspace, and the Admin Console makes the SAML app setup straightforward.
 
 **Type:** config (Polis SAML connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/google](https://www.ory.com/docs/polis/sso-providers/google)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/google-workspace](https://www.ory.com/docs/integrates-with/enterprise-sso/google-workspace) — full guide: [ory.com/docs/polis/sso-providers/google](https://www.ory.com/docs/polis/sso-providers/google)
 
 ## Setup
 

@@ -7,7 +7,7 @@ Configure **any** OIDC-compliant Identity Provider into Ory Polis as the OIDC Re
 > Mirrored under [`generic-protocols/generic-oidc`](../../generic-protocols/generic-oidc/) — same source page on ory.com/docs.
 
 **Type:** config (Polis OIDC connection — no webhook code)
-**Docs page:** [ory.com/docs/polis/sso-providers/generic-oidc](https://www.ory.com/docs/polis/sso-providers/generic-oidc)
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/generic-oidc](https://www.ory.com/docs/integrates-with/enterprise-sso/generic-oidc) — full guide: [ory.com/docs/polis/sso-providers/generic-oidc](https://www.ory.com/docs/polis/sso-providers/generic-oidc)
 
 ## When to use
 

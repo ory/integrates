@@ -5,7 +5,7 @@
 [Persona](https://withpersona.com) is an identity verification platform with configurable templates (document capture, selfie + liveness, database checks, watchlist screening). This integration runs a Persona Inquiry from Ory Actions during registration, consumes Persona's HMAC-signed callback when the inquiry completes, and gates login on the stored verification status.
 
 **Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
-**Docs page:** No dedicated Ory page yet. The webhook follows the patterns in the [Ory Actions web_hook docs](https://www.ory.com/docs/actions/web-hook).
+**Docs page:** [ory.com/docs/integrates-with/identity-verification/persona](https://www.ory.com/docs/integrates-with/identity-verification/persona)
 
 ## Endpoints
 

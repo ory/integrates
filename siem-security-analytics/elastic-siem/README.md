@@ -5,7 +5,7 @@
 [Elastic SIEM](https://www.elastic.co/security/siem) (part of the Elastic Stack) — security analytics, threat detection, incident response, built on Elasticsearch + Kibana. This integration ingests Ory Network identity and authentication events into Elasticsearch, mapping to the **Elastic Common Schema (ECS)** for standardized security monitoring.
 
 **Type:** webhook (Ory Action → handler → Elastic bulk ingest API) — wiring is Ory Action config + customer-implemented handler
-**Docs page:** No dedicated Elastic page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/siem-security-analytics/elastic-siem](https://www.ory.com/docs/integrates-with/siem-security-analytics/elastic-siem)
 
 ## How it works
 

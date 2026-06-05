@@ -5,7 +5,7 @@
 [ZoomInfo](https://www.zoominfo.com) is a B2B data intelligence platform — contact, company, and intent data for sales, marketing, and recruiting. This integration enriches Ory identities post-registration with B2B contact + company data so newly registered users land in your funnel pre-qualified.
 
 **Type:** webhook (Ory Action → handler → ZoomInfo API → Ory admin patch) — wiring is Ory Action config + customer-implemented handler
-**Docs page:** No dedicated ZoomInfo page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/user-enrichment/zoominfo](https://www.ory.com/docs/integrates-with/user-enrichment/zoominfo)
 
 ## How it works
 

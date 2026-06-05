@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Validate Ory Network session tokens and JWTs at the Fastly Compute@Edge WASM runtime before requests hit
   origin. Same shape as the canonical edge-token-validation/cloudflare-workers reference, compiled to WASM
-  with Fastly's host backends API and KV Store. No dedicated Ory docs.
+  with Fastly's host backends API and KV Store. Documented at ory.com/docs/integrates-with/edge-token-validation/fastly-compute.
 useCase: >-
   A team running Fastly for CDN + edge compute wants Ory session / JWT validation at the edge so origin
   receives a trusted X-User-Id (or 401 from the edge for invalid tokens) without round-tripping every request.
@@ -22,7 +22,7 @@ coreFunctionality: |-
   - Edge dictionaries for non-secret config (Ory project URL, audience IDs); edge secrets for JWKS pinning / service tokens.
   - On valid: inject X-User-Id header; on invalid: synthesize 401 at the edge.
   - Rust is the most performant; JavaScript (via Quick.js) is the easiest path porting from the Cloudflare reference.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/fastly-compute.
 oryMechanism:
   - standards
 protocol:

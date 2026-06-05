@@ -5,7 +5,7 @@
 [Arkose Labs](https://www.arkoselabs.com) is a bot detection and fraud-prevention platform — adaptive enforcement challenges that progress from invisible risk scoring to interactive puzzles only when warranted. Designed for high-value flows (account creation, login, payment).
 
 **Type:** webhook (Ory Action verifies the Arkose token from the client) — code lives in customer's webhook handler
-**Docs page:** No dedicated Arkose page on ory.com/docs. Pattern is client widget + Ory Action calling Arkose's `/v2/verify` endpoint.
+**Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs](https://www.ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs)
 
 ## How it works
 

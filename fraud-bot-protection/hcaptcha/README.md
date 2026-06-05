@@ -5,7 +5,7 @@
 [hCaptcha](https://www.hcaptcha.com) is a privacy-focused CAPTCHA service — drop-in alternative to reCAPTCHA with stronger privacy posture (no data sale, GDPR-compliant) and a paid Enterprise tier with adaptive challenge difficulty.
 
 **Type:** webhook (Ory Action verifies the hCaptcha token from the client) — code in customer's webhook handler
-**Docs page:** No dedicated hCaptcha page on ory.com/docs. Pattern is universal — client widget + Ory Action calling hCaptcha's `siteverify` endpoint.
+**Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha](https://www.ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha)
 
 ## How it works
 

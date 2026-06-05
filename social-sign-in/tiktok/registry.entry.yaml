@@ -19,7 +19,7 @@ coreFunctionality: |-
   - Authorization endpoint: https://www.tiktok.com/v2/auth/authorize; Token: https://open.tiktokapis.com/v2/oauth/token/; Profile: https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name.
   - Default Jsonnet maps data.user.open_id, display_name, and email (when the email scope is granted).
   - Scopes opt-in: `user.info.basic` is base; `user.info.email` is a separately approved scope and may require TikTok app review.
-  - Status: community/proposed — no dedicated ory/docs page; contributions welcome.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/tiktok; contributions welcome.
 oryMechanism:
   - standards
 protocol:

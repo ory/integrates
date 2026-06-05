@@ -5,7 +5,7 @@
 Add GitHub as a social sign-in provider in Ory Network. GitHub doesn't implement OIDC, so Ory uses its OAuth2 flow and calls GitHub's User API to populate the claims envelope. Ideal for developer tools, DevOps platforms, and anything where most users already have a GitHub account.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/github](https://www.ory.com/docs/kratos/social-signin/github)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/github](https://www.ory.com/docs/integrates-with/social-sign-in/github) — full guide: [ory.com/docs/kratos/social-signin/github](https://www.ory.com/docs/kratos/social-signin/github)
 
 ## Setup
 

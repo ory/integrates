@@ -5,7 +5,7 @@
 [Vanta](https://www.vanta.com) is an automated security and compliance platform — continuously monitors security posture for SOC 2, ISO 27001, HIPAA, and similar frameworks. This integration connects Vanta to Ory Network's admin API to collect identity and access management evidence automatically.
 
 **Type:** config (Vanta reads from Ory's admin API — no webhook code on the Ory side)
-**Docs page:** No dedicated Vanta page on ory.com/docs. Vanta does not have a turnkey Ory connector; integration is via Vanta's **Custom Integration / API integration** plus an HTTP poller against the Ory admin API.
+**Docs page:** [ory.com/docs/integrates-with/compliance-audit/vanta](https://www.ory.com/docs/integrates-with/compliance-audit/vanta)
 
 ## Setup outline
 

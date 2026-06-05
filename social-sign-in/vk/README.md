@@ -5,7 +5,7 @@
 Add VKontakte as a social sign-in provider in Ory Network. VK is the dominant Russian-language social network — the natural sign-in option for consumer products targeting Russia and CIS markets.
 
 **Type:** config (Ory CLI configuration)
-**Docs page:** [ory.com/docs/kratos/social-signin/vk](https://www.ory.com/docs/kratos/social-signin/vk)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/vk](https://www.ory.com/docs/integrates-with/social-sign-in/vk) — full guide: [ory.com/docs/kratos/social-signin/vk](https://www.ory.com/docs/kratos/social-signin/vk)
 
 ## Setup
 

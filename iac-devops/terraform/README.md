@@ -5,7 +5,9 @@
 Official Terraform provider for managing **Ory Network** resources as infrastructure-as-code — identity schemas, OAuth2 clients, project configuration, identities, organizations, permissions, and webhooks. Source at [github.com/ory/terraform-provider-ory](https://github.com/ory/terraform-provider-ory); registry source `ory/ory`.
 
 **Type:** config (Terraform provider — no source code in this directory)
+**Docs page:** [ory.com/docs/integrates-with/iac-devops/terraform](https://www.ory.com/docs/integrates-with/iac-devops/terraform)
 **Provider docs:** [registry.terraform.io/providers/ory/ory](https://registry.terraform.io/providers/ory/ory/latest/docs)
+**OpenTofu:** also published on the [OpenTofu registry](https://search.opentofu.org/provider/ory/ory/latest) — same `ory/ory` source, so the configuration below works identically under `tofu`.
 
 > This provider targets **Ory Network only** — it does not manage self-hosted Ory deployments. For self-hosted, use [`iac-devops/helm`](../helm/) or raw [`containerization/kubernetes`](../../containerization/kubernetes/) manifests.
 

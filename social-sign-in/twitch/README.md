@@ -5,7 +5,7 @@
 Add Log in with Twitch as a social sign-in provider in Ory Network. Common in gaming, streaming, and creator-tooling products targeting Twitch's audience and content creators.
 
 **Type:** config (Ory CLI configuration)
-**Docs page:** [ory.com/docs/kratos/social-signin/twitch](https://www.ory.com/docs/kratos/social-signin/twitch)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/twitch](https://www.ory.com/docs/integrates-with/social-sign-in/twitch) — full guide: [ory.com/docs/kratos/social-signin/twitch](https://www.ory.com/docs/kratos/social-signin/twitch)
 
 ## Setup
 

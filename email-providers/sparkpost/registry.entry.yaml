@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Use SparkPost as the SMTP or HTTP courier for Ory Network transactional emails. Enterprise-grade transactional
   email platform (now part of Bird/MessageBird) with strong delivery analytics and per-region (US vs EU) hosting.
-  No dedicated section in the Ory docs; configures as a generic SMTP or HTTP courier.
+  Documented at ory.com/docs/integrates-with/email-providers/sparkpost; configures as a generic SMTP or HTTP courier.
 useCase: >-
   An Ory Network customer with high transactional email volume and stringent deliverability requirements wants
   enterprise-grade tooling and per-region (US vs EU) hosting for data-residency.

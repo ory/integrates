@@ -9,7 +9,7 @@ type: config
 maintainedBy: Community contributors
 description: >-
   Configure CyberArk Identity (the SSO/identity portion of the CyberArk platform — distinct from CyberArk's PAM
-  product) as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. No dedicated docs; configures via
+  product) as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. Documented at ory.com/docs/integrates-with/enterprise-sso/cyberark-identity; configures via
   the Polis generic SAML or generic OIDC provider walkthrough.
 useCase: >-
   An enterprise customer running CyberArk Identity as their workforce IdP needs Ory-protected applications to
@@ -19,7 +19,7 @@ coreFunctionality: |-
   - CyberArk side: create a Custom SAML App (or Custom OIDC App), paste in Polis SP metadata, map outbound attributes (email, firstname, lastname, groups).
   - Group-based access stays on the CyberArk side; Ory only sees the authentication result and released attributes.
   - PAM-specific REST integration (privileged sessions, credential rotation) is out of scope — separate work item.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/cyberark-identity.
 oryMechanism:
   - standards
 protocol:

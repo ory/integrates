@@ -5,7 +5,7 @@
 <!-- One paragraph: what does this integration do, and why would someone configure it? -->
 
 **Type:** config (no webhook code; Ory Console configuration only)
-**Docs page:** [ory.com/docs/integrations/<your-integration>](https://ory.com/docs/integrations/)
+**Docs page:** [ory.com/docs/integrates-with/<your-integration>](https://ory.com/docs/integrates-with/)
 
 ## Setup
 

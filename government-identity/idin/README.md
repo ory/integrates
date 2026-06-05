@@ -5,7 +5,7 @@
 [iDIN](https://www.idin.nl) is the Dutch banks' identity-verification service — it lets users identify themselves online with the same credentials they use for online banking (ING, Rabobank, ABN AMRO, etc.) and returns bank-verified attributes (name, address, date of birth, 18+ flag). Widely used in the Netherlands for KYC, age verification, and onboarding.
 
 **Type:** config (generic OIDC provider in Kratos pointing at an iDIN broker)
-**Docs page:** No dedicated Ory page. Configures via the [generic OIDC provider](https://www.ory.com/docs/kratos/social-signin/generic) path.
+**Docs page:** [ory.com/docs/integrates-with/government-identity/idin](https://www.ory.com/docs/integrates-with/government-identity/idin)
 
 ## How to integrate iDIN
 

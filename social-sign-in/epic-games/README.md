@@ -5,7 +5,7 @@
 Add Epic Games as a social sign-in provider in Ory Network. Useful for products targeting Fortnite, Rocket League, and Unreal-engine games — Epic Online Services (EOS) is the OAuth provider behind Epic Games accounts.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/generic](https://www.ory.com/docs/kratos/social-signin/generic) (no Epic-specific page yet — Epic configures cleanly as a generic OIDC / OAuth2 provider)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/epic-games](https://www.ory.com/docs/integrates-with/social-sign-in/epic-games)
 
 ## Setup
 

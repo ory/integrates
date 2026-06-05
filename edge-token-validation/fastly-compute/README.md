@@ -5,7 +5,7 @@
 [Fastly Compute@Edge](https://www.fastly.com/products/edge-compute) is Fastly's WASM-based serverless runtime — Rust, JavaScript, AssemblyScript, Go (TinyGo) compiled to WebAssembly. Validate Ory Network session tokens and JWTs at the Fastly edge so requests never round-trip to origin when invalid, and so origin services receive a trusted `X-User-Id` header.
 
 **Type:** session-validation (edge token validation pattern — see [`edge-token-validation/cloudflare-workers`](../cloudflare-workers/) for the canonical reference implementation)
-**Docs page:** No dedicated Fastly page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/edge-token-validation/fastly-compute](https://www.ory.com/docs/integrates-with/edge-token-validation/fastly-compute)
 
 ## Pattern
 

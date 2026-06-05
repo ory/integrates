@@ -5,7 +5,7 @@
 [Split.io](https://www.split.io) is a feature delivery platform — feature flags combined with metric-driven impact measurement. This integration passes Ory identity attributes (traits + subscription tier + organization + groups) to Split as user properties so feature rollouts can target by identity attributes.
 
 **Type:** sdk-client (Split.io SDK in your application, fed Ory identity attributes — same pattern as `feature-flags/launchdarkly`)
-**Docs page:** No dedicated Split.io page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/feature-flags/split-io](https://www.ory.com/docs/integrates-with/feature-flags/split-io)
 
 ## How it works
 

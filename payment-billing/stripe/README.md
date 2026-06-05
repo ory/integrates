@@ -2,6 +2,8 @@
 
 Bidirectional integration between Ory Network and Stripe for customer lifecycle management and subscription-aware authentication.
 
+**Docs page:** [ory.com/docs/integrates-with/payment-billing/stripe](https://www.ory.com/docs/integrates-with/payment-billing/stripe)
+
 ## Overview
 
 This integration connects Ory Network identity events with Stripe's billing platform in both directions:

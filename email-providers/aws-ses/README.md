@@ -5,7 +5,7 @@
 Amazon Simple Email Service (SES) is AWS's transactional/marketing email service — high deliverability, pay-per-use pricing, deep AWS integration. **Documented directly in the Ory SMTP courier page.** Natural choice when the rest of the stack is on AWS.
 
 **Type:** config (Kratos courier-spi over SMTP — no webhook code)
-**Docs page:** [ory.com/docs/kratos/emails-sms/sending-emails-smtp#aws-ses](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#aws-ses)
+**Docs page:** [ory.com/docs/integrates-with/email-providers/aws-ses](https://www.ory.com/docs/integrates-with/email-providers/aws-ses) — full guide: [ory.com/docs/kratos/emails-sms/sending-emails-smtp#aws-ses](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#aws-ses)
 
 | Setting | Value |
 | --- | --- |

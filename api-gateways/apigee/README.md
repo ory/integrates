@@ -5,7 +5,7 @@
 [Google Apigee](https://cloud.google.com/apigee) is an enterprise API management platform — API proxying, security, analytics, monetization. Validate Ory-issued JWTs at the gateway layer with Apigee's **VerifyJWT** policy + a SharedFlow for token validation, using Ory Network's JWKS endpoint.
 
 **Type:** config (Apigee policy + shared flow — no webhook code)
-**Docs page:** No dedicated Apigee page on ory.com/docs. Standard JWT-at-the-edge pattern; the Ory side is just JWKS exposure.
+**Docs page:** [ory.com/docs/integrates-with/api-gateways/apigee](https://www.ory.com/docs/integrates-with/api-gateways/apigee)
 
 ## Pattern
 

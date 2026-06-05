@@ -5,7 +5,7 @@
 Castle.io is an adaptive risk-scoring platform that evaluates device fingerprints, IP reputation, and behavioral signals to produce a real-time risk score and recommended action for each authentication event. This integration runs Castle inline with Ory login and registration flows so high-risk events can trigger MFA step-up or be blocked outright.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/fraud-bot-protection/castle](https://ory.com/docs/integrations/fraud-bot-protection/castle)
+**Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/castle](https://www.ory.com/docs/integrates-with/fraud-bot-protection/castle)
 
 ## Use case
 
@@ -47,7 +47,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 1. In the Ory Console, configure two Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml) (post-login and post-registration).
 2. The body templates are [`jsonnet/login.jsonnet`](jsonnet/login.jsonnet) and [`jsonnet/registration.jsonnet`](jsonnet/registration.jsonnet).
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
-4. Embed `castle.js` in your login/registration UI and pass the device token via `transient_payload.castle_request_token`. See the [docs page](https://ory.com/docs/integrations/fraud-bot-protection/castle) for client-side examples.
+4. Embed `castle.js` in your login/registration UI and pass the device token via `transient_payload.castle_request_token`. See the [docs page](https://ory.com/docs/integrates-with/fraud-bot-protection/castle) for client-side examples.
 
 Detailed setup with screenshots, threshold tuning guidance, and Castle dashboard wiring: see the docs page.
 

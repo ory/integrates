@@ -5,7 +5,7 @@
 Automatic user provisioning and deprovisioning from Okta into Ory Network / Ory Polis via SCIM 2.0. Pair with [`enterprise-sso/okta`](../../enterprise-sso/okta/) for the federated sign-in side.
 
 **Type:** config (SCIM endpoint configuration — no webhook code)
-**Docs page:**
+**Docs page:** [ory.com/docs/integrates-with/directory-sync/okta-scim](https://www.ory.com/docs/integrates-with/directory-sync/okta-scim)
 - Ory Network (managed): [ory.com/docs/kratos/manage-identities/scim/okta](https://www.ory.com/docs/kratos/manage-identities/scim/okta)
 - Ory Polis (self-hosted): [ory.com/docs/polis/directory-sync/providers/okta](https://www.ory.com/docs/polis/directory-sync/providers/okta)
 

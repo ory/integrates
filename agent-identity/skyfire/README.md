@@ -5,7 +5,7 @@
 [Skyfire](https://skyfire.xyz) is an AI-agent identity and payment platform — "Know Your Agent" (KYA) verification for autonomous agents. Integrate with Ory Hydra (OAuth2 issuance) and Ory Kratos (identity records) so AI agents authenticate to your APIs with verifiable identity and per-agent spend controls.
 
 **Type:** config (OAuth2 client + identity-mapping pattern — no first-party handler)
-**Docs page:** No dedicated Skyfire page on ory.com/docs.
+**Docs page:** [ory.com/docs/integrates-with/agent-identity/skyfire](https://www.ory.com/docs/integrates-with/agent-identity/skyfire)
 
 ## How it works
 

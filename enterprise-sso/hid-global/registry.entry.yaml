@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Configure HID Global Identity Services as an upstream SAML 2.0 or OIDC identity provider in Ory Polis. HID
   unifies physical (badge readers, smart cards, mobile credentials) and digital identity, common in government,
-  healthcare, financial services, and manufacturing. No dedicated docs; configures via the Polis generic SAML
+  healthcare, financial services, and manufacturing. Documented at ory.com/docs/integrates-with/enterprise-sso/hid-global; configures via the Polis generic SAML
   or generic OIDC walkthrough.
 useCase: >-
   An enterprise running HID Global as their unified physical + digital identity provider wants Ory-protected
@@ -21,7 +21,7 @@ coreFunctionality: |-
   - HID side: SAML 2.0 or OIDC application with attribute release for email, firstName, lastName, plus group claims as needed.
   - HID's certificate-based auth (PIV / CAC / smart card) enforced at the HID IdP layer; Ory consumes the resulting session.
   - Step-up to physical badge / token for high-value flows is configured as an HID policy that triggers re-auth before releasing the assertion to Polis.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/hid-global.
 oryMechanism:
   - standards
 protocol:

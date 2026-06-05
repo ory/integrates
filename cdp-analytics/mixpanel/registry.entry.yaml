@@ -21,7 +21,7 @@ coreFunctionality: |-
   - $insert_id for deduplication: set to Ory's flow id so retries don't double-count events.
   - ip=0 disables Mixpanel's IP geolocation when the request comes from your server, not the user.
   - User-property updates via /engage endpoint with $set operations for trait-change tracking.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/cdp-analytics/mixpanel.
 oryMechanism:
   - actions
 protocol:

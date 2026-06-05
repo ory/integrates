@@ -21,7 +21,7 @@ coreFunctionality: |-
   - Lead vs Contact: start with Lead; promote to Contact via Salesforce-side automation, not Ory.
   - Edition matters — Connected Apps + Permission Sets require Salesforce Enterprise edition or higher.
   - Daily API call limits vary by edition; high-volume signup flows may need batch creation rather than per-event calls.
-  - Status: community/proposed — no dedicated ory/docs page.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/crm/salesforce.
 oryMechanism:
   - actions
 protocol:

@@ -5,7 +5,7 @@
 Deployment patterns for running with Ory on Google Cloud. **Not a vendor integration** — Ory Network is reached over HTTPS like any SaaS, and self-hosted Ory products run on standard Kubernetes (GKE) with Cloud SQL Postgres. This directory captures the GCP-side glue.
 
 **Type:** config (deployment pattern)
-**Docs page:** No GCP-specific Ory page. Relevant Ory docs:
+**Docs page:** [ory.com/docs/integrates-with/cloud-infrastructure/gcp](https://www.ory.com/docs/integrates-with/cloud-infrastructure/gcp)
 - [Self-hosted Ory deployment overview](https://www.ory.com/docs/self-hosted/deployment)
 - [Hydra Helm chart guide](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 - For Google sign-in see [`social-sign-in/google`](../../social-sign-in/google/) and [`enterprise-sso/google-workspace`](../../enterprise-sso/google-workspace/).

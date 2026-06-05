@@ -5,7 +5,7 @@
 Add Amazon (Login with Amazon, LWA) as a social sign-in provider in Ory Network. Useful for consumer products targeting the Amazon ecosystem (Alexa skills, FireOS apps, retail-adjacent flows) where users are already signed in to Amazon.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/amazon](https://www.ory.com/docs/kratos/social-signin/amazon)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/amazon-lwa](https://www.ory.com/docs/integrates-with/social-sign-in/amazon-lwa) — full guide: [ory.com/docs/kratos/social-signin/amazon](https://www.ory.com/docs/kratos/social-signin/amazon)
 
 ## Setup
 

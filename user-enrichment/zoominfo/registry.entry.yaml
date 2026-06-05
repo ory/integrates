@@ -21,7 +21,7 @@ coreFunctionality: |-
   - Licensing is the long pole — Enrich API is a paid add-on requiring a sales conversation.
   - For intent signals (pricing page visits, whitepaper downloads), pair with ZoomInfo's intent product — separate API, not covered here.
   - Per-resolved-record billing; configure conservative match thresholds.
-  - Status: community/proposed — no dedicated ory/docs page, no first-party handler.
+  - Status: community/proposed — documented at ory.com/docs/integrates-with/user-enrichment/zoominfo, no first-party handler.
 oryMechanism:
   - actions
 protocol:

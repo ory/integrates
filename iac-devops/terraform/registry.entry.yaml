@@ -10,8 +10,9 @@ maintainedBy: Ory Engineering
 description: >-
   Officially maintained Terraform provider for managing Ory Network resources as infrastructure-as-code —
   identity schemas, OAuth2 clients, project configuration, identities, organizations, permissions, and
-  webhooks. Source at github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory`.
-  Targets Ory Network only — does not manage self-hosted Ory deployments.
+  webhooks. Source at github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory`
+  and on the OpenTofu registry (search.opentofu.org/provider/ory/ory) under the same source — works with `tofu`
+  as well as `terraform`. Targets Ory Network only — does not manage self-hosted Ory deployments.
 useCase: >-
   A platform team running Ory Network wants their identity and OAuth2 configuration in Git (not the Console)
   for code review, drift detection, and per-environment (dev/staging/prod) reproducibility.

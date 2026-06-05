@@ -5,7 +5,7 @@
 [Drata](https://drata.com) is an automated security and compliance platform — continuously monitors infrastructure and workflows for SOC 2, ISO 27001, HIPAA, PCI DSS, GDPR, etc. This integration connects Drata to Ory Network to collect identity and access management evidence, removing manual evidence gathering for audits.
 
 **Type:** config (Drata reads from Ory's admin API — no webhook code on the Ory side)
-**Docs page:** No dedicated Drata page on ory.com/docs. Drata does not have a turnkey Ory connector; integration is via Drata's **Generic Custom Connector** plus an HTTP/JSON poller against the Ory admin API.
+**Docs page:** [ory.com/docs/integrates-with/compliance-audit/drata](https://www.ory.com/docs/integrates-with/compliance-audit/drata)
 
 ## Setup outline
 

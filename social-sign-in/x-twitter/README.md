@@ -5,7 +5,7 @@
 Add Sign in with X (Twitter) as a social sign-in provider in Ory Network. Useful for consumer apps where Twitter/X is part of the audience graph — content discovery, social-adjacent products, creator tools.
 
 **Type:** config (Ory Console / CLI — no webhook code)
-**Docs page:** [ory.com/docs/kratos/social-signin/x-twitter](https://www.ory.com/docs/kratos/social-signin/x-twitter)
+**Docs page:** [ory.com/docs/integrates-with/social-sign-in/x-twitter](https://www.ory.com/docs/integrates-with/social-sign-in/x-twitter) — full guide: [ory.com/docs/kratos/social-signin/x-twitter](https://www.ory.com/docs/kratos/social-signin/x-twitter)
 
 ## Setup
 

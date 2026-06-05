@@ -5,7 +5,7 @@
 [ForgeRock Access Management](https://www.pingidentity.com/en/platform/forgerock.html) (now part of Ping Identity) is a widely deployed enterprise IAM platform supporting OIDC, OAuth 2.0, and SAML 2.0. Configure as an upstream IdP in Ory Network so existing ForgeRock-managed sessions flow through to Ory-protected applications.
 
 **Type:** config (generic OIDC or generic SAML in Ory Polis — no webhook code)
-**Docs page:** No dedicated ForgeRock page on ory.com/docs. Configures via:
+**Docs page:** [ory.com/docs/integrates-with/enterprise-sso/forgerock-am](https://www.ory.com/docs/integrates-with/enterprise-sso/forgerock-am)
 - [Polis SAML — generic SAML 2.0 SP](https://www.ory.com/docs/polis/sso-providers/generic-saml).
 - [Polis OIDC — generic OIDC provider](https://www.ory.com/docs/polis/sso-providers/generic-oidc).
 

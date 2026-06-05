@@ -5,7 +5,7 @@
 <!-- One paragraph: what does this integration do, and why would someone deploy it? -->
 
 **Type:** webhook (Ory Action calls a handler during a flow)
-**Docs page:** [ory.com/docs/integrations/<your-integration>](https://ory.com/docs/integrations/)
+**Docs page:** [ory.com/docs/integrates-with/<your-integration>](https://ory.com/docs/integrates-with/)
 
 ## Use case
 
@@ -44,7 +44,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet) — adjust as needed.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the Ory hook config.
 
-Detailed setup with screenshots: see the [docs page](https://ory.com/docs/integrations/).
+Detailed setup with screenshots: see the [docs page](https://ory.com/docs/integrates-with/).
 
 ## Troubleshooting
 
