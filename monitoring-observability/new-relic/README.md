@@ -2,7 +2,7 @@
 
 > **Maintained by:** Community contributors
 
-New Relic ingests OpenTelemetry over OTLP/HTTP. Self-hosted Ory products (Kratos, Hydra, Keto, Oathkeeper) emit OTel traces and metrics that New Relic consumes directly.
+New Relic ingests OpenTelemetry over OTLP/HTTP. Self-hosted Ory products (Kratos, Hydra, Keto, Oathkeeper) emit OTel traces that New Relic consumes directly. Metrics come from each service's Prometheus endpoint rather than over OTLP — scrape them with New Relic's Prometheus integration.
 
 > **Self-hosted only.** Ory Network does not export telemetry to customer-owned collectors — managed project config excludes operational settings such as `tracing` and `logging`.
 
@@ -15,7 +15,7 @@ New Relic ingests OpenTelemetry over OTLP/HTTP. Self-hosted Ory products (Kratos
 | OTLP endpoint (EU) | `https://otlp.eu01.nr-data.net:4318` |
 | Auth header | `api-key: <new-relic-license-key>` |
 | Protocols | OTLP/HTTP (recommended), OTLP/gRPC supported |
-| Signals | traces, metrics, logs |
+| Signals | traces (metrics come from the Prometheus endpoint, not OTLP) |
 
 ## Setup
 

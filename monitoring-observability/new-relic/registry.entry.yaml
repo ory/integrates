@@ -8,7 +8,7 @@ category: monitoring-observability
 type: config
 maintainedBy: Community contributors
 description: >-
-  Send self-hosted Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard
+  Send self-hosted Ory traces to New Relic over OTLP/HTTP using the standard
   OpenTelemetry exporter. Documented at ory.com/docs/integrates-with/monitoring-observability/new-relic;
   configures via the same OpenTelemetry path Ory documents for self-hosted tracing. Self-hosted only: Ory
   Network does not export telemetry to customer-owned collectors.

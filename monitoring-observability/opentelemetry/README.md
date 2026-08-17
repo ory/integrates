@@ -4,6 +4,8 @@
 
 Ory natively supports OpenTelemetry. Self-hosted products (Kratos, Hydra, Keto, Oathkeeper) ship an OTLP exporter and list OpenTelemetry as the recommended tracing backend in the Ory observability docs.
 
+The OTLP exporter carries **traces**. Metrics are exposed separately on each service's Prometheus endpoint and logs are written to stdout — neither is exported over OTLP.
+
 > **Self-hosted only.** Ory Network does not export OTLP telemetry to customer-owned collectors today. Project configuration on Ory Network deliberately excludes operational settings such as `tracing`, `logging`, and `port` — the managed control plane's telemetry stays internal. Use the Ory Console's built-in activity and event views for Network observability.
 
 **Type:** config (instrumentation — no source code in this directory)

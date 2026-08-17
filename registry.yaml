@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-17T15:35:17Z
+  generated: 2026-08-17T18:48:14Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -2470,10 +2470,10 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Send self-hosted Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard
-      OpenTelemetry exporter. Documented at ory.com/docs/integrates-with/monitoring-observability/new-relic; configures
-      via the same OpenTelemetry path Ory documents for self-hosted tracing. Self-hosted only: Ory Network does not
-      export telemetry to customer-owned collectors.
+      Send self-hosted Ory traces to New Relic over OTLP/HTTP using the standard OpenTelemetry exporter. Documented at
+      ory.com/docs/integrates-with/monitoring-observability/new-relic; configures via the same OpenTelemetry path Ory
+      documents for self-hosted tracing. Self-hosted only: Ory Network does not export telemetry to customer-owned
+      collectors.
     useCase: >-
       An Ory customer running New Relic wants identity-flow traces and metrics alongside the rest of their app's
       observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate identity
@@ -2502,11 +2502,12 @@ integrations:
       backend in the Ory observability docs. Self-hosted products ship OTLP via standard OTEL_EXPORTER_OTLP_* env vars.
       Self-hosted only: Ory Network does not export OTLP to customer collectors.
     useCase: >-
-      An Ory customer wants traces, metrics, and (optionally) logs in their own observability backend without being
-      locked into a single vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
+      An Ory customer wants distributed traces in their own observability backend without being locked into a single
+      vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
     coreFunctionality: |-
       - Self-hosted: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES) on each Ory product.
       - TRACING_PROVIDER accepts otel, jaeger, or zipkin; use otel for OTLP.
+      - OTLP carries traces only; metrics come from the Prometheus endpoint and logs from stdout.
       - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port), so there is no customer-facing OTLP export.
       - Recommended pipeline: run an OpenTelemetry Collector in front of the final backend for batching, retries, sampling, and PII redaction in one place; swap backends (Tempo, Datadog, New Relic, Honeycomb, etc.) without touching Ory config.
       - Sampling at the SDK / collector level (not backend-side) preserves head-of-trace context.
