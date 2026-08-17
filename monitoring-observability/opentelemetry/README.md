@@ -2,7 +2,9 @@
 
 > **Maintained by:** Ory Engineering
 
-Ory natively supports OpenTelemetry. Self-hosted products list it as the first supported tracing backend in the Ory observability docs; Ory Network exports OTLP for traces, metrics, and logs.
+Ory natively supports OpenTelemetry. Self-hosted products (Kratos, Hydra, Keto, Oathkeeper) ship an OTLP exporter and list OpenTelemetry as the recommended tracing backend in the Ory observability docs.
+
+> **Self-hosted only.** Ory Network does not export OTLP telemetry to customer-owned collectors today. Project configuration on Ory Network deliberately excludes operational settings such as `tracing`, `logging`, and `port` — the managed control plane's telemetry stays internal. Use the Ory Console's built-in activity and event views for Network observability.
 
 **Type:** config (instrumentation — no source code in this directory)
 **Docs page:** [ory.com/docs/integrates-with/monitoring-observability/opentelemetry](https://www.ory.com/docs/integrates-with/monitoring-observability/opentelemetry)
@@ -10,9 +12,7 @@ Ory natively supports OpenTelemetry. Self-hosted products list it as the first s
 - [Self-hosted observability (Prometheus metrics)](https://www.ory.com/docs/self-hosted/operations/observability)
 - [Kratos tracing guide](https://www.ory.com/docs/kratos/guides/tracing)
 
-## Two paths
-
-### Self-hosted Ory — native OTLP exporter
+## Self-hosted Ory — native OTLP exporter
 
 Each Ory product accepts standard OTel environment variables to ship traces directly to a collector or backend:
 
@@ -24,9 +24,7 @@ OTEL_RESOURCE_ATTRIBUTES=service.namespace=identity,deployment.environment=produ
 TRACING_PROVIDERS_OTLP_SAMPLING_SAMPLING_RATIO=1.0   # tune in production
 ```
 
-### Ory Network (managed) — OTLP export
-
-Ory Network exports OTLP from the managed control plane. In the Ory Console under **Project Settings → Telemetry**, set the OTLP endpoint (your collector's public address), pick `grpc` (4317) or `http/protobuf` (4318), and add any auth headers your collector requires.
+`TRACING_PROVIDER` accepts `otel`, `jaeger`, or `zipkin`. Use `otel` for OTLP.
 
 ## Recommended pipeline
 

@@ -6,7 +6,7 @@ Deployment patterns for running on AWS with Ory. This is **not a vendor integrat
 
 **Type:** config (deployment pattern)
 **Docs page:** [ory.com/docs/integrates-with/cloud-infrastructure/aws](https://www.ory.com/docs/integrates-with/cloud-infrastructure/aws)
-- [Self-hosted Ory deployment overview](https://www.ory.com/docs/self-hosted/deployment)
+- [Self-hosted Ory deployment overview](https://www.ory.com/docs/oss/deployment)
 - [Hydra Helm chart guide](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 - [Self-hosted operations: scalability, observability, tracing](https://www.ory.com/docs/self-hosted/operations/scalability)
 

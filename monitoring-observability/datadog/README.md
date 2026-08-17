@@ -2,22 +2,18 @@
 
 > **Maintained by:** Ory Engineering
 
-Monitor Ory in Datadog. Self-hosted Ory products (Kratos, Hydra, Keto, Oathkeeper) **natively support Datadog as a tracing backend** — listed alongside OpenTelemetry, Jaeger, Elastic APM, Zipkin, and Instana in the Ory observability docs. Ory Network customers ingest Datadog via OpenTelemetry (OTLP) export.
+Monitor self-hosted Ory in Datadog over OpenTelemetry. Ory's tracer emits OTLP; Datadog ingests it either through the Datadog Agent's OTLP receiver or through Datadog's agentless OTLP intake.
 
 **Type:** config (instrumentation — no source code in this directory)
 **Docs page:** [ory.com/docs/integrates-with/monitoring-observability/datadog](https://www.ory.com/docs/integrates-with/monitoring-observability/datadog)
-- [Self-hosted distributed tracing](https://www.ory.com/docs/self-hosted/operations/tracing) (lists Datadog as a first-class tracing backend)
+- [Self-hosted distributed tracing](https://www.ory.com/docs/self-hosted/operations/tracing)
 - [Self-hosted observability (Prometheus metrics)](https://www.ory.com/docs/self-hosted/operations/observability)
 
-## Two paths
+> **There is no `datadog` tracing provider.** `TRACING_PROVIDER` accepts `otel`, `jaeger`, or `zipkin` only — reach Datadog via OTLP (`TRACING_PROVIDER=otel`), not a native Datadog tracer. Ory's span helper does set Datadog-convention error attributes (`error.message`, `error.stack`, `error.type`), so traces arriving over OTLP render correctly in Datadog APM.
 
-### Self-hosted Ory — native Datadog tracer
+> **Self-hosted only.** Ory Network does not export telemetry to customer-owned collectors — managed project config excludes operational settings such as `tracing` and `logging`.
 
-Configure each Ory product to emit traces directly to a Datadog agent via the native Datadog tracing backend (no OTLP collector required). Per the Ory docs, set the tracing provider to `datadog` and point at the agent's APM endpoint (typically `localhost:8126`).
-
-### Ory Network (managed) — OTLP
-
-Ory Network exports telemetry over OTLP. Two ingestion paths:
+## Ingestion paths
 
 1. **Datadog Agent OTLP receiver** (recommended). Run the agent with `otlp_config.receiver.protocols.{grpc,http}` enabled (ports 4317 / 4318) and point Ory's OTLP exporter at it.
 2. **Datadog OTLP intake** (agentless). Ship straight to Datadog with `DD-API-KEY` header — endpoints per region:

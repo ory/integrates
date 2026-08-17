@@ -8,18 +8,19 @@ category: monitoring-observability
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Monitor Ory in Datadog. Self-hosted Ory products natively support Datadog as a tracing backend (listed
-  alongside OpenTelemetry/Jaeger/etc. in the Ory tracing docs). Ory Network customers ingest via OpenTelemetry
-  (OTLP) — either to the Datadog Agent's OTLP receiver or directly to Datadog's OTLP intake.
+  Monitor self-hosted Ory in Datadog over OpenTelemetry. Ory's tracer emits OTLP, which Datadog ingests either
+  via the Datadog Agent's OTLP receiver or via Datadog's agentless OTLP intake. Self-hosted only: Ory Network
+  does not export telemetry to customer-owned collectors.
 useCase: >-
   An Ory customer running on Datadog wants identity-flow traces and metrics in the same pane of glass as the
   rest of their app — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate
   identity events with downstream service calls.
 coreFunctionality: |-
-  - Self-hosted: native Datadog tracing backend on each Ory product (set tracing provider to `datadog`, point at the agent's APM endpoint, typically localhost:8126). No OTLP collector needed.
-  - Ory Network: OTLP export, ingested either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports 4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
-  - Prometheus metrics on /metrics/prometheus (each Ory service); ingest via the Datadog Agent's OpenMetrics check.
-  - Documented in /self-hosted/operations/tracing (Datadog explicitly listed as a supported backend) and /self-hosted/operations/observability.
+  - There is no `datadog` tracing provider: TRACING_PROVIDER accepts otel, jaeger, or zipkin. Reach Datadog with TRACING_PROVIDER=otel over OTLP.
+  - Ory's span helper sets Datadog-convention error attributes (error.message, error.stack, error.type), so OTLP traces render correctly in Datadog APM.
+  - Ingest either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports 4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
+  - Prometheus metrics on /metrics/prometheus (each Ory service, admin port); ingest via the Datadog Agent's OpenMetrics check.
+  - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
 oryMechanism:
   - standards
 protocol:

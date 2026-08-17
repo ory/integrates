@@ -65,4 +65,4 @@ Endpoints:
 ## Resources
 
 - [GBG GO API documentation](https://docs.gbgplc.com/identity)
-- [Ory Actions and webhooks](https://www.ory.com/docs/actions/web-hook)
+- [Ory Actions and webhooks](https://www.ory.com/docs/guides/integrate-with-ory-cloud-through-webhooks)
