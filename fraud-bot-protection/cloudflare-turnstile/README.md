@@ -10,16 +10,20 @@
 ## How it works
 
 1. Your registration / login UI embeds the **Turnstile client widget**; the widget runs the challenge invisibly and returns a token (`cf-turnstile-response`).
-2. The form submits to Ory's flow with the token in a custom field.
-3. An Ory Action on `registration.before` / `login.before` (with `can_interrupt: true`) calls your handler.
+2. The form submits to Ory's flow with the token in `transient_payload.turnstile_token`.
+3. An Ory Action on `registration.after` / `login.after` (with `can_interrupt: true`) calls your handler.
 4. The handler POSTs to `https://challenges.cloudflare.com/turnstile/v0/siteverify` with the token + Turnstile **secret key**; checks `success == true`.
 5. On fail, the handler returns an error and the Ory flow blocks the user.
+
+> Note: these are `after` hooks, not `before` hooks. Ory runs `before` actions when it creates the flow, so their payload
+> carries no `transient_payload` and the handler never sees the token. The `after` login hook still runs before Ory issues a
+> session, and the `after` registration hook before Ory persists the identity, so `can_interrupt: true` still blocks.
 
 ## Setup outline
 
 1. In Cloudflare dashboard → **Turnstile**, create a site; copy the **Site Key** (public, client widget) and **Secret Key** (server verify).
 2. Embed the Turnstile widget in your registration/login UI; configure it to render `data-callback` setting the token on form submit.
-3. Configure an Ory Action on `registration.before` / `login.before` with `can_interrupt: true` pointing at your handler.
+3. Configure an Ory Action on `registration.after` / `login.after` with `can_interrupt: true` pointing at your handler.
 4. Handler calls Turnstile `siteverify` and surfaces a failure to Ory (HTTP 4xx with a Kratos-style messages array).
 
 ## Notable

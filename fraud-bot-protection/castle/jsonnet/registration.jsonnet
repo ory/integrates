@@ -10,7 +10,7 @@ function(ctx) {
   flow: {
     id: ctx.flow.id,
     type: ctx.flow.type,
-    transient_payload: ctx.flow.transient_payload,
+    transient_payload: if std.objectHas(ctx.flow, "transient_payload") then ctx.flow.transient_payload else {},
   },
   request_headers: ctx.request_headers,
   request_url: ctx.request_url,

@@ -10,16 +10,20 @@
 ## How it works
 
 1. Your registration / login UI embeds the **Arkose Labs client SDK**; the SDK runs scoring + a challenge if needed and returns a one-time token.
-2. The form submits to Ory's flow with the token in a custom field (or trait — but custom field is cleaner).
-3. An Ory Action on `registration.before` / `login.before` (with `can_interrupt: true`) calls your handler.
+2. The form submits to Ory's flow with the token in `transient_payload.arkose_token`.
+3. An Ory Action on `registration.after` / `login.after` (with `can_interrupt: true`) calls your handler.
 4. The handler POSTs to Arkose `https://customer-api.arkoselabs.com/api/v4/verify/` with the token + private key; checks `solved == true`.
 5. On fail, the handler returns an error and the Ory flow blocks the user.
+
+> Note: these are `after` hooks, not `before` hooks. Ory runs `before` actions when it creates the flow, so their payload
+> carries no `transient_payload` and the handler never sees the token. The `after` login hook still runs before Ory issues a
+> session, and the `after` registration hook before Ory persists the identity, so `can_interrupt: true` still blocks.
 
 ## Setup outline
 
 1. Sign up at Arkose Labs; create a **Public Key** (client SDK) and **Private Key** (verify API).
 2. Add the Arkose client SDK to your registration/login UI; configure it to set the token on form submit.
-3. Configure an Ory Action on `registration.before` / `login.before` with `can_interrupt: true` pointing at your handler.
+3. Configure an Ory Action on `registration.after` / `login.after` with `can_interrupt: true` pointing at your handler.
 4. The handler calls Arkose's verify endpoint and surfaces a failure to Ory (returning HTTP 4xx with a Kratos-style messages array).
 
 ## Notable

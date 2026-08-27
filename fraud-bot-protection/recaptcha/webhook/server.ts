@@ -142,9 +142,9 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// Sync pre-flow hook. Interrupts the flow with a 400 + user-facing message
-// when the token is missing, invalid, or below threshold. Allowed flows pass
-// through with a plain 200 (no identity mutation).
+// Sync hook on the after trigger. Interrupts the flow with a 400 +
+// user-facing message when the token is missing, invalid, or below threshold.
+// Allowed flows pass through with a plain 200 (no identity mutation).
 app.post(
   "/recaptcha/verify",
   verifyWebhookSecret,

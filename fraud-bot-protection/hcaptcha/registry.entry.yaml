@@ -10,7 +10,7 @@ maintainedBy: Community contributors
 description: >-
   Privacy-focused CAPTCHA via hCaptcha — drop-in alternative to reCAPTCHA with stronger privacy posture
   (GDPR-compliant, no data sale) and a paid Enterprise tier with adaptive challenge difficulty. Wired into
-  Ory via an Ory Action on registration.before / login.before with can_interrupt, verifying the hCaptcha
+  Ory via an Ory Action on registration.after / login.after with can_interrupt, verifying the hCaptcha
   token from the client widget.
 useCase: >-
   A consumer product wants CAPTCHA defense at signup/login without Google's reCAPTCHA privacy concerns —

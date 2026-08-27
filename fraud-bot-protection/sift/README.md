@@ -11,22 +11,27 @@
 
 Two flows in one handler:
 
-**Pre-flow check (block on fail)**
-1. Ory Action on `registration.before` / `login.before` with `can_interrupt: true` calls handler.
+**Check on submission (block on fail)**
+1. Ory Action on `registration.after` / `login.after` with `can_interrupt: true` calls handler.
 2. Handler reads the user's current Sift abuse score (`GET /v205/users/{user_id}/score`).
 3. If the score exceeds a configurable threshold, handler returns a failure and Ory blocks the flow.
 
 **Post-event reporting (signal collection)**
 1. Ory Action on `registration.after` / `login.after` (async, `response.ignore: true`) calls handler.
 2. Handler POSTs a `$create_account` / `$login` event to `https://api.sift.com/v205/events` with the user's data (IP, user agent, session, traits).
-3. Sift updates its internal model and the user's score for future pre-flow checks.
+3. Sift updates its internal model and the user's score for future checks.
 
-Both flows must run for Sift to be useful — pre-flow alone has no signal; post-event alone never blocks.
+Both flows must run for Sift to be useful: the score lookup alone has no signal, and the event reporter alone never blocks.
+
+> Note: the blocking hook is an `after` hook. Ory runs `before` actions when it creates the flow, before it has resolved an
+> identity, so a `before` handler has no `user_id` to score. The `after` login hook runs before Ory issues a session, so
+> `can_interrupt: true` still blocks.
 
 ## Setup outline
 
 1. Sign up at Sift; copy the **API Key** (server-side, all calls).
-2. Configure two Ory Actions — `before` (sync, can_interrupt) and `after` (async) — both pointing at your handler.
+2. Configure two Ory Actions on the `after` trigger, one sync with `can_interrupt: true` and one async with
+   `response.ignore: true`, both pointing at your handler.
 3. Handler implements both endpoints, reusing the Sift API key.
 
 ## Notable
