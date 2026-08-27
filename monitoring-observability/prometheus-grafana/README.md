@@ -26,7 +26,7 @@ scrape_configs:
     static_configs: [{ targets: ['hydra-admin:4445'] }]
 ```
 
-> **Self-hosted only.** `/metrics/prometheus` is bound on each service's admin port, which is never exposed on Ory Network — `<your-project>.projects.oryapis.com` serves the public API only and has no metrics endpoint to scrape. On Ory Network the equivalent signals come from the Ory Console's activity and event views.
+> **Self-hosted only.** `/metrics/prometheus` is bound on each service's admin port, which is never exposed on Ory Network — `<your-project>.projects.oryapis.com` serves the public API only and has no metrics endpoint to scrape. On Ory Network the equivalent signals come from the Ory Console's **Activity** > **Logs & Events** view.
 
 ## Dashboards
 
