@@ -14,7 +14,7 @@ A consumer-facing product wants to stop bot signups and credential-stuffing atte
 ## How it works
 
 1. The client loads `recaptcha/api.js`, generates a token (`grecaptcha.execute` for v3, or via the widget callback for v2), and submits it on the flow request via `transient_payload.recaptcha_token`.
-2. On submission, Ory fires the sync Action webhook to this handler. The handler verifies the shared secret.
+2. On submission, Ory Kratos Identities fires the sync Action webhook to this handler. The handler verifies the shared secret.
 3. The handler POSTs `{secret, response, remoteip}` to Google's `https://www.google.com/recaptcha/api/siteverify` (form-urlencoded).
 4. For v2: pass if `success: true`. For v3: pass if `success: true` AND `score >= RECAPTCHA_SCORE_THRESHOLD` AND (when set) `action == RECAPTCHA_EXPECTED_ACTION`.
 5. Pass returns `200` with an empty body (flow continues). Fail returns `400` with `{messages:[{message:"…", type:"error"}]}` which Ory renders as a flow-level error message. Verify outages fail **closed** — a Google-API outage rejects the flow rather than silently letting bots through.
@@ -42,7 +42,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Ory
 
-1. In the Ory Console, configure the Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml), on the `after` trigger for registration and login. Ory runs `before` actions when it creates the flow, so a `before` handler never receives `transient_payload` and cannot see the token.
+1. In the Ory Console, configure the Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml), on the `after` trigger for registration and login. Ory Kratos Identities runs `before` actions when it creates the flow, so a `before` handler never receives `transient_payload` and cannot see the token.
 2. The body template is [`jsonnet/verify.jsonnet`](jsonnet/verify.jsonnet).
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 4. In your custom UI, load `recaptcha/api.js`, generate a token, and include it in `transient_payload.recaptcha_token` on the flow submission. A working browser snippet is in the [docs page](https://ory.com/docs/integrates-with/fraud-bot-protection/recaptcha).

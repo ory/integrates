@@ -23,9 +23,9 @@ Two flows in one handler:
 
 Both flows must run for Sift to be useful: the score lookup alone has no signal, and the event reporter alone never blocks.
 
-> Note: the blocking hook is an `after` hook. Ory runs `before` actions when it creates the flow, before it has resolved an
-> identity, so a `before` handler has no `user_id` to score. The `after` login hook runs before Ory issues a session, so
-> `can_interrupt: true` still blocks.
+> Note: the blocking hook is an `after` hook. Ory Kratos Identities runs `before` actions when it creates the flow, before it
+> has resolved an identity, so a `before` handler has no `user_id` to score. The `after` login hook runs before it issues a
+> session, so `can_interrupt: true` still blocks.
 
 ## Setup outline
 

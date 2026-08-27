@@ -15,9 +15,9 @@
 4. The handler POSTs to `https://api.hcaptcha.com/siteverify` with the token + hCaptcha **secret**; checks `success == true`.
 5. On fail, the handler returns an error and the Ory flow blocks the user.
 
-> Note: these are `after` hooks, not `before` hooks. Ory runs `before` actions when it creates the flow, so their payload
-> carries no `transient_payload` and the handler never sees the token. The `after` login hook still runs before Ory issues a
-> session, and the `after` registration hook before Ory persists the identity, so `can_interrupt: true` still blocks.
+> Note: these are `after` hooks, not `before` hooks. Ory Kratos Identities runs `before` actions when it creates the flow, so
+> their payload carries no `transient_payload` and the handler never sees the token. The `after` login hook still runs before it
+> issues a session, and the `after` registration hook before it persists the identity, so `can_interrupt: true` still blocks.
 
 ## Setup outline
 
