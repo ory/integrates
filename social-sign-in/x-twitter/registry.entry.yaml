@@ -14,7 +14,7 @@ useCase: >-
   A consumer or creator-tooling product wants sign-in via the OAuth provider its users use to follow / discover
   content. Twitter v2 free tier supports social sign-in without a paid API subscription.
 coreFunctionality: |-
-  - First-party Kratos OAuth2 provider — Ory provider id is `twitter` (not `x` or `x-twitter`); registry name `x-twitter` reflects the post-rebrand vendor name.
+  - First-party Kratos OAuth2 provider — Ory provider id is `x` (not `twitter` or `x-twitter`); registry name `x-twitter` reflects the post-rebrand vendor name.
   - Confidential Client app type required (not Public Client); "Request email from users" toggle controls whether email is returned.
   - PKCE supported and enabled by default for the Twitter v2 OAuth flow.
   - Default Jsonnet maps the username and email when present.

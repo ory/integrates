@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-27T17:12:33Z
+  generated: 2026-08-27T18:01:07Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -2443,18 +2443,19 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Monitor Ory in Datadog. Self-hosted Ory products natively support Datadog as a tracing backend (listed alongside
-      OpenTelemetry/Jaeger/etc. in the Ory tracing docs). Ory Network customers ingest via OpenTelemetry (OTLP) — either
-      to the Datadog Agent's OTLP receiver or directly to Datadog's OTLP intake.
+      Monitor self-hosted Ory in Datadog over OpenTelemetry. Ory's tracer emits OTLP, which Datadog ingests either via
+      the Datadog Agent's OTLP receiver or via Datadog's agentless OTLP intake. Self-hosted only: Ory Network does not
+      export telemetry to customer-owned collectors.
     useCase: >-
       An Ory customer running on Datadog wants identity-flow traces and metrics in the same pane of glass as the rest of
       their app — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate identity events
       with downstream service calls.
     coreFunctionality: |-
-      - Self-hosted: native Datadog tracing backend on each Ory product (set tracing provider to `datadog`, point at the agent's APM endpoint, typically localhost:8126). No OTLP collector needed.
-      - Ory Network: OTLP export, ingested either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports 4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
-      - Prometheus metrics on /metrics/prometheus (each Ory service); ingest via the Datadog Agent's OpenMetrics check.
-      - Documented in /self-hosted/operations/tracing (Datadog explicitly listed as a supported backend) and /self-hosted/operations/observability.
+      - There is no `datadog` tracing provider: TRACING_PROVIDER accepts otel, jaeger, or zipkin. Reach Datadog with TRACING_PROVIDER=otel over OTLP.
+      - Ory's span helper sets Datadog-convention error attributes (error.message, error.stack, error.type), so OTLP traces render correctly in Datadog APM.
+      - Ingest either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports 4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
+      - Prometheus metrics on /metrics/prometheus (each Ory service, admin port); ingest via the Datadog Agent's OpenMetrics check.
+      - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
     oryMechanism:
       - standards
     protocol:
@@ -2469,9 +2470,10 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Send Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard OpenTelemetry exporter.
-      Documented at ory.com/docs/integrates-with/monitoring-observability/new-relic; configures via the same
-      OpenTelemetry path Ory documents for self-hosted tracing.
+      Send self-hosted Ory traces to New Relic over OTLP/HTTP using the standard OpenTelemetry exporter. Documented at
+      ory.com/docs/integrates-with/monitoring-observability/new-relic; configures via the same OpenTelemetry path Ory
+      documents for self-hosted tracing. Self-hosted only: Ory Network does not export telemetry to customer-owned
+      collectors.
     useCase: >-
       An Ory customer running New Relic wants identity-flow traces and metrics alongside the rest of their app's
       observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate identity
@@ -2480,7 +2482,7 @@ integrations:
       - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). OTLP/gRPC also supported.
       - Auth via header `api-key: <NEW_RELIC_LICENSE_KEY>` — use Account/Ingest-scope license keys, NEVER full user keys.
       - Self-hosted Ory: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME).
-      - Ory Network: OTLP endpoint configured in Project Settings → Telemetry.
+      - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
       - For production, prefer an OpenTelemetry Collector in front for batching/retries/sampling.
       - New Relic enforces attribute count/size limits — identity.id fine, identity.traits as flat blob not. Sample at SDK/collector level, not backend side, to preserve head-of-trace context.
     oryMechanism:
@@ -2496,15 +2498,17 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Ory natively supports OpenTelemetry across all products — listed as the first/recommended tracing backend in the
-      Ory observability docs. Self-hosted products ship OTLP via standard OTEL_EXPORTER_OTLP_* env vars; Ory Network
-      exports OTLP from the managed control plane via Project Settings → Telemetry.
+      Ory natively supports OpenTelemetry across all self-hosted products — listed as the first/recommended tracing
+      backend in the Ory observability docs. Self-hosted products ship OTLP via standard OTEL_EXPORTER_OTLP_* env vars.
+      Self-hosted only: Ory Network does not export OTLP to customer collectors.
     useCase: >-
-      An Ory customer wants traces, metrics, and (optionally) logs in their own observability backend without being
-      locked into a single vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
+      An Ory customer wants distributed traces in their own observability backend without being locked into a single
+      vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
     coreFunctionality: |-
       - Self-hosted: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES) on each Ory product.
-      - Ory Network: Console UI under Project Settings → Telemetry — set OTLP endpoint, pick grpc (4317) or http/protobuf (4318), add auth headers.
+      - TRACING_PROVIDER accepts otel, jaeger, or zipkin; use otel for OTLP.
+      - OTLP carries traces only; metrics come from the Prometheus endpoint and logs from stdout.
+      - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port), so there is no customer-facing OTLP export.
       - Recommended pipeline: run an OpenTelemetry Collector in front of the final backend for batching, retries, sampling, and PII redaction in one place; swap backends (Tempo, Datadog, New Relic, Honeycomb, etc.) without touching Ory config.
       - Sampling at the SDK / collector level (not backend-side) preserves head-of-trace context.
     oryMechanism:
@@ -2520,16 +2524,17 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Every Ory service exposes a Prometheus-compatible metrics endpoint at /metrics/prometheus. Documented in the Ory
-      self-hosted observability docs as the recommended metrics path; Grafana dashboards are not officially published —
-      build your own around Ory's HTTP request metrics plus standard Go runtime metrics.
+      Every self-hosted Ory service exposes a Prometheus-compatible metrics endpoint at /metrics/prometheus. Documented
+      in the Ory self-hosted observability docs as the recommended metrics path; Grafana dashboards are not officially
+      published — build your own around Ory's HTTP request metrics plus standard Go runtime metrics. Self-hosted only:
+      the metrics endpoint is not exposed on Ory Network.
     useCase: >-
       An Ory customer running Prometheus + Grafana wants identity service metrics in the same dashboards as the rest of
       their stack — request rate / latency / error rate per Ory endpoint, plus runtime health (Go GC, memory,
       goroutines).
     coreFunctionality: |-
       - Each Ory service exposes /metrics/prometheus; ports differ per product (Kratos admin 4434, Hydra admin 4445, Keto 4468, Oathkeeper 9000).
-      - Ory Network: scrape https://<project>.projects.oryapis.com/metrics/prometheus.
+      - Ory Network: not available — /metrics/prometheus is bound on admin ports that Ory Network does not expose; the public project domain serves the API only.
       - No officially published Grafana dashboard JSON; build around Ory HTTP request metrics + standard Go runtime metrics.
       - For richer signals (traces, distributed correlation), pair with monitoring-observability/opentelemetry feeding into Tempo/Jaeger.
     oryMechanism:
@@ -3084,14 +3089,14 @@ integrations:
     description: >-
       Sign in via a GitHub App (the modern variant of GitHub OAuth Apps) so the same identity flow that authenticates
       the user also pairs with an app installation that can act on their org/repos with fine-grained permissions and
-      per-installation rate limits. The Ory side reuses the standard GitHub OIDC provider; the difference is on the
-      GitHub side where you register an App instead of an OAuth App.
+      per-installation rate limits. Kratos has a dedicated `github-app` provider for this; on the GitHub side you
+      register an App instead of an OAuth App.
     useCase: >-
       A developer-tool product (CI, code review, security scanner, automation) needs both user login and the ability to
       act on the user's repositories — opening PRs, posting check runs, reading code. The GitHub App flow gives scoped
       per-repo permissions and a separate JWT-based server-to-server credential, neither of which OAuth Apps provide.
     coreFunctionality: |-
-      - Kratos provider configuration uses `provider: github` with a distinct `id` (e.g. `github-app`); the user-facing OAuth flow is identical to the regular GitHub provider.
+      - Kratos ships a dedicated first-party `github-app` provider (`provider: github-app`); use `provider: github` for a plain OAuth App. The user-facing OAuth flow is identical to the regular GitHub provider.
       - GitHub-side registration uses GitHub Apps (settings/apps/new) instead of OAuth Apps, with the Ory redirect URI set as the Callback URL and "Request user authorization (OAuth) during installation" enabled.
       - Fine-grained per-repository permissions, per-installation rate limits (5,000 req/hr per installation), and rich webhook events.
       - Server-to-server authentication via JWT signed with the App's private key, exchanged at GitHub for an installation access token — handled by the application, not by Ory.
@@ -3511,7 +3516,7 @@ integrations:
       A gaming, streaming, or creator-tooling product wants sign-in via the OAuth provider its viewers and streamers
       already use. Optional Twitch scopes (channel info, follows, subscriptions) enable feature gating on creator tier.
     coreFunctionality: |-
-      - First-party Kratos OIDC provider (`provider: twitch`); CLI-only configuration.
+      - Configured as a generic OIDC provider (`provider: generic`, `id: twitch`, issuer https://id.twitch.tv/oauth2) — there is no first-party `twitch` provider in Kratos. CLI-only configuration.
       - Twitch publishes /.well-known/openid-configuration but the `openid` claim isn't returned in the access_token; Ory hits Twitch's /me API to populate the claims envelope.
       - Default Jsonnet returns email gated on email_verified.
       - Configured via the Twitch Developer Portal; scopes follow the Twitch Helix scope catalog.
@@ -3612,7 +3617,7 @@ integrations:
       A consumer or creator-tooling product wants sign-in via the OAuth provider its users use to follow / discover
       content. Twitter v2 free tier supports social sign-in without a paid API subscription.
     coreFunctionality: |-
-      - First-party Kratos OAuth2 provider — Ory provider id is `twitter` (not `x` or `x-twitter`); registry name `x-twitter` reflects the post-rebrand vendor name.
+      - First-party Kratos OAuth2 provider — Ory provider id is `x` (not `twitter` or `x-twitter`); registry name `x-twitter` reflects the post-rebrand vendor name.
       - Confidential Client app type required (not Public Client); "Request email from users" toggle controls whether email is returned.
       - PKCE supported and enabled by default for the Twitter v2 OAuth flow.
       - Default Jsonnet maps the username and email when present.

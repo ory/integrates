@@ -8,9 +8,10 @@ category: monitoring-observability
 type: config
 maintainedBy: Community contributors
 description: >-
-  Send Ory telemetry (traces, metrics, logs) to New Relic over OTLP/HTTP using the standard OpenTelemetry
-  exporter. Documented at ory.com/docs/integrates-with/monitoring-observability/new-relic; configures via the same OpenTelemetry path Ory
-  documents for self-hosted tracing.
+  Send self-hosted Ory traces to New Relic over OTLP/HTTP using the standard
+  OpenTelemetry exporter. Documented at ory.com/docs/integrates-with/monitoring-observability/new-relic;
+  configures via the same OpenTelemetry path Ory documents for self-hosted tracing. Self-hosted only: Ory
+  Network does not export telemetry to customer-owned collectors.
 useCase: >-
   An Ory customer running New Relic wants identity-flow traces and metrics alongside the rest of their app's
   observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate
@@ -19,7 +20,7 @@ coreFunctionality: |-
   - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). OTLP/gRPC also supported.
   - Auth via header `api-key: <NEW_RELIC_LICENSE_KEY>` — use Account/Ingest-scope license keys, NEVER full user keys.
   - Self-hosted Ory: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME).
-  - Ory Network: OTLP endpoint configured in Project Settings → Telemetry.
+  - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
   - For production, prefer an OpenTelemetry Collector in front for batching/retries/sampling.
   - New Relic enforces attribute count/size limits — identity.id fine, identity.traits as flat blob not. Sample at SDK/collector level, not backend side, to preserve head-of-trace context.
 oryMechanism:

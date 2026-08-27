@@ -17,7 +17,7 @@ The full walkthrough (with screenshots and the Ory CLI alternative) lives in the
 4. Add the Jsonnet data-mapping snippet from the docs page.
 5. Save and trigger a registration flow to test.
 
-The Ory provider id is `twitter` (not `x` or `x-twitter`) — Ory shipped this provider before the rebrand and the id is sticky.
+The Ory provider id is `x` (not `twitter` or `x-twitter`) — the registry name `x-twitter` here just reflects the post-rebrand vendor name.
 
 ## License
 

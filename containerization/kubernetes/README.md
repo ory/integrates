@@ -6,9 +6,9 @@ Raw Kubernetes manifests for deploying the open-source Ory stack (Kratos, Hydra,
 
 **Type:** config (deployment pattern)
 **Docs page:** [ory.com/docs/integrates-with/containerization/kubernetes](https://www.ory.com/docs/integrates-with/containerization/kubernetes)
-- [Kratos install](https://www.ory.com/docs/kratos/install)
+- [Kratos install](https://www.ory.com/docs/oss/kratos/install)
 - [Hydra install](https://www.ory.com/docs/hydra/self-hosted/install)
-- [Keto install](https://www.ory.com/docs/keto/install)
+- [Keto install](https://www.ory.com/docs/oss/keto/install)
 - [Oathkeeper install](https://www.ory.com/docs/oathkeeper/install)
 
 ## What's in this directory

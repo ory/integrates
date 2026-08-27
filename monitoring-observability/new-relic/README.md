@@ -2,7 +2,9 @@
 
 > **Maintained by:** Community contributors
 
-New Relic ingests OpenTelemetry over OTLP/HTTP. Ory products (self-hosted Kratos / Hydra / Keto / Oathkeeper, plus Ory Network's exported telemetry) emit OTel traces and metrics that New Relic consumes directly.
+New Relic ingests OpenTelemetry over OTLP/HTTP. Self-hosted Ory products (Ory Kratos, Ory Hydra, Ory Keto, Ory Oathkeeper) emit OTel traces that New Relic consumes directly. Metrics come from each service's Prometheus endpoint rather than over OTLP — scrape them with New Relic's Prometheus integration.
+
+> **Self-hosted only.** Ory Network does not export telemetry to customer-owned collectors — managed project config excludes operational settings such as `tracing` and `logging`.
 
 **Type:** config (instrumentation — no source code in this directory)
 **Docs page:** [ory.com/docs/integrates-with/monitoring-observability/new-relic](https://www.ory.com/docs/integrates-with/monitoring-observability/new-relic)
@@ -13,11 +15,11 @@ New Relic ingests OpenTelemetry over OTLP/HTTP. Ory products (self-hosted Kratos
 | OTLP endpoint (EU) | `https://otlp.eu01.nr-data.net:4318` |
 | Auth header | `api-key: <new-relic-license-key>` |
 | Protocols | OTLP/HTTP (recommended), OTLP/gRPC supported |
-| Signals | traces, metrics, logs |
+| Signals | traces (metrics come from the Prometheus endpoint, not OTLP) |
 
 ## Setup
 
-Self-hosted Ory — set OTel exporter env vars on each service:
+Set OTel exporter env vars on each service:
 
 ```bash
 TRACING_PROVIDER=otel
@@ -27,8 +29,6 @@ OTEL_SERVICE_NAME=ory-kratos                      # or ory-hydra / ory-keto / or
 OTEL_RESOURCE_ATTRIBUTES=service.namespace=identity,deployment.environment=production
 TRACING_PROVIDERS_OTLP_SAMPLING_SAMPLING_RATIO=1.0  # tune in production
 ```
-
-For Ory Network, set the OTLP endpoint in **Project Settings → Telemetry** with the `api-key` header.
 
 For production, prefer running an OpenTelemetry Collector in front so batching, retries, and sampling happen in one place.
 
