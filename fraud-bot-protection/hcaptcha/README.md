@@ -10,16 +10,20 @@
 ## How it works
 
 1. Your registration / login UI embeds the **hCaptcha client widget**; the widget runs the challenge and returns a token (`h-captcha-response`).
-2. The form submits to Ory's flow with the token in a custom field.
-3. An Ory Action on `registration.before` / `login.before` (with `can_interrupt: true`) calls your handler.
-4. The handler POSTs to `https://hcaptcha.com/siteverify` with the token + hCaptcha **secret**; checks `success == true`.
+2. The form submits to Ory's flow with the token in `transient_payload.hcaptcha_token`.
+3. An Ory Action on `registration.after` / `login.after` (with `can_interrupt: true`) calls your handler.
+4. The handler POSTs to `https://api.hcaptcha.com/siteverify` with the token + hCaptcha **secret**; checks `success == true`.
 5. On fail, the handler returns an error and the Ory flow blocks the user.
+
+> Note: these are `after` hooks, not `before` hooks. Ory Kratos Identities runs `before` actions when it creates the flow, so
+> their payload carries no `transient_payload` and the handler never sees the token. The `after` login hook still runs before it
+> issues a session, and the `after` registration hook before it persists the identity, so `can_interrupt: true` still blocks.
 
 ## Setup outline
 
 1. Sign up at [hcaptcha.com](https://www.hcaptcha.com); create a site; copy the **Site Key** (public, client widget) and **Secret** (server verify).
 2. Embed the hCaptcha widget in your registration/login UI.
-3. Configure an Ory Action on `registration.before` / `login.before` with `can_interrupt: true` pointing at your handler.
+3. Configure an Ory Action on `registration.after` / `login.after` with `can_interrupt: true` pointing at your handler.
 4. Handler calls hCaptcha `siteverify` and surfaces a failure to Ory.
 
 ## Notable

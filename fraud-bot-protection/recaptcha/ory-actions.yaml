@@ -1,17 +1,22 @@
-# Google reCAPTCHA pre-flow hooks.
+# Google reCAPTCHA verification hooks.
 #
-# Sync pre-registration and pre-login (response.parse: true, can_interrupt:
-# true). The handler returns 400 with a flow message when the token is
-# missing, invalid, or below the v3 score threshold; 200 to let the flow
-# proceed.
+# Both hooks run synchronously on the after trigger (response.parse: true,
+# can_interrupt: true). The handler returns 400 with a flow message when the
+# token is missing, invalid, or below the v3 score threshold; 200 to let the
+# flow proceed. On login the hook runs before Ory issues a session, on
+# registration before Ory persists the identity, so either can still block.
 #
 # The client must pass the reCAPTCHA token via transient_payload:
 #   { "transient_payload": { "recaptcha_token": "03AGdBq26..." } }
+#
+# The token only reaches the hook on submission, which is why these are not
+# before hooks: Ory runs those when it creates the flow, before the user has
+# submitted anything.
 
 selfservice:
   flows:
     registration:
-      before:
+      after:
         hooks:
           - hook: web_hook
             config:
@@ -29,7 +34,7 @@ selfservice:
                   value: <your-shared-secret>
                   in: header
     login:
-      before:
+      after:
         hooks:
           - hook: web_hook
             config:

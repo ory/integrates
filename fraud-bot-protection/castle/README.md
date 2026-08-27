@@ -9,7 +9,7 @@ Castle.io is an adaptive risk-scoring platform that evaluates device fingerprint
 
 ## Use case
 
-A B2C product wants to keep credential-stuffing and account-takeover attempts out of its login flow without blocking legitimate users behind a CAPTCHA. Castle scores each login in real time; the integration applies an `allow` / `challenge` / `deny` decision before the session is issued, with challenge events flagged for MFA step-up in the client.
+A B2C product wants to keep credential-stuffing and account-takeover attempts out of its login flow without blocking legitimate users behind a CAPTCHA. Castle scores each login in real time; the integration applies an `allow` / `challenge` / `deny` decision on the `after` trigger, before the session is issued, with challenge events flagged for MFA step-up in the client.
 
 ## How it works
 

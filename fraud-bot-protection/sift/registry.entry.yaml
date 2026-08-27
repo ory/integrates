@@ -9,7 +9,7 @@ type: webhook
 maintainedBy: Community contributors
 description: >-
   Digital trust & safety via Sift — real-time ML-based fraud and account-abuse scoring. Wired into Ory via
-  two Actions: a sync pre-flow check (registration.before / login.before with can_interrupt) reading the
+  two Actions: a sync check on submission (registration.after / login.after with can_interrupt) reading the
   user's current Sift abuse score and blocking when above threshold, plus an async post-event reporter
   emitting Sift events that feed the model.
 useCase: >-
