@@ -12,7 +12,7 @@
 1. Your registration / login UI embeds the **hCaptcha client widget**; the widget runs the challenge and returns a token (`h-captcha-response`).
 2. The form submits to Ory's flow with the token in `transient_payload.hcaptcha_token`.
 3. An Ory Action on `registration.after` / `login.after` (with `can_interrupt: true`) calls your handler.
-4. The handler POSTs to `https://hcaptcha.com/siteverify` with the token + hCaptcha **secret**; checks `success == true`.
+4. The handler POSTs to `https://api.hcaptcha.com/siteverify` with the token + hCaptcha **secret**; checks `success == true`.
 5. On fail, the handler returns an error and the Ory flow blocks the user.
 
 > Note: these are `after` hooks, not `before` hooks. Ory runs `before` actions when it creates the flow, so their payload

@@ -16,7 +16,7 @@ useCase: >-
   A consumer product wants CAPTCHA defense at signup/login without Google's reCAPTCHA privacy concerns —
   hCaptcha's GDPR posture and no-data-sale guarantee make it a common choice in EU-targeted products.
 coreFunctionality: |-
-  - Pattern: client widget collects token (h-captcha-response) → form submits → Ory Action with can_interrupt calls handler → handler verifies via POST https://hcaptcha.com/siteverify → handler returns success/failure → Ory consumes via response.parse.
+  - Pattern: client widget collects token (h-captcha-response) → form submits → Ory Action with can_interrupt calls handler → handler verifies via POST https://api.hcaptcha.com/siteverify → handler returns success/failure → Ory consumes via response.parse.
   - Two keys: Site Key (public, client widget) and Secret (server verify); never expose Secret.
   - Tokens are one-time-use and expire 2 minutes after issue.
   - hCaptcha API contract is nearly identical to reCAPTCHA — easy migration between the two.
