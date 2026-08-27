@@ -6,7 +6,7 @@ Deployment patterns for running with Ory on Google Cloud. **Not a vendor integra
 
 **Type:** config (deployment pattern)
 **Docs page:** [ory.com/docs/integrates-with/cloud-infrastructure/gcp](https://www.ory.com/docs/integrates-with/cloud-infrastructure/gcp)
-- [Self-hosted Ory deployment overview](https://www.ory.com/docs/self-hosted/deployment)
+- [Self-hosted Ory deployment overview](https://www.ory.com/docs/oss/deployment)
 - [Hydra Helm chart guide](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 - For Google sign-in see [`social-sign-in/google`](../../social-sign-in/google/) and [`enterprise-sso/google-workspace`](../../enterprise-sso/google-workspace/).
 

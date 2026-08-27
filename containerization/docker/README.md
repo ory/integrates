@@ -6,9 +6,9 @@ Run the open-source Ory stack locally or in containerized deployments using the 
 
 **Type:** config (deployment pattern)
 **Docs page:** [ory.com/docs/integrates-with/containerization/docker](https://www.ory.com/docs/integrates-with/containerization/docker)
-- [Kratos install](https://www.ory.com/docs/kratos/install)
+- [Kratos install](https://www.ory.com/docs/oss/kratos/install)
 - [Hydra install](https://www.ory.com/docs/hydra/self-hosted/install) and [Hydra quickstart](https://www.ory.com/docs/hydra/self-hosted/quickstart) (Docker Compose-based)
-- [Keto install](https://www.ory.com/docs/keto/install)
+- [Keto install](https://www.ory.com/docs/oss/keto/install)
 - [Oathkeeper install](https://www.ory.com/docs/oathkeeper/install)
 
 ## What's in this directory

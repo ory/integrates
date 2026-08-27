@@ -6,7 +6,7 @@ Deployment patterns for running with Ory on Azure. **Not a vendor integration** 
 
 **Type:** config (deployment pattern)
 **Docs page:** [ory.com/docs/integrates-with/cloud-infrastructure/azure](https://www.ory.com/docs/integrates-with/cloud-infrastructure/azure)
-- [Self-hosted Ory deployment overview](https://www.ory.com/docs/self-hosted/deployment)
+- [Self-hosted Ory deployment overview](https://www.ory.com/docs/oss/deployment)
 - [Hydra Helm chart guide](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 - For Microsoft Entra ID social sign-in / enterprise SSO see [`social-sign-in/microsoft`](../../social-sign-in/microsoft/) and [`enterprise-sso/microsoft-entra-id`](../../enterprise-sso/microsoft-entra-id/).
 

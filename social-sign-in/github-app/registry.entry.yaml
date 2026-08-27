@@ -10,15 +10,15 @@ maintainedBy: Community contributors
 description: >-
   Sign in via a GitHub App (the modern variant of GitHub OAuth Apps) so the same identity flow that authenticates
   the user also pairs with an app installation that can act on their org/repos with fine-grained permissions and
-  per-installation rate limits. The Ory side reuses the standard GitHub OIDC provider; the difference is on the
-  GitHub side where you register an App instead of an OAuth App.
+  per-installation rate limits. Kratos has a dedicated `github-app` provider for this; on the GitHub side you
+  register an App instead of an OAuth App.
 useCase: >-
   A developer-tool product (CI, code review, security scanner, automation) needs both user login and the ability
   to act on the user's repositories — opening PRs, posting check runs, reading code. The GitHub App flow gives
   scoped per-repo permissions and a separate JWT-based server-to-server credential, neither of which OAuth Apps
   provide.
 coreFunctionality: |-
-  - Kratos provider configuration uses `provider: github` with a distinct `id` (e.g. `github-app`); the user-facing OAuth flow is identical to the regular GitHub provider.
+  - Kratos ships a dedicated first-party `github-app` provider (`provider: github-app`); use `provider: github` for a plain OAuth App. The user-facing OAuth flow is identical to the regular GitHub provider.
   - GitHub-side registration uses GitHub Apps (settings/apps/new) instead of OAuth Apps, with the Ory redirect URI set as the Callback URL and "Request user authorization (OAuth) during installation" enabled.
   - Fine-grained per-repository permissions, per-installation rate limits (5,000 req/hr per installation), and rich webhook events.
   - Server-to-server authentication via JWT signed with the App's private key, exchanged at GitHub for an installation access token — handled by the application, not by Ory.

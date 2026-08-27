@@ -15,7 +15,7 @@ useCase: >-
   A gaming, streaming, or creator-tooling product wants sign-in via the OAuth provider its viewers and streamers
   already use. Optional Twitch scopes (channel info, follows, subscriptions) enable feature gating on creator tier.
 coreFunctionality: |-
-  - First-party Kratos OIDC provider (`provider: twitch`); CLI-only configuration.
+  - Configured as a generic OIDC provider (`provider: generic`, `id: twitch`, issuer https://id.twitch.tv/oauth2) — there is no first-party `twitch` provider in Kratos. CLI-only configuration.
   - Twitch publishes /.well-known/openid-configuration but the `openid` claim isn't returned in the access_token; Ory hits Twitch's /me API to populate the claims envelope.
   - Default Jsonnet returns email gated on email_verified.
   - Configured via the Twitch Developer Portal; scopes follow the Twitch Helix scope catalog.
