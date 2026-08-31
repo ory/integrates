@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-27T18:01:07Z
+  generated: 2026-08-31T14:26:35Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -767,6 +767,36 @@ integrations:
       - UUID PKs (good — distribute across nodes) vs SERIAL (would hot-shard) — verify no Ory product version uses SERIAL.
       - Serverless tier has request-per-second limits unsuitable for production identity workloads; use Self-hosted (Dedicated) tier.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/data-persistence/cockroachdb.
+    oryMechanism:
+      - standards
+    protocol:
+      - custom
+  - name: yugabytedb
+    displayName: YugabyteDB
+    vendor: Yugabyte
+    category: data-persistence
+    path: data-persistence/yugabytedb
+    type: config
+    maintainedBy: Ory Engineering
+    status: active
+    description: >-
+      Use YugabyteDB as the primary datastore for self-hosted Ory components. YugabyteDB is a first-class dialect
+      selected by a yugabyte:// DSN (synonym yugabytedb://), not PostgreSQL in disguise: each service picks the
+      migrations and SQL that YugabyteDB accepts. Requires an Ory Enterprise License (OEL) image for Ory Kratos
+      Identities, Ory Hydra Authorization, and Ory Keto Permissions; Ory Polis B2B Federation supports it in open source
+      and OEL builds. Documented at ory.com/docs/integrates-with/data-persistence/yugabytedb.
+    useCase: >-
+      A self-hosted Ory deployment needs a distributed, PostgreSQL-compatible SQL database with horizontal scalability
+      and strong consistency, and standardizes on YugabyteDB rather than CockroachDB.
+    coreFunctionality: |-
+      - DSN scheme selects the dialect: yugabyte://user:password@host:5433/<db>?sslmode=verify-full (yugabytedb:// is a synonym); 5433 is the default YSQL port.
+      - Same DSN parameters as PostgreSQL: sslmode, application_name, search_path, sslcert/sslkey/sslrootcert, and connection pool settings.
+      - Migrations run normally (`kratos migrate sql` etc.); services prefer .yugabyte. migration files over .postgres. ones.
+      - A postgres:// DSN pointed at YugabyteDB selects the PostgreSQL migrations; OEL images fail fast at startup and name the correct scheme.
+      - Schema changes apply with autocommit — one statement per migration file, safe to rerun.
+      - READ COMMITTED maps to snapshot isolation unless yb_enable_read_committed_isolation is set; Ory retries serialization failures instead.
+      - Not available (CockroachDB-only): row-level TTL retention, multi-region table localities, eventually consistent follower reads.
+      - Ory Polis B2B Federation selects it with DB_ENGINE=sql, DB_TYPE=yugabytedb, DB_URL=postgresql://…:5433/… and reuses the PostgreSQL driver.
     oryMechanism:
       - standards
     protocol:
