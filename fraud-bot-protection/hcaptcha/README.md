@@ -7,6 +7,8 @@
 **Type:** webhook (Ory Action verifies the hCaptcha token from the client) — code in customer's webhook handler
 **Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha](https://www.ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha)
 
+> **Built-in alternative:** Ory Kratos Identities has [built-in CAPTCHA protection](https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA) based on Cloudflare Turnstile, with no webhook to build or host. Use it unless you need hCaptcha specifically.
+
 ## How it works
 
 1. Your registration / login UI embeds the **hCaptcha client widget**; the widget runs the challenge and returns a token (`h-captcha-response`).

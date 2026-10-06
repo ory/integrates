@@ -22,6 +22,7 @@ coreFunctionality: |-
   - hCaptcha API contract is nearly identical to reCAPTCHA — easy migration between the two.
   - Enterprise tier adds adaptive risk scoring and invisible challenges; verify endpoint shape unchanged.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha; same pattern as Turnstile / reCAPTCHA / Arkose.
+  - Built-in alternative: Ory Kratos Identities has native CAPTCHA protection based on Cloudflare Turnstile (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); use it unless you need hCaptcha specifically.
 oryMechanism:
   - actions
 protocol:

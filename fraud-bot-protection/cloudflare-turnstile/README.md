@@ -7,6 +7,8 @@
 **Type:** webhook (Ory Action verifies the Turnstile token from the client) — code in customer's webhook handler
 **Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile](https://www.ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile)
 
+> **Built-in alternative:** Ory Kratos Identities supports Cloudflare Turnstile natively. Turn on [built-in CAPTCHA protection](https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA) in your project instead of building and hosting this webhook.
+
 ## How it works
 
 1. Your registration / login UI embeds the **Turnstile client widget**; the widget runs the challenge invisibly and returns a token (`cf-turnstile-response`).
@@ -34,7 +36,7 @@
 
 ## Status
 
-Community / proposed — no dedicated Ory documentation. Same pattern as hCaptcha / reCAPTCHA / Arkose.
+Community / proposed. Superseded by Ory's [built-in Turnstile support](https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); use that instead.
 
 ## License
 

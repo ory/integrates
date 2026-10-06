@@ -23,6 +23,7 @@ coreFunctionality: |-
   - For v2 returns pass on success: true; for v3 also enforces RECAPTCHA_SCORE_THRESHOLD and optional RECAPTCHA_EXPECTED_ACTION.
   - Returns 400 + a flow-level error message ("CAPTCHA verification failed") to interrupt the flow, or 200 + empty body to let it proceed.
   - Fails closed on a siteverify outage so a Google-API hiccup doesn't silently disable bot protection.
+  - Built-in alternative: Ory Kratos Identities has native CAPTCHA protection based on Cloudflare Turnstile (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); use it unless you need reCAPTCHA specifically.
 oryMechanism:
   - actions
 protocol:

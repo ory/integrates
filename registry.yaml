@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-31T14:26:35Z
+  generated: 2026-10-06T15:31:37Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -1758,6 +1758,7 @@ integrations:
       - Use a per-flow token (don't reuse across registration and login).
       - Adaptive challenges escalate per-risk; pick challenge type per-flow risk profile via Arkose's game configuration.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs.
+      - Built-in alternative: Ory Kratos Identities has native CAPTCHA protection based on Cloudflare Turnstile (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); use it unless you need Arkose Labs specifically.
     oryMechanism:
       - actions
     protocol:
@@ -1811,6 +1812,7 @@ integrations:
       - Free with no per-call limit — practical default for new projects.
       - Optional remoteip field in siteverify enables IP-binding check; pass the client IP through the reverse proxy.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile; same pattern as hCaptcha / reCAPTCHA / Arkose.
+      - Built-in alternative: Ory Kratos Identities supports Turnstile natively (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); turn on built-in CAPTCHA protection instead of building and hosting this webhook.
     oryMechanism:
       - actions
     protocol:
@@ -1838,6 +1840,7 @@ integrations:
       - hCaptcha API contract is nearly identical to reCAPTCHA — easy migration between the two.
       - Enterprise tier adds adaptive risk scoring and invisible challenges; verify endpoint shape unchanged.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/hcaptcha; same pattern as Turnstile / reCAPTCHA / Arkose.
+      - Built-in alternative: Ory Kratos Identities has native CAPTCHA protection based on Cloudflare Turnstile (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); use it unless you need hCaptcha specifically.
     oryMechanism:
       - actions
     protocol:
@@ -1866,6 +1869,7 @@ integrations:
       - For v2 returns pass on success: true; for v3 also enforces RECAPTCHA_SCORE_THRESHOLD and optional RECAPTCHA_EXPECTED_ACTION.
       - Returns 400 + a flow-level error message ("CAPTCHA verification failed") to interrupt the flow, or 200 + empty body to let it proceed.
       - Fails closed on a siteverify outage so a Google-API hiccup doesn't silently disable bot protection.
+      - Built-in alternative: Ory Kratos Identities has native CAPTCHA protection based on Cloudflare Turnstile (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); use it unless you need reCAPTCHA specifically.
     oryMechanism:
       - actions
     protocol:
