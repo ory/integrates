@@ -21,6 +21,7 @@ coreFunctionality: |-
   - Free with no per-call limit — practical default for new projects.
   - Optional remoteip field in siteverify enables IP-binding check; pass the client IP through the reverse proxy.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/cloudflare-turnstile; same pattern as hCaptcha / reCAPTCHA / Arkose.
+  - Built-in alternative: Ory Kratos Identities supports Turnstile natively (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); turn on built-in CAPTCHA protection instead of building and hosting this webhook.
 oryMechanism:
   - actions
 protocol:

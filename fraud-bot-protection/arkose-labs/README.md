@@ -7,6 +7,8 @@
 **Type:** webhook (Ory Action verifies the Arkose token from the client) — code lives in customer's webhook handler
 **Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs](https://www.ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs)
 
+> **Built-in alternative:** Ory Kratos Identities has [built-in CAPTCHA protection](https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA) based on Cloudflare Turnstile, with no webhook to build or host. Use it unless you need Arkose Labs specifically.
+
 ## How it works
 
 1. Your registration / login UI embeds the **Arkose Labs client SDK**; the SDK runs scoring + a challenge if needed and returns a one-time token.

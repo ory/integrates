@@ -21,6 +21,7 @@ coreFunctionality: |-
   - Use a per-flow token (don't reuse across registration and login).
   - Adaptive challenges escalate per-risk; pick challenge type per-flow risk profile via Arkose's game configuration.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/fraud-bot-protection/arkose-labs.
+  - Built-in alternative: Ory Kratos Identities has native CAPTCHA protection based on Cloudflare Turnstile (https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA); use it unless you need Arkose Labs specifically.
 oryMechanism:
   - actions
 protocol:

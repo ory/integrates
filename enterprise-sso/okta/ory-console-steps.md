@@ -1,6 +1,6 @@
 # Okta — Ory Console setup steps
 
-This is the manual setup flow for adding Okta as an OIDC social-signin provider to an Ory Network project. The full walkthrough with screenshots lives at [ory.com/docs/integrations/okta](https://ory.com/docs/integrations/okta).
+This is the manual setup flow for adding Okta as an OIDC social-signin provider to an Ory Network project. The full walkthrough with screenshots lives at [ory.com/docs/integrates-with/enterprise-sso/okta](https://www.ory.com/docs/integrates-with/enterprise-sso/okta).
 
 ## 1. Create the Okta application
 

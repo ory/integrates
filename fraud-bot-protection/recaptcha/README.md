@@ -7,6 +7,8 @@
 **Type:** webhook (Ory Action calls a handler during a flow)
 **Docs page:** [ory.com/docs/integrates-with/fraud-bot-protection/recaptcha](https://www.ory.com/docs/integrates-with/fraud-bot-protection/recaptcha)
 
+> **Built-in alternative:** Ory Kratos Identities has [built-in CAPTCHA protection](https://www.ory.com/docs/kratos/self-service/flows/CAPTCHA) based on Cloudflare Turnstile, with no webhook to build or host. Use it unless you need reCAPTCHA specifically.
+
 ## Use case
 
 A consumer-facing product wants to stop bot signups and credential-stuffing attempts without enrolling in Cloudflare Turnstile. The team already has Google reCAPTCHA on its marketing site and wants the same protection on Ory-hosted registration and login flows. This integration runs as a sync webhook on the `after` trigger that interrupts the flow before any identity is created or session is issued if the reCAPTCHA token is missing, invalid, or scores below the configured threshold.
