@@ -8,8 +8,8 @@ category: enterprise-sso
 type: config
 maintainedBy: Community contributors
 description: >-
-  Configure Keycloak — the open-source CNCF-graduated identity and access management server — as an upstream
-  OIDC (preferred) or SAML 2.0 identity provider in Ory Polis. Common when an enterprise self-hosts their IdP
+  Configure Keycloak — the open-source, CNCF incubating identity and access management server — as an upstream
+  OIDC (preferred) or SAML 2.0 identity provider for an Ory Network organization or self-hosted Ory Polis. Common when an enterprise self-hosts their IdP
   for control, data residency, or vendor-lock-in avoidance. Documented at ory.com/docs/integrates-with/enterprise-sso/keycloak; configures via the Polis
   generic OIDC or generic SAML walkthrough.
 useCase: >-
@@ -17,10 +17,10 @@ useCase: >-
   consume Keycloak-issued sessions instead of standing up a separate identity store.
 coreFunctionality: |-
   - Configured as a generic OIDC RP (recommended — Keycloak's OIDC support is first-class) or generic SAML SP in Ory Polis pointing at a Keycloak client.
-  - Keycloak side: Clients → Create client (OpenID Connect, Confidential type); set Valid redirect URI to Polis ACS URL.
-  - Issuer URL pattern: https://<keycloak-host>/realms/<realm-name>; Polis uses /.well-known/openid-configuration automatically.
+  - Keycloak side: Clients → Create client (OpenID Connect, Confidential type); turn Client authentication on; set Valid redirect URIs to the organization's OIDC redirect URI (https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/organization/<organization-id>/callback/<connection-id>, or /self-service/methods/oidc/callback with pkce: force).
+  - Issuer URL pattern: https://<keycloak-host>/realms/<realm-name>; Ory uses /.well-known/openid-configuration automatically.
   - Group claims released via a Group Membership mapper on the client's dedicated client scope — must be added explicitly.
-  - Self-hosted: pin both Keycloak and Polis library versions; test upgrades against staging since Keycloak's protocol responses occasionally change in major releases.
+  - Self-hosted: pin the Keycloak version; test upgrades against staging since Keycloak's protocol responses occasionally change in major releases.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/keycloak.
 oryMechanism:
   - standards

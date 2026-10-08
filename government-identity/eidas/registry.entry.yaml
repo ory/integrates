@@ -18,7 +18,7 @@ useCase: >-
 coreFunctionality: |-
   - Configured as a generic OIDC provider in Kratos pointing at the broker's issuer; broker handles per-country eIDAS node integration.
   - Common brokers: Signicat (pan-EU), Criipto (Nordic + EU), IDnow, yes.com (DE).
-  - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token; Jsonnet maps to identity metadata for downstream policy. Substantial roughly maps to Ory aal1; High to aal2.
+  - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token's acr claim (e.g. http://eidas.europa.eu/LoA/high). List the acr values that count as AAL2 in the provider's aal2_acr_values; Jsonnet metadata mapping alone doesn't change the session AAL. Request a level with upstream_parameters acr_values.
   - Per-country eID schemes vary in user experience (card reader for DE Personalausweis, mobile app for FR FranceConnect, etc.) — the broker abstracts this.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/eidas; configures via the generic OIDC path once a broker is chosen.
 oryMechanism:

@@ -9,13 +9,14 @@ type: config
 maintainedBy: Ory Engineering
 description: >-
   Automatic user provisioning and deprovisioning from OneLogin (One Identity) into Ory Network / Ory Polis via
-  SCIM 2.0. Documented directly in /polis/directory-sync/providers/onelogin. Pair with enterprise-sso/onelogin
+  SCIM 2.0. Documented in /kratos/manage-identities/scim (Ory Network) and
+  /polis/directory-sync/providers/onelogin (Ory Polis self-hosted). Pair with enterprise-sso/onelogin
   for the federated sign-in side.
 useCase: >-
   An Ory customer running enterprise SSO from OneLogin wants user lifecycle events (create / update / disable)
   to flow into Ory automatically — no manual user management, no stale identities after offboarding.
 coreFunctionality: |-
-  - Configured in OneLogin Admin Portal → Applications → app → Configuration tab; paste SCIM Base URL + API Bearer Token from Ory's directory-sync setup-link.
+  - Configured in OneLogin Admin Portal → Applications → app → Configuration tab; paste the SCIM Base URL + API Bearer Token: on Ory Network, the base URL and authorization header secret of a SCIM client created on an organization; on self-hosted Ory Polis, the directory-sync endpoint and token.
   - Provisioning tab: enable provisioning and select which events trigger automatic vs manual approval (Create User, Delete User, Update User).
   - Parameters mappings: OneLogin attributes → SCIM userName / name.givenName / name.familyName / emails[].value / groups[].
   - SCIM connector requires a matching SAML/OIDC application — directory sync is tied to an SSO app, not standalone.

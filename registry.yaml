@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-31T14:26:35Z
+  generated: 2026-10-08T18:28:36Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -20,18 +20,18 @@ integrations:
     status: active
     description: >-
       Pair Skyfire's "Know Your Agent" (KYA) verification with Ory for AI-agent identity — Skyfire issues verifiable
-      credentials per agent; a customer-built provisioning service maps each Skyfire agent to an Ory Kratos identity,
-      and Hydra issues OAuth2 access tokens (client_credentials) for the agent to call APIs.
+      credentials per agent; a customer-built provisioning service maps each Skyfire agent to an Ory Hydra OAuth2
+      client, and Hydra issues OAuth2 access tokens (client_credentials) for the agent to call APIs.
     useCase: >-
       A product running autonomous AI agents that need to authenticate to backend APIs wants the agents to have
       verifiable identity (so the call site can answer "which agent is this and is it KYA-verified") plus per-agent
       spend controls — patterns that combining Skyfire and Ory makes natural.
     coreFunctionality: |-
-      - Each agent = one Kratos identity (not one user with multiple agents) — keeps audit and revocation clean.
-      - metadata_public.skyfire stores agent_id + kya_status on the Kratos identity.
-      - Ory Hydra issues access tokens via client_credentials; sub = Kratos identity id.
-      - API gateways validate tokens at the edge (see api-gateways/*) and can read metadata_public.skyfire.agent_id for access control.
-      - Skyfire can revoke agents — periodically re-check KYA status before token issuance to respect revocations.
+      - Each agent = one Hydra OAuth2 client (not one user with multiple agents) — keeps audit and revocation clean.
+      - The client's metadata stores skyfire.agent_id + kya_status.
+      - Ory Hydra issues access tokens via client_credentials; sub = the OAuth2 client ID.
+      - API gateways validate tokens at the edge (see api-gateways/*) and map sub to the agent via the client's metadata, or read an agent ID claim added by an OAuth2 token webhook.
+      - Skyfire can revoke agents — re-check KYA status on token issuance; the OAuth2 token webhook runs on every token request and can deny it with 403.
       - Payment / spend controls stay on the Skyfire side.
       - Status: community/proposed — emerging space, reference architecture more than turnkey product.
     oryMechanism:
@@ -59,7 +59,7 @@ integrations:
       data.
     coreFunctionality: |-
       - Two-layer architecture: Ory is the authorization/policy layer (what an agent or user may access at the resource level); Tetrate Agent Router Enterprise is the network/gateway layer that enforces policy on live traffic.
-      - Agents are first-class identities authenticated through Ory; Hydra issues OAuth2/OIDC tokens via client_credentials.
+      - Each agent is a Hydra OAuth2 client using client_credentials, so the token's sub is the client ID and Keto policies refer to that ID; agents acting for a user use a consented flow (e.g. authorization code), where sub is the user and the agent is the token's client_id.
       - Authorization policies defined in Ory Keto; Tetrate evaluates each agent request (tool call + request parameters) against them at the point an agent invokes an MCP tool.
       - Parameter-level enforcement: Tetrate can gate not just which tools an agent may use but which request parameters are allowed, based on Keto policies.
       - Step-up auth: requests exceeding a risk threshold can pause, trigger an authentication/approval flow through Ory, and issue short-lived elevated access.
@@ -810,19 +810,18 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      BambooHR is an HRIS popular with SMB and mid-market companies. This integration enriches Ory identities with
-      employee data from BambooHR via an Ory Action webhook on login or registration, returning employment status, job
-      title, department, and hire date so a post-flow Action can gate access or write the fields into identity metadata.
+      BambooHR is an HRIS popular with SMB and mid-market companies. This integration checks employment status in
+      BambooHR from an Ory Action webhook on login or registration and blocks the flow for users who aren't active
+      employees.
     useCase: >-
       A company runs internal SaaS for employees and wants login to gate on employment status — off-boarded employees
       lose access automatically without a separate deprovision step. BambooHR is the HRIS source of truth; the
-      integration looks up the user's BambooHR record at login and returns the employment flag so Ory can fail the flow
-      on employed: false.
+      integration looks up the user's BambooHR record at login and blocks the sign-in when there is no active record.
     coreFunctionality: |-
-      - Sync Ory Action webhook (response.parse: true) on after:login and optionally after:registration.
-      - Looks up the employee via /employees/directory filtered by workEmail (BambooHR has no direct lookup-by-email API).
-      - Fetches detail fields (status, jobTitle, department, hireDate, terminationDate) and returns { employed, employee_id, job_title, department, hire_date }.
-      - Returns { employed: false } on no match so Ory can branch on member-vs-non-member traffic instead of erroring.
+      - Sync Ory Action webhook (response.parse: true) in the login method hook lists (for example selfservice.flows.login.after.password.hooks) and optionally registration.
+      - Looks up the employee via /employees/directory filtered by workEmail (BambooHR has no direct lookup-by-email API), then fetches the employee's status.
+      - Active employees get 204 No Content; no match or a non-Active status gets 403 with a Kratos `messages` body, which blocks the flow and shows the reason.
+      - BambooHR errors return 502, which fails the flow, so every sign-in depends on BambooHR availability.
       - BambooHR Basic auth: API key as username, literal "x" as password — documented in code so it doesn't look like a typo.
     oryMechanism:
       - actions
@@ -845,7 +844,7 @@ integrations:
       / disable) in Workspace to flow into Ory automatically — no manual user management, no stale identities after
       offboarding.
     coreFunctionality: |-
-      - Configured in Google Workspace Admin Console → Apps → Web and mobile apps → app → Auto-provisioning. Pastes SCIM endpoint URL + access token from Ory's setup-link.
+      - Google Workspace provisions only to apps in its supported-app catalog, not to custom SCIM endpoints; the Ory Network guide adds the Keeper Web (SAML) catalog app and enters the Ory SCIM client's base URL and authorization header secret as its provisioning endpoint and token.
       - Attribute mapping: primary email → userName; given/family name → name.givenName / name.familyName; groups → groups.
       - Workspace pushes lifecycle events on its own schedule (typically within a few minutes of directory change) — no manual "push now".
       - Deactivation in Workspace becomes a deactivate in Ory (preserves identity record) — not a hard delete.
@@ -864,13 +863,13 @@ integrations:
     status: active
     description: >-
       Automatic user provisioning and deprovisioning from JumpCloud into Ory Network / Ory Polis via SCIM 2.0.
-      Documented directly in /polis/directory-sync/providers/jumpcloud. Pair with enterprise-sso/jumpcloud for the
-      federated sign-in side.
+      Documented in /kratos/manage-identities/scim (Ory Network) and /polis/directory-sync/providers/jumpcloud (Ory
+      Polis self-hosted). Pair with enterprise-sso/jumpcloud for the federated sign-in side.
     useCase: >-
       An Ory customer running enterprise SSO from JumpCloud wants user lifecycle events (create / update / disable) in
       JumpCloud to flow into Ory automatically — no manual user management, no stale identities after offboarding.
     coreFunctionality: |-
-      - Configured in JumpCloud Admin Console → SSO Applications → app → Identity Management tab. Pastes SCIM Base URL + API key from Ory's directory-sync setup-link.
+      - Configured in JumpCloud Admin Console → SSO Applications → app → Identity Management tab. Pastes the SCIM Base URL + API key: on Ory Network, the base URL and authorization header secret of a SCIM client created on an organization; on self-hosted Ory Polis, the directory-sync endpoint and token.
       - Attribute mapping: email → userName; given/family name → name.givenName / name.familyName; group membership → groups.
       - SCIM provisioning is tied to a SAML application — cannot run SCIM without also having the corresponding SAML app configured.
       - JumpCloud pushes only members of assigned user groups; manage scope via group assignment, not user assignment.
@@ -941,13 +940,13 @@ integrations:
     status: active
     description: >-
       Automatic user provisioning and deprovisioning from OneLogin (One Identity) into Ory Network / Ory Polis via SCIM
-      2.0. Documented directly in /polis/directory-sync/providers/onelogin. Pair with enterprise-sso/onelogin for the
-      federated sign-in side.
+      2.0. Documented in /kratos/manage-identities/scim (Ory Network) and /polis/directory-sync/providers/onelogin (Ory
+      Polis self-hosted). Pair with enterprise-sso/onelogin for the federated sign-in side.
     useCase: >-
       An Ory customer running enterprise SSO from OneLogin wants user lifecycle events (create / update / disable) to
       flow into Ory automatically — no manual user management, no stale identities after offboarding.
     coreFunctionality: |-
-      - Configured in OneLogin Admin Portal → Applications → app → Configuration tab; paste SCIM Base URL + API Bearer Token from Ory's directory-sync setup-link.
+      - Configured in OneLogin Admin Portal → Applications → app → Configuration tab; paste the SCIM Base URL + API Bearer Token: on Ory Network, the base URL and authorization header secret of a SCIM client created on an organization; on self-hosted Ory Polis, the directory-sync endpoint and token.
       - Provisioning tab: enable provisioning and select which events trigger automatic vs manual approval (Create User, Delete User, Update User).
       - Parameters mappings: OneLogin attributes → SCIM userName / name.givenName / name.familyName / emails[].value / groups[].
       - SCIM connector requires a matching SAML/OIDC application — directory sync is tied to an SSO app, not standalone.
@@ -975,10 +974,10 @@ integrations:
       IdP (Okta / Entra ID) being on the critical path.
     coreFunctionality: |-
       - No turnkey Workday → SCIM connector ships with Workday; integration requires one of three patterns.
-      - Pattern A (canonical): Workday Studio / Integration System maps Workday data sources (Worker, Position, etc.) into SCIM 2.0 calls against Ory's directory-sync endpoint. Requires Workday Studio licensing and developer hours.
+      - Pattern A (canonical): Workday Studio / Integration System maps Workday data sources (Worker, Position, etc.) into SCIM 2.0 calls against Ory's SCIM endpoint. Requires Workday Studio licensing and developer hours.
       - Pattern B: deploy a mid-tier connector (Tools4ever HelloID, Saviynt, or a custom service) that pulls Workday REST/SOAP and pushes to Ory's SCIM endpoint.
       - Pattern C (most common in practice): provision Workday → Okta/Entra via the IdP's native Workday connector, then Okta/Entra → Ory via the existing SCIM integration. Avoids touching Workday directly.
-      - Ory side is a standard SCIM 2.0 endpoint with bearer-token auth, accepting Users and Groups; endpoint URL and token come from the directory-sync setup-link.
+      - Ory side is a standard SCIM 2.0 endpoint accepting Users and Groups; on Ory Network each SCIM client belongs to an organization and has its own base URL, authorization header secret, and data mapping.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/directory-sync/workday-scim.
     oryMechanism:
       - directory-sync
@@ -1276,8 +1275,8 @@ integrations:
       customer's IdP happens to be Auth0 — this integration is the per-customer connection setup.
     coreFunctionality: |-
       - Configured per Ory Polis docs at /polis/sso-providers/auth0; Polis acts as the SAML SP, Auth0 as the IdP.
-      - Auth0 side: Regular Web Application + SAML2 WEB APP addon; configure ACS URL + Audience from Ory's setup-link.
-      - SP-initiated only — Auth0 also supports IdP-initiated but Polis consumes SP-initiated.
+      - Auth0 side: Regular Web Application + SAML2 WEB APP addon; configure ACS URL (https://<project-slug>.projects.oryapis.com/saml/api/oauth/saml) + Audience (https://<project-slug>.projects.oryapis.com/self-service/methods/saml/organizations/<organization-id>) on Ory Network.
+      - Auth0 supports both SP-initiated and IdP-initiated SSO. SAML connections on Ory Network support IdP-initiated login (off by default); see ory.com/docs/kratos/organizations#idp-initiated-login.
       - Use Auth0 Actions (not the addon's claims editor) for non-trivial attribute transformations — version-controlled, supported path.
       - MFA enforcement sits at the Auth0 IdP layer; Ory consumes the resulting authenticated assertion.
     oryMechanism:
@@ -1321,7 +1320,7 @@ integrations:
     status: active
     description: >-
       Configure ForgeRock Access Management (now part of Ping Identity following the 2023 acquisition) as an upstream
-      SAML 2.0 or OIDC identity provider in Ory Polis. Documented at
+      SAML 2.0 or OIDC identity provider for an Ory Network organization or self-hosted Ory Polis. Documented at
       ory.com/docs/integrates-with/enterprise-sso/forgerock-am; configures via the Polis generic SAML or generic OIDC
       walkthrough.
     useCase: >-
@@ -1330,7 +1329,7 @@ integrations:
     coreFunctionality: |-
       - Configured as a generic SAML 2.0 SP (preferred for enterprise SSO) or generic OIDC RP in Ory Polis pointing at the ForgeRock entity / OAuth client.
       - ForgeRock side: SAML entity under Realms → Applications → Federation, or OAuth 2.0 client under OAuth 2.0 → Clients.
-      - SP-initiated only — Polis does not consume IdP-initiated SAML assertions; configure the ForgeRock side accordingly.
+      - SAML connections on Ory Network support IdP-initiated login (off by default); see ory.com/docs/kratos/organizations#idp-initiated-login.
       - OIDC supports openid / profile / email / groups; group claims may need a custom scope mapper depending on AM version.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/forgerock-am.
     oryMechanism:
@@ -1347,17 +1346,18 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Configure ANY OIDC-compliant Identity Provider into Ory Polis as the OIDC Relying Party. Canonical reference for
-      OIDC-based enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP. Same source
-      page is mirrored under generic-protocols/generic-oidc.
+      Configure ANY OIDC-compliant Identity Provider for enterprise SSO. On Ory Network, Ory Kratos is the OIDC Relying
+      Party for an organization's connection; when self-hosting, Ory Polis is the RP. Canonical reference for OIDC-based
+      enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP. Same source page is
+      mirrored under generic-protocols/generic-oidc.
     useCase: >-
       An Ory Polis customer needs to integrate an OIDC IdP that isn't on the supported-vendor list (open-source IdPs
       like Keycloak, Authentik, Zitadel, or any custom OIDC implementation), or wants the protocol mechanics documented
       for debugging or non-default configuration.
     coreFunctionality: |-
       - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-oidc; Polis acts as the OIDC RP, IdP as the OP.
-      - Discovery via /.well-known/openid-configuration on the issuer URL — Polis fetches and caches automatically.
-      - Required from the IdP: issuer URL, client id, client secret, plus the Polis ACS URL configured on the IdP side as the redirect URI.
+      - Discovery via /.well-known/openid-configuration on the issuer URL — Ory fetches and caches automatically.
+      - Required from the IdP: issuer URL, client id, client secret, plus the organization's OIDC redirect URI (https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/organization/<organization-id>/callback/<connection-id>, or /self-service/methods/oidc/callback with pkce: force) configured on the IdP side.
       - Standard scopes: openid (required), profile, email; add groups if attribute mapping needs them.
       - Same content mirrored at generic-protocols/generic-oidc — categorization choice; either entry resolves to the same Polis page.
     oryMechanism:
@@ -1373,19 +1373,20 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Configure ANY SAML 2.0-compliant Identity Provider into Ory Polis as the SAML Service Provider. Canonical
-      reference for SAML-based enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP.
-      Same source page is mirrored under generic-protocols/generic-saml.
+      Configure ANY SAML 2.0-compliant Identity Provider for enterprise SSO. Ory Network acts as the SAML Service
+      Provider for organizations; when self-hosting, Ory Polis is the SAML SP. Canonical reference for SAML-based
+      enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP. Same source page is
+      mirrored under generic-protocols/generic-saml.
     useCase: >-
       An Ory Polis customer needs to integrate a SAML IdP that isn't on the supported-vendor list (CyberArk, ForgeRock,
-      IBM Security Verify, custom in-house SAML), or wants the protocol mechanics documented for debugging or
-      non-default configuration.
+      IBM Verify, custom in-house SAML), or wants the protocol mechanics documented for debugging or non-default
+      configuration.
     coreFunctionality: |-
       - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-saml; Polis acts as the SAML SP, IdP as the IdP.
       - From the IdP: metadata XML (preferred — Polis can consume URL or upload), or manual entity-id / SSO URL / signing certificate paste.
-      - To the IdP: Polis SP metadata XML from the Ory organization's setup-link, or manual ACS URL / entity-id / certificate.
+      - To the IdP on Ory Network: ACS URL https://<project-slug>.projects.oryapis.com/saml/api/oauth/saml and SP entity ID https://<project-slug>.projects.oryapis.com/self-service/methods/saml/organizations/<organization-id>; self-hosted Polis uses its own SP metadata.
       - Attribute mapping defined IdP-side; Polis maps the released attributes to Ory identity traits.
-      - SP-initiated only — Polis does not consume IdP-initiated SAML responses.
+      - SAML connections on Ory Network support IdP-initiated login (off by default); see ory.com/docs/kratos/organizations#idp-initiated-login.
       - Same content mirrored at generic-protocols/generic-saml — categorization choice; either entry resolves to the same Polis page.
     oryMechanism:
       - standards
@@ -1445,7 +1446,7 @@ integrations:
       - saml2
       - oidc
   - name: ibm-security-verify
-    displayName: IBM Security Verify
+    displayName: IBM Verify
     vendor: IBM
     category: enterprise-sso
     path: enterprise-sso/ibm-security-verify
@@ -1453,16 +1454,17 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Configure IBM Security Verify (IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or OIDC identity
-      provider in Ory Polis. Documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify; configures
-      via the Polis generic SAML or generic OIDC walkthrough.
+      Configure IBM Verify (formerly IBM Security Verify, IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or
+      OIDC identity provider for an Ory Network organization or self-hosted Ory Polis. Documented at
+      ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify; configures via the Polis generic SAML or generic
+      OIDC walkthrough.
     useCase: >-
-      An enterprise running IBM Security Verify (Verify Cloud SaaS or Verify Access on-prem) as their workforce IdP
-      wants Ory-protected applications to consume IBM-issued sessions instead of standing up a separate identity store.
+      An enterprise running IBM Verify (SaaS) or IBM Verify Identity Access (on-premises) as their workforce IdP wants
+      Ory-protected applications to consume IBM-issued sessions instead of standing up a separate identity store.
     coreFunctionality: |-
       - Configured as a generic SAML 2.0 SP (preferred) or generic OIDC RP in Ory Polis pointing at an IBM Verify Custom SAML 2.0 / Custom OIDC application.
-      - Same federation flows for both Verify Cloud (SaaS) and Verify Access (on-prem) — difference is administration location.
-      - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Polis consumes the resulting authenticated assertion.
+      - IBM Verify (SaaS) and IBM Verify Identity Access (on-premises, formerly IBM Security Verify Access) both support SAML 2.0 and OIDC federation — difference is administration location.
+      - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Ory consumes the resulting authenticated assertion.
       - Passkey / FIDO2 enforcement configured in IBM Verify's policy engine; Ory consumes the assurance level reported in the assertion.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify.
     oryMechanism:
@@ -1504,9 +1506,9 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Configure Keycloak — the open-source CNCF-graduated identity and access management server — as an upstream OIDC
-      (preferred) or SAML 2.0 identity provider in Ory Polis. Common when an enterprise self-hosts their IdP for
-      control, data residency, or vendor-lock-in avoidance. Documented at
+      Configure Keycloak — the open-source, CNCF incubating identity and access management server — as an upstream OIDC
+      (preferred) or SAML 2.0 identity provider for an Ory Network organization or self-hosted Ory Polis. Common when an
+      enterprise self-hosts their IdP for control, data residency, or vendor-lock-in avoidance. Documented at
       ory.com/docs/integrates-with/enterprise-sso/keycloak; configures via the Polis generic OIDC or generic SAML
       walkthrough.
     useCase: >-
@@ -1514,10 +1516,10 @@ integrations:
       Keycloak-issued sessions instead of standing up a separate identity store.
     coreFunctionality: |-
       - Configured as a generic OIDC RP (recommended — Keycloak's OIDC support is first-class) or generic SAML SP in Ory Polis pointing at a Keycloak client.
-      - Keycloak side: Clients → Create client (OpenID Connect, Confidential type); set Valid redirect URI to Polis ACS URL.
-      - Issuer URL pattern: https://<keycloak-host>/realms/<realm-name>; Polis uses /.well-known/openid-configuration automatically.
+      - Keycloak side: Clients → Create client (OpenID Connect, Confidential type); turn Client authentication on; set Valid redirect URIs to the organization's OIDC redirect URI (https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/organization/<organization-id>/callback/<connection-id>, or /self-service/methods/oidc/callback with pkce: force).
+      - Issuer URL pattern: https://<keycloak-host>/realms/<realm-name>; Ory uses /.well-known/openid-configuration automatically.
       - Group claims released via a Group Membership mapper on the client's dedicated client scope — must be added explicitly.
-      - Self-hosted: pin both Keycloak and Polis library versions; test upgrades against staging since Keycloak's protocol responses occasionally change in major releases.
+      - Self-hosted: pin the Keycloak version; test upgrades against staging since Keycloak's protocol responses occasionally change in major releases.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/keycloak.
     oryMechanism:
       - standards
@@ -1595,7 +1597,7 @@ integrations:
     coreFunctionality: |-
       - Configured per Ory Polis docs at /polis/sso-providers/okta; Polis acts as the SAML SP / OIDC RP, Okta as the IdP.
       - Okta side: Applications → Create App Integration → SAML 2.0 (preferred) or OIDC Web Application.
-      - SAML: Single sign-on URL = Polis ACS URL; Audience URI = Polis Entity ID; both from Ory's setup-link.
+      - SAML on Ory Network: Single sign-on URL = https://<project-slug>.projects.oryapis.com/saml/api/oauth/saml; Audience URI = https://<project-slug>.projects.oryapis.com/self-service/methods/saml/organizations/<organization-id>.
       - Attribute statements: email, firstName, lastName. Groups released only if explicitly mapped in attribute statements (SAML) or claims (OIDC).
       - Sign-on Policies (MFA, network zones, device trust) sit at the Okta layer; resulting authenticated assertion flows through to Ory.
       - For SCIM provisioning of Okta users into Ory, see directory-sync/okta-scim (separate concern).
@@ -1909,8 +1911,9 @@ integrations:
     status: active
     description: >-
       Configure any OpenID Connect-compliant Identity Provider with Ory. OIDC shows up in two product surfaces: Ory
-      Kratos (consumer / federated sign-in — Kratos is the RP) and Ory Polis (B2B enterprise SSO with per-organization
-      isolation — Polis is the RP). Same source content mirrored under enterprise-sso/generic-oidc.
+      Kratos (consumer / federated sign-in — Kratos is the RP) and B2B enterprise SSO with per-organization isolation
+      (an OIDC connection on an Ory Network organization, or self-hosted Ory Polis). Same source content mirrored under
+      enterprise-sso/generic-oidc.
     useCase: >-
       An Ory customer needs to integrate an OIDC IdP that isn't on a vendor-specific docs list — open-source IdPs
       (Keycloak, Authentik, Zitadel), in-house implementations, or any custom OIDC server. Same reference works whether
@@ -1918,7 +1921,7 @@ integrations:
     coreFunctionality: |-
       - Two product surfaces: Kratos social sign-in (docs/kratos/social-signin/generic — for consumer/user-facing flows) and Polis (docs/polis/sso-providers/generic-oidc — for B2B enterprise SSO).
       - Discovery via /.well-known/openid-configuration on the issuer URL — Ory fetches and caches automatically.
-      - Required from the IdP: issuer URL, client id, client secret, plus the Ory callback URL configured as redirect URI.
+      - Required from the IdP: issuer URL, client id, client secret, plus the Ory callback URL configured as redirect URI (/self-service/methods/oidc/callback/<provider-id> for social sign-in, /self-service/methods/oidc/organization/<organization-id>/callback/<connection-id> for organization connections, or /self-service/methods/oidc/callback with pkce: force).
       - Standard scopes: openid (required), profile, email; groups when claim mapping needs them.
       - Same content mirrored at enterprise-sso/generic-oidc — categorization choice; either entry resolves to the same authoritative Ory docs.
     oryMechanism:
@@ -1934,19 +1937,19 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Configure any SAML 2.0-compliant Identity Provider with Ory. SAML support is provided by Ory Polis (formerly SAML
-      Jackson) acting as the SAML Service Provider — Kratos does not natively speak SAML. Same source content mirrored
-      under enterprise-sso/generic-saml.
+      Configure any SAML 2.0-compliant Identity Provider with Ory. On Ory Network, add the IdP as a SAML connection to
+      an organization and Ory Network acts as the SAML Service Provider; when self-hosting, Ory Polis (formerly SAML
+      Jackson) is the SP. Same source content mirrored under enterprise-sso/generic-saml.
     useCase: >-
       An Ory Polis customer needs to integrate a SAML IdP that isn't on the supported-vendor list (CyberArk, ForgeRock,
-      IBM Security Verify, in-house Shibboleth or SimpleSAMLphp, custom SAML), or wants the protocol mechanics
-      documented for debugging or non-default configuration.
+      IBM Verify, in-house Shibboleth or SimpleSAMLphp, custom SAML), or wants the protocol mechanics documented for
+      debugging or non-default configuration.
     coreFunctionality: |-
       - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-saml; Polis acts as the SAML SP, IdP as the IdP.
       - From the IdP: metadata XML (preferred — Polis can consume URL or upload), or manual entity-id / SSO URL / signing certificate paste.
-      - To the IdP: Polis SP metadata XML from the Ory organization's setup-link, or manual ACS URL / entity-id / certificate.
+      - To the IdP on Ory Network: ACS URL https://<project-slug>.projects.oryapis.com/saml/api/oauth/saml and SP entity ID https://<project-slug>.projects.oryapis.com/self-service/methods/saml/organizations/<organization-id>; self-hosted Polis uses its own SP metadata.
       - Attribute mapping defined IdP-side; Polis maps the released attributes to Ory identity traits.
-      - SP-initiated only — Polis does not consume IdP-initiated SAML responses.
+      - SAML connections on Ory Network support IdP-initiated login (off by default); see ory.com/docs/kratos/organizations#idp-initiated-login.
       - Same content mirrored at enterprise-sso/generic-saml — categorization choice; either entry resolves to the same authoritative Ory Polis page.
     oryMechanism:
       - standards
@@ -1969,6 +1972,7 @@ integrations:
       verification at signup and is willing to integrate via a licensed eKYC provider.
     coreFunctionality: |-
       - Architecture: Ory Kratos webhook → your verification service → licensed ASA/AUA provider → UIDAI CIDR.
+      - The webhook runs without response.parse in a registration method hook list (e.g. selfservice.flows.registration.after.password.hooks) so it runs after the identity is saved and receives the real identity ID for the Admin API write-back.
       - Common licensed providers: Signzy, Digio, Karza Technologies, IDfy. Direct UIDAI API access is prohibited.
       - OTP-based eKYC flow is the typical path; biometric flow is also possible but requires registered devices.
       - Compliance non-negotiables: NEVER store the full Aadhaar number (mask / last 4 only); explicit `consent: "Y"` per call; data localization (Aadhaar-derived data must stay in India — keep full eKYC in India-hosted infra, only store masked/verified-status in Ory metadata which is global); 5-year audit trail.
@@ -2026,7 +2030,7 @@ integrations:
     coreFunctionality: |-
       - Configured as a generic OIDC provider in Kratos pointing at the broker's issuer; broker handles per-country eIDAS node integration.
       - Common brokers: Signicat (pan-EU), Criipto (Nordic + EU), IDnow, yes.com (DE).
-      - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token; Jsonnet maps to identity metadata for downstream policy. Substantial roughly maps to Ory aal1; High to aal2.
+      - eIDAS Levels of Assurance: Low / Substantial / High — broker reports LoA in the ID token's acr claim (e.g. http://eidas.europa.eu/LoA/high). List the acr values that count as AAL2 in the provider's aal2_acr_values; Jsonnet metadata mapping alone doesn't change the session AAL. Request a level with upstream_parameters acr_values.
       - Per-country eID schemes vary in user experience (card reader for DE Personalausweis, mobile app for FR FranceConnect, etc.) — the broker abstracts this.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/government-identity/eidas; configures via the generic OIDC path once a broker is chosen.
     oryMechanism:
@@ -2905,7 +2909,7 @@ integrations:
       - First-party Kratos OIDC provider (`provider: amazon`); registered as an "OpenID Connect provider" in the Ory Console wizard.
       - Standard scope `profile` (also `postal_code` if needed). Amazon doesn't issue an id_token, so Ory calls the LWA customer-profile API and exposes name / email as claims.
       - Default Jsonnet maps email to traits.email; email may be empty if the user denied the email permission on the consent screen.
-      - Configured via Amazon Security Profile (Login with Amazon → Create a New Security Profile); the Allowed Return URLs in Web Settings must include the Ory redirect URI.
+      - Configured via Amazon Security Profile (Login with Amazon → Create a New Security Profile); the Allowed Return URLs in Web Settings must include https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback — the provider rejects the default `pkce: auto`, so set `pkce: force`, which drops the provider ID from the redirect URI.
     oryMechanism:
       - standards
     protocol:
@@ -2970,21 +2974,22 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Battle.net (Blizzard) as a social sign-in provider in Ory Network. OIDC-compliant and configures cleanly as a
-      generic OIDC provider; no Battle.net-specific Ory page yet — pattern follows the generic-OIDC docs.
+      Battle.net (Blizzard) as a social sign-in provider in Ory Network. Battle.net supports OpenID Connect and
+      configures as a generic OIDC provider; no Battle.net-specific Ory page yet — pattern follows the generic-OIDC
+      docs.
     useCase: >-
       A gaming product targeting Blizzard's player base (World of Warcraft, Overwatch, Hearthstone, Diablo) wants
       sign-in via the OAuth provider its players already use to access their games and battle.tag identity.
     coreFunctionality: |-
-      - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI) — Battle.net is OIDC-certified.
-      - Issuer URL: https://oauth.battle.net (global identity; regional aliases also resolve here).
-      - Standard scopes: openid (basic identity); add `wow.profile` / `sc2.profile` etc. for game-specific data.
-      - Default Jsonnet maps battle_tag, sub, email when present.
+      - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI) — Battle.net supports OpenID Connect discovery.
+      - Issuer URL: https://oauth.battle.net; the China region uses https://oauth.battlenet.com.cn.
+      - Scope: openid.
+      - Battle.net doesn't release email addresses. Jsonnet maps `sub` (numeric account ID) and, when present, `raw_claims.battle_tag`; the identity schema must not require an email address.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/battle-net; contributions welcome.
     oryMechanism:
       - standards
     protocol:
-      - oauth2
+      - oidc
   - name: dingtalk
     displayName: DingTalk
     vendor: Alibaba
@@ -3019,15 +3024,15 @@ integrations:
     status: active
     description: >-
       Discord as a social sign-in provider in Ory Network. Users sign in with their Discord account; Ory maps Discord's
-      OAuth2 response (username, email, avatar, optional guild membership) to the identity schema. Common in gaming,
-      community, and creator-facing products.
+      OAuth2 response (user ID, username, email and its verification status, avatar, locale) to the identity schema.
+      Common in gaming, community, and creator-facing products.
     useCase: >-
       A gaming or community product wants sign-in via the OAuth provider its users already use to chat with each other —
-      often paired with guild-membership scopes to gate features on which Discord servers the user belongs to.
+      Ory doesn't fetch guild membership; read it from the Discord API in application code if needed.
     coreFunctionality: |-
       - First-party Kratos OAuth2 provider (`provider: discord`).
-      - Standard scopes: identify (username + ID), email, and optionally guilds (read the user's Discord servers).
-      - Default Jsonnet maps email and identifier; can extend to avatar, username, or guild filter.
+      - Standard scopes: identify (username + ID) and email. Ory doesn't fetch guild (server) membership.
+      - Default Jsonnet maps email and identifier; can extend to avatar, username, or locale.
       - Discord OAuth applications are configured under the Discord Developer Portal; no Discord-side approval needed beyond enabling OAuth2.
       - Refresh tokens supported by default — the access token has limited TTL.
     oryMechanism:
@@ -3128,6 +3133,7 @@ integrations:
     coreFunctionality: |-
       - Kratos ships a dedicated first-party `github-app` provider (`provider: github-app`); use `provider: github` for a plain OAuth App. The user-facing OAuth flow is identical to the regular GitHub provider.
       - GitHub-side registration uses GitHub Apps (settings/apps/new) instead of OAuth Apps, with the Ory redirect URI set as the Callback URL and "Request user authorization (OAuth) during installation" enabled.
+      - The app needs the Email addresses (read) account permission: the provider reads the user's emails on every sign-in and fails without it.
       - Fine-grained per-repository permissions, per-installation rate limits (5,000 req/hr per installation), and rich webhook events.
       - Server-to-server authentication via JWT signed with the App's private key, exchanged at GitHub for an installation access token — handled by the application, not by Ory.
       - Use the regular `github` provider instead if only user login is needed; choose this variant when the product also needs to act on installations.
@@ -3200,15 +3206,16 @@ integrations:
       A consumer product targeting South Korean users wants sign-in via the platform that nearly every Korean smartphone
       user has installed for messaging, payments, and identity.
     coreFunctionality: |-
-      - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI).
+      - Configured via Ory's "Add a Generic Provider" Console wizard (or `provider: generic` in the CLI) after turning on Kakao Login and OpenID Connect for the app.
       - Issuer URL: https://kauth.kakao.com.
-      - Standard scopes: openid, profile_nickname, account_email; Kakao requires explicit scope opt-in for email and other PII fields on the app's "Consent Items" screen.
-      - Client Secret must be explicitly enabled under the app's Security settings (it's optional for Kakao apps by default).
+      - Scopes: openid, profile_nickname, profile_image, account_email; each consent item must be configured on the app, and some require additional Kakao permissions such as business verification.
+      - Ory requires the client secret of the REST API key.
+      - The ID token carries sub, plus nickname, picture, and email when the user consents; there is no email_verified claim.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/kakao; contributions welcome.
     oryMechanism:
       - standards
     protocol:
-      - oauth2
+      - oidc
   - name: lark
     displayName: Lark / Feishu
     vendor: ByteDance
@@ -3226,7 +3233,7 @@ integrations:
       single-sign-on via the workplace platform that ~10M+ enterprise users sign into daily.
     coreFunctionality: |-
       - First-party Kratos OIDC provider (`provider: lark`); CLI-only configuration today.
-      - Configured via the Feishu Open Platform Developer Console; backs both Lark (overseas) and Feishu (China) tenants under one integration.
+      - Configured via the Feishu Open Platform Developer Console; the built-in `lark` provider calls the Feishu endpoints at passport.feishu.cn, so create the app on the Feishu Open Platform.
       - Default Jsonnet maps email when present; richer fields (name, avatar, employee_no) available from Lark's user-info API.
       - Application-side approval may be required for org-scoped scopes per Lark's tenant administration model.
     oryMechanism:
@@ -3251,7 +3258,7 @@ integrations:
     coreFunctionality: |-
       - First-party Kratos OIDC provider (`provider: line`); both Console wizard and CLI configurations supported.
       - LINE channel must enable `PROFILE`, `OPENID_CONNECT`, and `OC_EMAIL` permissions on the LINE Developer Console.
-      - Default Jsonnet maps email + name → first_name; add scopes for richer profile or messaging access as needed.
+      - Default Jsonnet maps email when present (needs the email permission, the `email` scope, and user consent); the display name is available as `name` if your schema has a matching trait.
       - Optional pairing with LINE Messaging API enables push notifications to authenticated users.
     oryMechanism:
       - standards
@@ -3319,14 +3326,14 @@ integrations:
     status: active
     description: >-
       Naver Login as a social sign-in provider in Ory Network. Naver is South Korea's largest search portal — a
-      complementary sign-in option to Kakao for products targeting Korean users. OAuth 2.0 (not OIDC).
+      complementary sign-in option to Kakao for products targeting Korean users. Ory has no built-in Naver provider.
     useCase: >-
       A consumer product targeting South Korean users wants sign-in via Naver in addition to (or instead of) Kakao —
       Naver dominates search and adjacent services in Korea while Kakao dominates messaging.
     coreFunctionality: |-
-      - Configured via the Ory CLI as a generic provider — Naver isn't OIDC (no /.well-known/openid-configuration), so the Console wizard's discovery flow doesn't apply.
-      - Authorization endpoint: https://nid.naver.com/oauth2.0/authorize; Token endpoint: https://nid.naver.com/oauth2.0/token; Profile API: https://openapi.naver.com/v1/nid/me.
-      - Default Jsonnet maps response.id (Naver user id), response.email, response.nickname.
+      - Ory's generic provider works only with OpenID Connect providers: it reads endpoints from discovery and claims from the ID token, and doesn't accept explicit authorization, token, or profile endpoints.
+      - Naver's classic OAuth 2.0 API (nid.naver.com/oauth2.0, profile at openapi.naver.com/v1/nid/me) returns no ID token, so it needs an OAuth 2.0 to OIDC bridge that you build and operate, configured in Ory as a generic provider.
+      - Naver also publishes OIDC discovery at https://nid.naver.com/.well-known/openid-configuration; check whether your app can sign in with a generic provider on issuer https://nid.naver.com before building a bridge.
       - Configured at the Naver Developers Console (developers.naver.com/apps).
       - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/naver; contributions welcome.
     oryMechanism:
@@ -3366,14 +3373,14 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Patreon as a social sign-in provider in Ory Network. Patreon's OAuth response includes the user's identity plus
-      their pledge / membership data, which downstream code can use to gate access on tier or campaign membership.
+      Patreon as a social sign-in provider in Ory Network. Ory maps the user's Patreon identity (user ID, name, email,
+      profile image); Ory doesn't fetch pledge or membership data.
     useCase: >-
       A creator-economy product or member-only platform wants sign-in via the OAuth provider its patrons already use.
       Application code can read the Patreon membership API after sign-in to gate content on pledge tier.
     coreFunctionality: |-
       - First-party Kratos OIDC provider (`provider: patreon`); CLI-only configuration.
-      - Supported claims: Subject, Email, Name, GivenName, FamilyName, LastName, Picture.
+      - Supported claims: sub, email, name, given_name, family_name, last_name, picture.
       - Default Jsonnet maps email; downstream apps typically call Patreon's membership API with the access_token to gate access on tier.
       - Configured via Patreon's OAuth client portal; consent screen is Patreon-managed.
     oryMechanism:
@@ -3413,15 +3420,16 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Slack as a social sign-in provider in Ory Network. The "Sign in with Slack" OIDC flow returns the user's identity
-      plus their Slack workspace (team) membership, useful for B2B products where workspace membership signals access.
+      Slack as a social sign-in provider in Ory Network. The provider uses Slack's OAuth 2.0 "Sign in with Slack" flow,
+      which returns the user's identity plus the ID of their Slack workspace (team), useful for B2B products where
+      workspace membership signals access.
     useCase: >-
       A B2B SaaS, internal tool, or productivity app wants single-sign-on via the workspace its users already share.
-      Sign in with Slack returns the team_id claim so the app can scope access by Slack workspace.
+      Sign in with Slack returns the workspace ID as the `team` claim so the app can scope access by Slack workspace.
     coreFunctionality: |-
-      - First-party Kratos OIDC provider (`provider: slack`); discovery at https://slack.com/.well-known/openid-configuration.
-      - Slack-specific scopes (openid, email, profile) under "User Token Scopes" on the Slack app config.
-      - Default Jsonnet maps email + name; Slack adds team-specific claims (https://slack.com/team_id, https://slack.com/team_name) that map well into identity metadata for workspace-based policy.
+      - First-party Kratos provider (`provider: slack`) using Slack's OAuth 2.0 identity flow (slack.com/oauth/authorize and users.identity), not OIDC.
+      - Scopes identity.basic and identity.email under "User Token Scopes" on the Slack app config; the provider needs both client_id and client_secret.
+      - Claims: sub, name, email, picture, and the workspace ID as `team`, which maps well into identity metadata for workspace-based policy.
       - App must be Installed to each workspace before users can sign in.
       - Tokens are workspace-scoped — a user in two Slack workspaces will have two different (sub, team_id) tuples even with the same email.
     oryMechanism:
@@ -3438,7 +3446,7 @@ integrations:
     status: active
     description: >-
       Spotify as a social sign-in provider in Ory Network. Users sign in with their Spotify account; Ory maps Spotify's
-      OAuth2 response (id, email, display name, country, product tier) to the identity schema. Common in music,
+      profile (user ID, display name, email address, and profile image) to the identity schema. Common in music,
       entertainment, and creator-tool products.
     useCase: >-
       An entertainment or music-adjacent product wants sign-in via the OAuth provider its users already use to listen.
@@ -3446,7 +3454,7 @@ integrations:
     coreFunctionality: |-
       - First-party Kratos OAuth2 provider (`provider: spotify`); Spotify is not OIDC, so Ory calls the Spotify API to populate the claims envelope.
       - Common scopes: user-read-email, user-read-private (basic identity); add music-data scopes for personalization.
-      - Default Jsonnet maps email + display_name; can extend to country, product (free/premium), or Spotify URI.
+      - Default Jsonnet maps email + display name; Ory doesn't fetch country or product (free/premium) — call the Spotify API with the access token if you need them.
       - Spotify apps start in Development mode with a 25-user whitelist; production requires Spotify approval.
       - Refresh tokens supported by default.
     oryMechanism:
@@ -3471,7 +3479,7 @@ integrations:
     coreFunctionality: |-
       - Steam is NOT natively supported by Kratos — it speaks OpenID 2.0 (2007 spec), not OAuth 2.0/OIDC.
       - Recommended pattern: deploy a small OpenID 2.0 → OIDC proxy that wraps Steam's `https://steamcommunity.com/openid/login` endpoint and exposes a normal OIDC issuer; configure Kratos against the proxy as a generic provider.
-      - Alternative: implement Steam OpenID 2.0 in your backend and create/lookup identities via the Kratos Admin API, bypassing the social-signin subsystem.
+      - Ory doesn't provide the proxy; you build and operate it.
       - Steam does NOT share email; design the identity schema to use the 64-bit Steam ID as the credential identifier.
       - A Steam Web API key (from steamcommunity.com/dev/apikey) is needed to fetch profile data via GetPlayerSummaries; profile visibility may be restricted.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/steam.
@@ -3488,22 +3496,23 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Telegram does not implement OAuth 2.0 / OIDC; it provides a Login Widget that posts an HMAC-SHA256-signed payload
-      to a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot
-      token and returns the verified profile so applications can call the Ory Admin API to upsert the matching identity
-      and issue a session.
+      Telegram Login supports the OpenID Connect authorization code flow, so it connects to Ory as a generic provider
+      (issuer https://oauth.telegram.org). This integration also ships a validator for the legacy Login Widget's
+      HMAC-SHA256-signed payload, for teams that keep the widget behind their own OIDC bridge.
     useCase: >-
-      A consumer app wants Telegram as a sign-in option but Telegram has no OIDC, so Ory's native social-sign-in
-      providers don't apply. The bridge validates the Login Widget HMAC inline, returns suggested identity traits, and
-      the application uses Ory's Admin API to upsert the identity and start a session.
+      A consumer app wants Telegram as a sign-in option. New integrations configure Telegram's OIDC flow as a generic
+      provider; apps that keep the legacy widget verify its payload with the validator inside an OIDC bridge that they
+      build and operate.
     coreFunctionality: |-
-      - POST /telegram/validate verifies X-Webhook-Secret, computes HMAC-SHA256 over the sorted data_check_string with key SHA256(bot_token), and rejects expired auth_date.
-      - Returns the verified profile plus suggested_identity_traits (telegram_id, name, username) for the application's Admin API upsert.
-      - Configurable TELEGRAM_AUTH_MAX_AGE_SECONDS for replay window (default 24h per Telegram's recommendation; tighten for stricter session creation).
-      - Stateless and read-only — does not touch Ory directly; the application owns the upsert and session-bootstrap.
+      - OIDC: provider generic, issuer_url https://oauth.telegram.org, claims_source id_token (no UserInfo endpoint), scopes openid + profile (optionally phone); with pkce force, register /self-service/methods/oidc/callback in the bot's Allowed URLs.
+      - Telegram supplies sub, name, preferred_username, picture, and phone_number with the phone scope; no email address.
+      - Legacy widget: POST /telegram/validate verifies X-Webhook-Secret, computes HMAC-SHA256 over the sorted data_check_string with key SHA256(bot_token), and rejects expired auth_date.
+      - Configurable TELEGRAM_AUTH_MAX_AGE_SECONDS for the replay window (default 24h).
+      - The validator is stateless and does not call Ory; the bridge completes OIDC with the Telegram user ID as sub.
     oryMechanism:
       - actions
     protocol:
+      - oidc
       - custom
   - name: tiktok
     displayName: TikTok
@@ -3516,15 +3525,15 @@ integrations:
     description: >-
       Add Login with TikTok as a social sign-in provider in Ory Network. Useful for consumer media products, creator
       tools, and short-form video adjacent apps where TikTok is the audience graph. TikTok Login Kit is OAuth 2.0 (not
-      OIDC) and is configured as a generic provider with explicit endpoints.
+      OIDC), so it connects to Ory through an OAuth 2.0 to OIDC bridge that you build and operate.
     useCase: >-
       A consumer media or creator product wants Login with TikTok in addition to Google/Facebook so users with strong
       TikTok presence can sign in with the account they actually use day to day.
     coreFunctionality: |-
-      - Configured via the Ory CLI as a generic provider — TikTok isn't OIDC so the Console wizard's discovery flow doesn't apply.
-      - Authorization endpoint: https://www.tiktok.com/v2/auth/authorize; Token: https://open.tiktokapis.com/v2/oauth/token/; Profile: https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name.
-      - Default Jsonnet maps data.user.open_id, display_name, and email (when the email scope is granted).
-      - Scopes opt-in: `user.info.basic` is base; `user.info.email` is a separately approved scope and may require TikTok app review.
+      - Ory has no built-in TikTok provider, and the generic provider requires OIDC discovery and an ID token, so TikTok can't be configured in Ory directly.
+      - The bridge calls TikTok's authorization (https://www.tiktok.com/v2/auth/authorize/), token (https://open.tiktokapis.com/v2/oauth/token/), and user info (https://open.tiktokapis.com/v2/user/info/) endpoints and returns an ID token to Ory; configure the bridge as a generic provider.
+      - Scope user.info.basic covers open_id, avatar, and display name; production scopes can require app review.
+      - TikTok has no email scope; use open_id or union_id as the identifier.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/tiktok; contributions welcome.
     oryMechanism:
       - standards
@@ -3547,7 +3556,7 @@ integrations:
       already use. Optional Twitch scopes (channel info, follows, subscriptions) enable feature gating on creator tier.
     coreFunctionality: |-
       - Configured as a generic OIDC provider (`provider: generic`, `id: twitch`, issuer https://id.twitch.tv/oauth2) — there is no first-party `twitch` provider in Kratos. CLI-only configuration.
-      - Twitch publishes /.well-known/openid-configuration but the `openid` claim isn't returned in the access_token; Ory hits Twitch's /me API to populate the claims envelope.
+      - Twitch supports OIDC: Ory reads the claims from the ID token. email and email_verified appear only when requested via requested_claims.id_token together with the user:read:email scope.
       - Default Jsonnet returns email gated on email_verified.
       - Configured via the Twitch Developer Portal; scopes follow the Twitch Helix scope catalog.
     oryMechanism:
@@ -3572,6 +3581,7 @@ integrations:
     coreFunctionality: |-
       - First-party Kratos OIDC provider (`provider: uaepass`); both Console wizard and CLI configurations supported.
       - Issuer URL is environment-specific: https://id.uaepass.ae for production, https://stg-id.uaepass.ae for staging.
+      - Ory always uses PKCE with UAE PASS unless `pkce: never` is set, so register the redirect URI https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback (no provider ID).
       - Default Jsonnet maps sub → subject, email → email, fullnameEN → name.
       - Onboarding is gated — applications must be registered with the UAE PASS partner portal and approved before going live.
       - Supports both web and mobile authentication flows; mobile-app handoff to the UAE PASS app is documented on the partner portal.

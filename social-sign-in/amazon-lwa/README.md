@@ -12,9 +12,9 @@ Add Amazon (Login with Amazon, LWA) as a social sign-in provider in Ory Network.
 The full walkthrough (with screenshots and the Ory CLI alternative) lives in the [Ory docs page above](https://www.ory.com/docs/kratos/social-signin/amazon). Short version:
 
 1. In the [Amazon Developer Console](https://developer.amazon.com/), create a **Security Profile** (Login with Amazon → Create a New Security Profile). Note the Client ID and Client Secret.
-2. In the Ory Console, enable **OpenID Connect** under Social Sign-In, click **Add new OpenID Connect provider**, choose Amazon, and copy the Redirect URI.
+2. In the Ory Console, enable **OpenID Connect** under Social Sign-In, click **Add new OpenID Connect provider**, and choose Amazon.
 3. Paste the Client ID and Client Secret into the Ory Console form.
-4. In the Amazon Security Profile → Web Settings, paste the Redirect URI into **Allowed Return URLs**.
+4. In the Amazon Security Profile → Web Settings, add `https://$PROJECT_SLUG.projects.oryapis.com/self-service/methods/oidc/callback` to **Allowed Return URLs**. The `amazon` provider rejects `pkce: auto`, the default, so set `pkce: force` as the docs page does. With forced PKCE the redirect URI has no provider ID.
 5. Add the `profile` scope and the Jsonnet data-mapping snippet from the docs page (default maps `email`).
 
 ## License

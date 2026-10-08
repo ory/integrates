@@ -13,10 +13,12 @@ Automatic user provisioning and deprovisioning from Google Workspace into Ory Ne
 
 The full walkthrough lives in the [Ory docs page above](https://www.ory.com/docs/kratos/manage-identities/scim/google-workspace). Short version:
 
-1. In **Google Workspace Admin Console** → **Apps → Web and mobile apps** → **Add app → Search for apps**, find or add **Ory Network** (or your custom SAML app).
-2. Under the app's **Auto-provisioning** section, enable SCIM and paste:
-   - **Endpoint URL** = SCIM endpoint from your Ory Network organization's setup-link.
-   - **Access token** = SCIM bearer token from the same setup-link.
+Google Workspace provisions users only to the apps in its [list of supported apps](https://knowledge.workspace.google.com/admin/users/advanced/about-automated-user-provisioning), not to a custom SCIM endpoint such as Ory Network. The Ory Network guide works around this with a supported catalog app.
+
+1. In **Google Workspace Admin Console** → **Apps → Web and mobile apps** → **Add app → Search for apps**, search for **Keeper** and select **Keeper Web (SAML)**.
+2. Under the app's provisioning section, click **Configure autoprovisioning** and enter:
+   - **Access token** = the authorization header secret of the SCIM client on your Ory Network organization.
+   - **Endpoint URL** = the SCIM client's base URL.
 3. Configure the **attribute mapping** — Google primary email → `userName`, given/family name → `name.givenName`/`name.familyName`, groups → `groups`.
 4. Choose the provisioning scope — which OUs / groups Workspace will sync to Ory.
 5. Toggle **on for all** users / OUs covered.

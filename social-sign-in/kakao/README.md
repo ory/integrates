@@ -9,13 +9,26 @@ Add Kakao Login as a social sign-in provider in Ory Network. Kakao is the domina
 
 ## Setup
 
-Kakao supports OIDC. Configure as a generic provider in Ory. Short version:
+Kakao Login supports OpenID Connect, so configure it as a [generic provider](https://www.ory.com/docs/kratos/social-signin/generic) in Ory. Short version:
 
-1. Create a Kakao application at the [Kakao Developers Console](https://developers.kakao.com/) and enable Kakao Login.
-2. Add the redirect URI from the Ory Console under **Product Settings → Kakao Login → Redirect URI**.
-3. Note the REST API key (Client ID) and the Client Secret (must be enabled separately under **Security**). Issuer URL: `https://kauth.kakao.com`.
-4. In the Ory Console, **Authentication → Social Sign-In → Add a Generic Provider**. Set Client ID, Client Secret, and Issuer URL.
-5. Add the `openid`, `profile_nickname`, `account_email` scopes plus a Jsonnet snippet mapping the Kakao claims (`sub`, `nickname`, `email`) to your identity schema.
+1. Create an app in the [Kakao Developers console](https://developers.kakao.com/console/app). Note the **REST API key**, which is the client ID, and the **client secret** of that key. Ory requires the client secret.
+2. Turn on **Kakao Login** and **OpenID Connect** for the app.
+3. Register the Ory redirect URI for the REST API key: `https://$PROJECT_SLUG.projects.oryapis.com/self-service/methods/oidc/callback/kakao`. The last path segment is the provider ID that you set in Ory.
+4. Configure the consent items you need: `profile_nickname`, `profile_image`, and `account_email`. Kakao can require additional permissions, such as business verification, before you can use some consent items.
+5. In the Ory Console, **Authentication → Social Sign-In → Add a Generic Provider**, or use the Ory CLI with `provider: generic`. Set Client ID, Client Secret, Issuer URL `https://kauth.kakao.com`, and the scopes `openid`, `profile_nickname`, `profile_image`, and `account_email`.
+6. Add a Jsonnet data mapping. Kakao's ID token contains `sub`, and `nickname`, `picture`, and `email` when the user consents to the matching consent items. It has no `email_verified` claim. This mapping copies the email address to the `email` trait when Kakao returns one:
+
+   ```jsonnet
+   local claims = std.extVar('claims');
+
+   {
+     identity: {
+       traits: {
+         [if 'email' in claims then 'email' else null]: claims.email,
+       },
+     },
+   }
+   ```
 
 ## Status
 

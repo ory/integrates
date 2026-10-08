@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Reference webhook handler for the Ory <> BambooHR integration.
-// Looks up the BambooHR employee matching an Ory identity's email and returns
-// employment fields back to Ory so the post-flow Action can decide whether to
-// allow the flow.
+// Looks up the BambooHR employee matching an Ory identity's email. Active
+// employees get 204 No Content, which lets the flow continue. Everyone else
+// gets 403 with a Kratos `messages` body, which blocks the flow and shows the
+// reason to the user. The hook must use `response.parse: true` for Kratos to
+// read that body.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -39,6 +41,18 @@ interface BamboohrDirectoryEmployee {
 interface BamboohrDirectoryResponse {
   employees?: BamboohrDirectoryEmployee[];
 }
+// Kratos only renders messages from a 4xx body in this shape.
+function denyFlow(res: Response, text: string) {
+  res.status(403).json({
+    messages: [
+      {
+        instance_ptr: "#/",
+        messages: [{ id: 10000001, text, type: "error", context: {} }],
+      },
+    ],
+  });
+}
+
 interface BamboohrEmployeeDetail {
   status?: string;
   jobTitle?: string;
@@ -97,7 +111,7 @@ app.post(
 
       if (!employee) {
         console.log(`No BambooHR record for ${email} (identity ${identity_id})`);
-        res.json({ ok: true, employed: false });
+        denyFlow(res, "Only current employees can sign in.");
         return;
       }
 
@@ -116,14 +130,12 @@ app.post(
       }
 
       const detail = (await empRes.json()) as BamboohrEmployeeDetail;
-      res.json({
-        ok: true,
-        employed: detail.status === "Active",
-        employee_id: employee.id,
-        job_title: detail.jobTitle ?? null,
-        department: detail.department ?? null,
-        hire_date: detail.hireDate ?? null,
-      });
+      if (detail.status !== "Active") {
+        console.log(`BambooHR employee ${employee.id} is ${detail.status ?? "unknown"} (identity ${identity_id})`);
+        denyFlow(res, "Only current employees can sign in.");
+        return;
+      }
+      res.status(204).end();
     } catch (err) {
       console.error("Enrich error:", (err as Error).message);
       res.status(502).json({ error: "enrich_failed" });

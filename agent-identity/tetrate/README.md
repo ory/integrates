@@ -11,7 +11,7 @@
 
 Two layers, each owning a distinct concern:
 
-1. **Authorization / policy layer (Ory)** — decides what an agent or user may access at the resource level. AI agents are first-class identities authenticated through Ory; Hydra issues OAuth2/OIDC tokens (`client_credentials`), and Keto holds the fine-grained policies.
+1. **Authorization / policy layer (Ory)** — decides what an agent or user may access at the resource level. Each AI agent is an OAuth2 client in Ory Hydra and gets tokens with the `client_credentials` grant. In these tokens, `sub` is the client ID, so policies in Ory Keto refer to the agent by its client ID. An agent that acts for a user needs a flow with user consent, such as the authorization code flow, so that the token's `sub` identifies the user. For delegated requests, identify the agent from the validated access token's `client_id` claim and check both the agent's and the user's permissions.
 2. **Network / gateway layer (Tetrate)** — enforces those policies on live traffic when agents call models, tools, and enterprise services. When an agent invokes an MCP tool, Tetrate Agent Router Enterprise evaluates the request against the Ory-defined policies.
 
 Because enforcement is parameter-level, Tetrate can gate **not only which tools** an agent may use **but also which request parameters** are allowed, based on policies defined in Ory Keto.
@@ -29,7 +29,7 @@ For example: an agent processes routine refunds automatically but requires appro
 ## Notable
 
 - Tetrate Agent Router Enterprise is built on **Envoy AI Gateway** — see [`api-gateways/envoy`](../../api-gateways/envoy/) for the underlying pattern of validating Ory tokens at the edge.
-- Closely related to [`agent-identity/skyfire`](../skyfire/): both treat AI agents as first-class Ory identities, differing in where verification and enforcement sit.
+- Closely related to [`agent-identity/skyfire`](../skyfire/): both model AI agents as OAuth2 clients in Ory Hydra, differing in where verification and enforcement sit.
 - Agent-identity is an emerging space — this integration reflects an announced partnership and is a reference architecture rather than a turnkey product.
 
 ## Status

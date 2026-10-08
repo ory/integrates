@@ -14,7 +14,7 @@ The full walkthrough (with screenshots and the Ory CLI alternative) lives in the
 1. Create a [LINE Business Account](https://account.line.biz/signup) and a new channel in the [LINE Developer Console](https://developers.line.biz/console/).
 2. On the channel, enable the `PROFILE`, `OPENID_CONNECT`, and `OC_EMAIL` permissions and add the redirect URI from the Ory Console as a Callback URL.
 3. Copy the Channel ID (Client ID) and Channel Secret (Client Secret) into the Ory Console's LINE form.
-4. Add the Jsonnet data-mapping snippet from the docs page (default maps `email` and `name` → `first_name`).
+4. Add the Jsonnet data-mapping snippet from the docs page (default maps `email` when present). LINE returns the email address only when your channel has permission to obtain email addresses, Ory requests the `email` scope, and the user consents. The display name is available as `claims.name`; to store it, add a matching trait to your identity schema and map it.
 5. Save and trigger a registration flow to test.
 
 ## License

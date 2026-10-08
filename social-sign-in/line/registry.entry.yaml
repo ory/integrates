@@ -17,7 +17,7 @@ useCase: >-
 coreFunctionality: |-
   - First-party Kratos OIDC provider (`provider: line`); both Console wizard and CLI configurations supported.
   - LINE channel must enable `PROFILE`, `OPENID_CONNECT`, and `OC_EMAIL` permissions on the LINE Developer Console.
-  - Default Jsonnet maps email + name → first_name; add scopes for richer profile or messaging access as needed.
+  - Default Jsonnet maps email when present (needs the email permission, the `email` scope, and user consent); the display name is available as `name` if your schema has a matching trait.
   - Optional pairing with LINE Messaging API enables push notifications to authenticated users.
 oryMechanism:
   - standards

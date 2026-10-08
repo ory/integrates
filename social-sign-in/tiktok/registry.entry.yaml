@@ -10,15 +10,15 @@ maintainedBy: Community contributors
 description: >-
   Add Login with TikTok as a social sign-in provider in Ory Network. Useful for consumer media products, creator
   tools, and short-form video adjacent apps where TikTok is the audience graph. TikTok Login Kit is OAuth 2.0
-  (not OIDC) and is configured as a generic provider with explicit endpoints.
+  (not OIDC), so it connects to Ory through an OAuth 2.0 to OIDC bridge that you build and operate.
 useCase: >-
   A consumer media or creator product wants Login with TikTok in addition to Google/Facebook so users with strong
   TikTok presence can sign in with the account they actually use day to day.
 coreFunctionality: |-
-  - Configured via the Ory CLI as a generic provider — TikTok isn't OIDC so the Console wizard's discovery flow doesn't apply.
-  - Authorization endpoint: https://www.tiktok.com/v2/auth/authorize; Token: https://open.tiktokapis.com/v2/oauth/token/; Profile: https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name.
-  - Default Jsonnet maps data.user.open_id, display_name, and email (when the email scope is granted).
-  - Scopes opt-in: `user.info.basic` is base; `user.info.email` is a separately approved scope and may require TikTok app review.
+  - Ory has no built-in TikTok provider, and the generic provider requires OIDC discovery and an ID token, so TikTok can't be configured in Ory directly.
+  - The bridge calls TikTok's authorization (https://www.tiktok.com/v2/auth/authorize/), token (https://open.tiktokapis.com/v2/oauth/token/), and user info (https://open.tiktokapis.com/v2/user/info/) endpoints and returns an ID token to Ory; configure the bridge as a generic provider.
+  - Scope user.info.basic covers open_id, avatar, and display name; production scopes can require app review.
+  - TikTok has no email scope; use open_id or union_id as the identifier.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/tiktok; contributions welcome.
 oryMechanism:
   - standards

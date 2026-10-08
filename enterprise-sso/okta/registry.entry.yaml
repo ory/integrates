@@ -17,7 +17,7 @@ useCase: >-
 coreFunctionality: |-
   - Configured per Ory Polis docs at /polis/sso-providers/okta; Polis acts as the SAML SP / OIDC RP, Okta as the IdP.
   - Okta side: Applications → Create App Integration → SAML 2.0 (preferred) or OIDC Web Application.
-  - SAML: Single sign-on URL = Polis ACS URL; Audience URI = Polis Entity ID; both from Ory's setup-link.
+  - SAML on Ory Network: Single sign-on URL = https://<project-slug>.projects.oryapis.com/saml/api/oauth/saml; Audience URI = https://<project-slug>.projects.oryapis.com/self-service/methods/saml/organizations/<organization-id>.
   - Attribute statements: email, firstName, lastName. Groups released only if explicitly mapped in attribute statements (SAML) or claims (OIDC).
   - Sign-on Policies (MFA, network zones, device trust) sit at the Okta layer; resulting authenticated assertion flows through to Ory.
   - For SCIM provisioning of Okta users into Ory, see directory-sync/okta-scim (separate concern).

@@ -9,14 +9,14 @@ type: config
 maintainedBy: Ory Engineering
 description: >-
   Automatic user provisioning and deprovisioning from JumpCloud into Ory Network / Ory Polis via SCIM 2.0.
-  Documented directly in /polis/directory-sync/providers/jumpcloud. Pair with enterprise-sso/jumpcloud for
+  Documented in /kratos/manage-identities/scim (Ory Network) and /polis/directory-sync/providers/jumpcloud (Ory Polis self-hosted). Pair with enterprise-sso/jumpcloud for
   the federated sign-in side.
 useCase: >-
   An Ory customer running enterprise SSO from JumpCloud wants user lifecycle events (create / update /
   disable) in JumpCloud to flow into Ory automatically — no manual user management, no stale identities
   after offboarding.
 coreFunctionality: |-
-  - Configured in JumpCloud Admin Console → SSO Applications → app → Identity Management tab. Pastes SCIM Base URL + API key from Ory's directory-sync setup-link.
+  - Configured in JumpCloud Admin Console → SSO Applications → app → Identity Management tab. Pastes the SCIM Base URL + API key: on Ory Network, the base URL and authorization header secret of a SCIM client created on an organization; on self-hosted Ory Polis, the directory-sync endpoint and token.
   - Attribute mapping: email → userName; given/family name → name.givenName / name.familyName; group membership → groups.
   - SCIM provisioning is tied to a SAML application — cannot run SCIM without also having the corresponding SAML app configured.
   - JumpCloud pushes only members of assigned user groups; manage scope via group assignment, not user assignment.

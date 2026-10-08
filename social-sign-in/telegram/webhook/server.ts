@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Reference handler that validates Telegram Login Widget payloads.
+// Reference handler that validates legacy Telegram Login Widget payloads.
 //
-// Telegram has no OIDC. The Login Widget posts an HMAC-SHA256-signed payload
-// to a customer-provided URL. This handler:
-//   1. Verifies the X-Webhook-Secret from the calling application.
+// The legacy widget posts an HMAC-SHA256-signed payload instead of returning an
+// OpenID Connect authorization code. An OIDC bridge calls this handler, which:
+//   1. Verifies the X-Webhook-Secret from the calling bridge.
 //   2. Verifies the Telegram-side HMAC against the bot token.
-//   3. Returns the validated profile so the application can call the Ory Admin
-//      API to upsert an identity matching telegram.id and start a session.
+//   3. Returns the validated profile so the bridge can complete OIDC with the
+//      Telegram user ID as the subject.
 //
-// Spec: https://core.telegram.org/widgets/login#checking-authorization
+// Spec: https://core.telegram.org/widgets/login-legacy
 
 import "dotenv/config";
 import crypto from "node:crypto";

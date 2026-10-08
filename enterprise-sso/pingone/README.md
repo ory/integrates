@@ -2,17 +2,26 @@
 
 > **Maintained by:** Ory Engineering
 
-Configure [PingOne](https://www.pingidentity.com/en/platform/capabilities/single-sign-on.html) — Ping Identity's cloud-based identity platform — as a SAML 2.0 Identity Provider into Ory Polis. Common in regulated industries (financial services, healthcare, government) where Ping's compliance posture and governance features matter.
+Configure [PingOne](https://www.pingidentity.com/en/platform/capabilities/single-sign-on.html) — Ping Identity's cloud-based identity platform — as a SAML 2.0 Identity Provider for enterprise single sign-on (SSO). Common in regulated industries (financial services, healthcare, government) where Ping's compliance posture and governance features matter.
 
-**Type:** config (Polis SAML connection — no webhook code)
+**Type:** config (SAML connection on an Ory Network organization, or self-hosted Ory Polis — no webhook code)
 **Docs page:** [ory.com/docs/integrates-with/enterprise-sso/pingone](https://www.ory.com/docs/integrates-with/enterprise-sso/pingone) — full guide: [ory.com/docs/polis/sso-providers/pingone](https://www.ory.com/docs/polis/sso-providers/pingone)
+
+## Ory Network connection values
+
+On Ory Network, add PingOne as a SAML connection to an [organization](https://www.ory.com/docs/kratos/organizations) in your project. In the PingOne SAML application, enter these values:
+
+- **ACS URL:** `https://<your-project-slug>.projects.oryapis.com/saml/api/oauth/saml`
+- **SP entity ID:** `https://<your-project-slug>.projects.oryapis.com/self-service/methods/saml/organizations/<your-organization-id>`
+
+The Ory Console shows these values when you add the connection. When you self-host Ory Polis, use the URLs of your own Ory Polis deployment instead.
 
 ## Setup
 
 The full walkthrough lives in the [Ory docs page above](https://www.ory.com/docs/polis/sso-providers/pingone). Short version:
 
 1. In the **PingOne Admin Console** → **Connections** → **Applications** → **+** → **Add Application** → choose **Web App** → **SAML**.
-2. Configure the SAML application with values from your Ory Network organization's setup-link:
+2. Configure the SAML application with values from [Ory Network connection values](#ory-network-connection-values):
    - **ACS URL** and **Entity ID**.
 3. Configure **Attribute Mapping**: `email`, `firstName`, `lastName`. Add a Group attribute mapping if you map them.
 4. Assign user / group **Access** to the application.

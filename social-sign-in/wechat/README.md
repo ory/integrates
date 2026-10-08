@@ -18,11 +18,11 @@ Stand up a small bridge in front of WeChat that:
 2. Translates the parameters (`client_id` → `appid`, etc.) and forwards to WeChat's authorization endpoint.
 3. Validates WeChat's response, calls `/sns/userinfo`, and returns a normal OIDC `id_token` to Kratos.
 
-Then configure Kratos against the proxy as a [generic OIDC provider](https://www.ory.com/docs/kratos/social-signin/generic).
+Then configure Kratos against the proxy as a [generic OIDC provider](https://www.ory.com/docs/kratos/social-signin/generic). Ory doesn't provide this proxy: you build and operate it.
 
 ### Without a proxy
 
-You can configure Kratos's `provider: generic` against WeChat's URLs directly, but parameter renaming and the missing `id_token` mean you'll need to override Kratos's userinfo behavior — usually impractical without the proxy above.
+Not possible. Kratos's `provider: generic` reads the endpoints from an OpenID Connect discovery document and the user's claims from the ID token, and it doesn't accept explicit authorization or token endpoints. WeChat publishes no discovery document and returns no `id_token`.
 
 ## WeChat-specific quirks to expect
 

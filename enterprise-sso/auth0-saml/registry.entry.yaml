@@ -16,8 +16,8 @@ useCase: >-
   customer's IdP happens to be Auth0 — this integration is the per-customer connection setup.
 coreFunctionality: |-
   - Configured per Ory Polis docs at /polis/sso-providers/auth0; Polis acts as the SAML SP, Auth0 as the IdP.
-  - Auth0 side: Regular Web Application + SAML2 WEB APP addon; configure ACS URL + Audience from Ory's setup-link.
-  - SP-initiated only — Auth0 also supports IdP-initiated but Polis consumes SP-initiated.
+  - Auth0 side: Regular Web Application + SAML2 WEB APP addon; configure ACS URL (https://<project-slug>.projects.oryapis.com/saml/api/oauth/saml) + Audience (https://<project-slug>.projects.oryapis.com/self-service/methods/saml/organizations/<organization-id>) on Ory Network.
+  - Auth0 supports both SP-initiated and IdP-initiated SSO. SAML connections on Ory Network support IdP-initiated login (off by default); see ory.com/docs/kratos/organizations#idp-initiated-login.
   - Use Auth0 Actions (not the addon's claims editor) for non-trivial attribute transformations — version-controlled, supported path.
   - MFA enforcement sits at the Auth0 IdP layer; Ory consumes the resulting authenticated assertion.
 oryMechanism:

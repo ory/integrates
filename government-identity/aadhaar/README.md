@@ -25,7 +25,7 @@ Common licensed providers:
 ## Setup outline
 
 1. Sign up with a licensed Aadhaar eKYC provider; complete KYB and licensing.
-2. Configure an Ory Actions webhook on `registration.after` (async) pointing at your verification service.
+2. Configure an Ory Actions web hook pointing at your verification service, without `response.parse`, in a registration method list such as `selfservice.flows.registration.after.password.hooks`. That hook runs after Ory saves the identity, so it receives the real identity ID. Hooks with `response.parse: true` run before the identity is saved and receive the ID `00000000-0000-0000-0000-000000000000`. Ory runs the global `selfservice.flows.registration.after.hooks` list only for a method that has no hooks of its own.
 3. Your service kicks off the OTP-based eKYC flow with the licensed provider.
 4. After the user completes OTP verification, write the verified eKYC fields back to Ory `metadata_public.aadhaar` via the Kratos Admin API.
 

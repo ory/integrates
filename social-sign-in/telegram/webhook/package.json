@@ -1,7 +1,7 @@
 {
   "name": "ory-telegram-webhook",
   "version": "1.0.0",
-  "description": "Reference webhook handler that validates Telegram Login Widget HMACs and returns the verified profile so applications can call the Ory Admin API.",
+  "description": "Reference handler that validates legacy Telegram Login Widget HMACs for an OIDC bridge.",
   "main": "server.ts",
   "scripts": {
     "start": "tsx server.ts",

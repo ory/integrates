@@ -9,8 +9,8 @@ type: config
 maintainedBy: Ory Engineering
 description: >-
   Configure any OpenID Connect-compliant Identity Provider with Ory. OIDC shows up in two product surfaces:
-  Ory Kratos (consumer / federated sign-in — Kratos is the RP) and Ory Polis (B2B enterprise SSO with
-  per-organization isolation — Polis is the RP). Same source content mirrored under enterprise-sso/generic-oidc.
+  Ory Kratos (consumer / federated sign-in — Kratos is the RP) and B2B enterprise SSO with per-organization
+  isolation (an OIDC connection on an Ory Network organization, or self-hosted Ory Polis). Same source content mirrored under enterprise-sso/generic-oidc.
 useCase: >-
   An Ory customer needs to integrate an OIDC IdP that isn't on a vendor-specific docs list — open-source IdPs
   (Keycloak, Authentik, Zitadel), in-house implementations, or any custom OIDC server. Same reference works
@@ -18,7 +18,7 @@ useCase: >-
 coreFunctionality: |-
   - Two product surfaces: Kratos social sign-in (docs/kratos/social-signin/generic — for consumer/user-facing flows) and Polis (docs/polis/sso-providers/generic-oidc — for B2B enterprise SSO).
   - Discovery via /.well-known/openid-configuration on the issuer URL — Ory fetches and caches automatically.
-  - Required from the IdP: issuer URL, client id, client secret, plus the Ory callback URL configured as redirect URI.
+  - Required from the IdP: issuer URL, client id, client secret, plus the Ory callback URL configured as redirect URI (/self-service/methods/oidc/callback/<provider-id> for social sign-in, /self-service/methods/oidc/organization/<organization-id>/callback/<connection-id> for organization connections, or /self-service/methods/oidc/callback with pkce: force).
   - Standard scopes: openid (required), profile, email; groups when claim mapping needs them.
   - Same content mirrored at enterprise-sso/generic-oidc — categorization choice; either entry resolves to the same authoritative Ory docs.
 oryMechanism:

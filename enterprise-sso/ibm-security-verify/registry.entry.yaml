@@ -2,22 +2,22 @@
 # Run `node scripts/build-registry.js` from the repo root to regenerate registry.yaml.
 
 name: ibm-security-verify
-displayName: IBM Security Verify
+displayName: IBM Verify
 vendor: IBM
 category: enterprise-sso
 type: config
 maintainedBy: Community contributors
 description: >-
-  Configure IBM Security Verify (IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or OIDC identity
-  provider in Ory Polis. Documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify; configures via the Polis generic SAML or generic OIDC walkthrough.
+  Configure IBM Verify (formerly IBM Security Verify, IBM's cloud-delivered IAM platform) as an upstream SAML 2.0 or OIDC identity
+  provider for an Ory Network organization or self-hosted Ory Polis. Documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify; configures via the Polis generic SAML or generic OIDC walkthrough.
 useCase: >-
-  An enterprise running IBM Security Verify (Verify Cloud SaaS or Verify Access on-prem) as their workforce IdP
+  An enterprise running IBM Verify (SaaS) or IBM Verify Identity Access (on-premises) as their workforce IdP
   wants Ory-protected applications to consume IBM-issued sessions instead of standing up a separate identity
   store.
 coreFunctionality: |-
   - Configured as a generic SAML 2.0 SP (preferred) or generic OIDC RP in Ory Polis pointing at an IBM Verify Custom SAML 2.0 / Custom OIDC application.
-  - Same federation flows for both Verify Cloud (SaaS) and Verify Access (on-prem) — difference is administration location.
-  - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Polis consumes the resulting authenticated assertion.
+  - IBM Verify (SaaS) and IBM Verify Identity Access (on-premises, formerly IBM Security Verify Access) both support SAML 2.0 and OIDC federation — difference is administration location.
+  - IBM access policies (risk-based auth, conditional access) stay on the IBM side; Ory consumes the resulting authenticated assertion.
   - Passkey / FIDO2 enforcement configured in IBM Verify's policy engine; Ory consumes the assurance level reported in the assertion.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/enterprise-sso/ibm-security-verify.
 oryMechanism:
