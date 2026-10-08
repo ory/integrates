@@ -15,8 +15,8 @@ useCase: >-
   An Ory Network customer with EU data-residency or GDPR concerns wants a EU-headquartered email vendor for
   identity emails, in addition to or instead of US-based providers like SendGrid or Mailgun.
 coreFunctionality: |-
-  - SMTP relay (recommended): smtps://<smtp_login>:<smtp_key>@smtp-relay.brevo.com:587 (STARTTLS) or :465 (TLS).
-  - REST API alternative: POST https://api.brevo.com/v3/smtp/email with header `api-key: <brevo-api-key>` and a Jsonnet body wired via Kratos's HTTP courier.
+  - SMTP relay (recommended): smtp://<smtp_login>:<smtp_key>@smtp-relay.brevo.com:587 (STARTTLS) or smtps://…@smtp-relay.brevo.com:465 (implicit TLS).
+  - REST API alternative: POST https://api.brevo.com/v3/smtp/email with header `api-key: <brevo-api-key>` and a Jsonnet body wired via Kratos's HTTP email courier (courier.delivery_strategy: http).
   - Brevo SMTP keys are distinct from API keys — do not confuse them.
   - Free tier rate-limits SMTP; identity flows at scale should be on a paid plan.
   - DKIM and Return-Path must be aligned with the From domain for Gmail/Microsoft deliverability.

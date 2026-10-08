@@ -1,9 +1,11 @@
-// Body for the sync post-registration Ory Action that starts a Persona inquiry.
-function(ctx) {
-  kratos_identity_id: ctx.identity.id,
-  email: ctx.identity.traits.email,
-  first_name: if std.objectHas(ctx.identity.traits, "name") && std.objectHas(ctx.identity.traits.name, "first")
-              then ctx.identity.traits.name.first else "",
-  last_name:  if std.objectHas(ctx.identity.traits, "name") && std.objectHas(ctx.identity.traits.name, "last")
-              then ctx.identity.traits.name.last else "",
-}
+// Body for the post-registration Ory Action that starts a Persona inquiry.
+// The action runs after the identity is saved, so ctx.identity.id is the real ID.
+function(ctx)
+  local traits = std.get(ctx.identity, 'traits', {});
+  local name = std.get(traits, 'name', {});
+  {
+    kratos_identity_id: ctx.identity.id,
+    email: std.get(traits, 'email', null),
+    first_name: if name == null then '' else std.get(name, 'first', ''),
+    last_name: if name == null then '' else std.get(name, 'last', ''),
+  }

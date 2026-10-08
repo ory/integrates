@@ -1,15 +1,34 @@
-hooks:
-  - hook: web_hook
-    config:
-      url: https://your-deployed-handler.example.com/okta-verify/challenge
-      method: POST
-      body: file://./jsonnet/identity.jsonnet
-      auth:
-        type: api_key
-        config:
-          name: X-Webhook-Secret
-          value: <your-shared-secret>
-          in: header
-      response:
-        ignore: false
-        parse: true
+# Merge into the identity configuration. The password lists are aliased into
+# the oidc, code, passkey, and webauthn lists, so every sign-in method runs
+# the same hooks. Alias them into any other method you enable, such as saml,
+# the same way. Encode jsonnet/identity.jsonnet with:
+#
+#   base64 < jsonnet/identity.jsonnet | tr -d '\n'
+
+selfservice:
+  flows:
+    login:
+      after:
+        password:
+          hooks: &login_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/okta-verify/verify
+                method: POST
+                body: base64://<base64-encoded-jsonnet/identity.jsonnet>
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+                response:
+                  parse: true
+        oidc:
+          hooks: *login_after_hooks
+        code:
+          hooks: *login_after_hooks
+        passkey:
+          hooks: *login_after_hooks
+        webauthn:
+          hooks: *login_after_hooks

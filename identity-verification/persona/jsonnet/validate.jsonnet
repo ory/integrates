@@ -1,11 +1,9 @@
-// Body for the sync post-login Ory Action that reads stored Persona
-// verification status and blocks login when it's "declined".
-function(ctx) {
-  kratos_identity_id: ctx.identity.id,
-  persona_inquiry_id:
-    if ctx.identity.metadata_admin != null && std.objectHas(ctx.identity.metadata_admin, "persona_inquiry_id")
-    then ctx.identity.metadata_admin.persona_inquiry_id else null,
-  persona_verification_status:
-    if ctx.identity.metadata_admin != null && std.objectHas(ctx.identity.metadata_admin, "persona_verification_status")
-    then ctx.identity.metadata_admin.persona_verification_status else null,
-}
+// Body for the post-login Ory Action that reads the stored Persona
+// verification status and blocks login when it's "declined". The webhook
+// payload has no metadata_admin, so the status lives in metadata_public.
+function(ctx)
+  local metadata = std.get(ctx.identity, 'metadata_public', null);
+  {
+    persona_verification_status:
+      if metadata == null then null else std.get(metadata, 'persona_verification_status', null),
+  }

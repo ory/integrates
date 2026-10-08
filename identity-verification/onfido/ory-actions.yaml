@@ -1,44 +1,44 @@
-# Onfido identity-verification hooks.
+# Onfido identity-verification hook.
 #
-# Two Ory-side hooks (initiate + validate). Onfido also POSTs back to
+# Only the login check is an Ory Action. Ory doesn't relay webhook responses
+# to the browser, so your backend calls /onfido/initiate after sign-up and
+# renders the Onfido SDK with the returned token. Onfido also POSTs back to
 # /onfido/callback when the workflow completes; that endpoint is gated by
 # Onfido's HMAC-SHA256 signature, not by this Ory webhook secret.
+#
+# Ory Kratos Identities runs the flow-level after.hooks list only for a method
+# that has no hooks of its own, so the hook goes in the method lists. The
+# password lists are aliased into the oidc, code, passkey, and webauthn lists,
+# so every sign-in method runs the same hooks. Alias them into any other
+# method you enable, such as saml, the same way.
+#
+# On Ory Network, replace the file:// body with
+# base64://<base64-encoded-jsonnet>.
 
 selfservice:
   flows:
-    registration:
-      after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/onfido/initiate
-              method: POST
-              body: file://./jsonnet/initiate.jsonnet
-              can_interrupt: false
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
     login:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/onfido/validate
-              method: POST
-              body: file://./jsonnet/validate.jsonnet
-              can_interrupt: true
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &login_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/onfido/validate
+                method: POST
+                body: file://./jsonnet/validate.jsonnet
+                response:
+                  parse: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+        oidc:
+          hooks: *login_after_hooks
+        code:
+          hooks: *login_after_hooks
+        passkey:
+          hooks: *login_after_hooks
+        webauthn:
+          hooks: *login_after_hooks

@@ -15,8 +15,8 @@ useCase: >-
   An Ory Network customer with high transactional email volume and stringent deliverability requirements wants
   enterprise-grade tooling and per-region (US vs EU) hosting for data-residency.
 coreFunctionality: |-
-  - SMTP relay (recommended): smtps://SMTP_Injection:<API_KEY>@smtp.sparkpostmail.com:587 (US) or smtp.eu.sparkpost.com (EU). The literal username "SMTP_Injection" is correct for all customers; password is the API key.
-  - REST Transmissions API alternative: POST https://api.sparkpost.com/api/v1/transmissions (US) or api.eu.sparkpost.com (EU) with `Authorization: <API_KEY>` and a Jsonnet body.
+  - SMTP relay (recommended): smtp://SMTP_Injection:<API_KEY>@smtp.sparkpostmail.com:587 (US, STARTTLS) or smtp.eu.sparkpostmail.com (EU). The literal username "SMTP_Injection" is correct for all customers; password is the API key.
+  - REST Transmissions API alternative: POST https://api.sparkpost.com/api/v1/transmissions (US) or api.eu.sparkpost.com (EU) with `Authorization: <API_KEY>` and a Jsonnet body, via Kratos's HTTP email courier (courier.delivery_strategy: http).
   - SparkPost separates US and EU accounts — pick data residency before integration; migrations are not trivial.
   - API key needs the "Send via SMTP" permission; minimum scope is sufficient.
   - Stored templates available via the API if SparkPost-side template management is preferred over Kratos-side rendering (not recommended — Ory renders templates by default).

@@ -20,7 +20,7 @@ Ory Kratos courier → Brevo SMTP relay (smtp-relay.brevo.com:587) → recipient
 1. **Ory Network account.**
 2. **Brevo account** at [brevo.com](https://www.brevo.com/).
 3. A **verified sender domain** in Brevo (DKIM + Return-Path). Unauthenticated senders will be filtered or rejected by major providers.
-4. An **SMTP key** generated from **Brevo → SMTP & API → SMTP** — note the SMTP login (your Brevo account email) and the SMTP key.
+4. An **SMTP key** generated from **Brevo → SMTP & API → SMTP** — note the SMTP login and the SMTP key shown on that page. URI-encode both in the connection URI (for example, `@` becomes `%40`).
 
 ## Configuration
 
@@ -32,32 +32,34 @@ In the Ory Console under **Email & SMS → Email** or via CLI:
 ory patch identity-config \
   --project <your-project-id> \
   --workspace <your-workspace-id> \
-  --replace '/courier/smtp/connection_uri="smtps://<brevo-smtp-login>:<brevo-smtp-key>@smtp-relay.brevo.com:587"' \
+  --replace '/courier/smtp/connection_uri="smtp://<brevo-smtp-login>:<brevo-smtp-key>@smtp-relay.brevo.com:587/"' \
   --replace '/courier/smtp/from_address="no-reply@your-verified-domain.com"' \
   --replace '/courier/smtp/from_name="Your App"'
 ```
 
+Use `smtp://` with port `587` (STARTTLS) or `smtps://` with port `465` (implicit TLS). `smtps://` on port `587` fails the TLS handshake.
+
 ### REST API (alternative)
 
-If you need Brevo-side analytics that the SMTP relay does not surface, you can post to Brevo's REST API instead via Kratos's HTTP courier:
+If you need Brevo-side analytics that the SMTP relay does not surface, you can post to Brevo's REST API instead via Kratos's HTTP email courier (`courier.delivery_strategy: http`). `courier.channels` only accepts the `sms` channel, so email over HTTP is configured under `courier.http`:
 
 ```bash
 ory patch identity-config \
   --project <your-project-id> \
   --workspace <your-workspace-id> \
-  --replace '/courier/channels=[{
-    "id": "email",
-    "type": "http",
-    "request_config": {
-      "url": "https://api.brevo.com/v3/smtp/email",
-      "method": "POST",
-      "headers": {
-        "api-key": "<brevo-api-key>",
-        "content-type": "application/json"
-      },
-      "body": "base64://'"$(base64 < brevo-body.jsonnet)"'"
-    }
-  }]'
+  --replace '/courier/delivery_strategy="http"' \
+  --replace '/courier/http/request_config={
+    "url": "https://api.brevo.com/v3/smtp/email",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "auth": {
+      "type": "api_key",
+      "config": { "name": "api-key", "value": "<brevo-api-key>", "in": "header" }
+    },
+    "body": "base64://'"$(base64 < brevo-body.jsonnet | tr -d '\n')"'"
+  }'
 ```
 
 `brevo-body.jsonnet`:
@@ -67,10 +69,15 @@ function(ctx) {
   sender: { email: 'no-reply@your-verified-domain.com', name: 'Your App' },
   to: [{ email: ctx.recipient }],
   subject: ctx.subject,
-  htmlContent: ctx.body.html,
-  textContent: ctx.body.plaintext,
-}
+  textContent: ctx.body,
+} + (
+  if std.objectHas(ctx, 'html_body') && ctx.html_body != ''
+  then { htmlContent: ctx.html_body }
+  else {}
+)
 ```
+
+The courier passes the rendered plaintext body as `ctx.body` and the rendered HTML body, when the template has one, as `ctx.html_body`. See the [`ctx` reference](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#payload).
 
 ## Technical details
 

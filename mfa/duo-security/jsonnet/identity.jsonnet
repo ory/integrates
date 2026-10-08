@@ -1,7 +1,9 @@
-function(ctx) {
-  identity_id: ctx.identity.id,
-  // Duo identifies users by username, not email — you must enroll the user in Duo
-  // ahead of time and put the matching username in identity.traits.duo_username.
-  duo_username: if std.objectHas(ctx.identity.traits, "duo_username") then ctx.identity.traits.duo_username else ctx.identity.traits.email,
-  client_ip: ctx.request_headers["X-Forwarded-For"][0],
-}
+// The login UI sends the Duo passcode in the flow's transient_payload under
+// `duo_passcode`. Ory Network sets the client IP in the True-Client-Ip header.
+function(ctx)
+  local payload = std.get(ctx.flow, 'transient_payload', null);
+  {
+    username: ctx.identity.id,
+    passcode: if payload == null then null else std.get(payload, 'duo_passcode', null),
+    ipaddr: std.get(ctx.request_headers, 'True-Client-Ip', [null])[0],
+  }

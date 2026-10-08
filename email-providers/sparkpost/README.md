@@ -30,34 +30,38 @@ Ory Kratos courier → SparkPost SMTP (smtp.sparkpostmail.com:587) → recipient
 ory patch identity-config \
   --project <your-project-id> \
   --workspace <your-workspace-id> \
-  --replace '/courier/smtp/connection_uri="smtps://SMTP_Injection:<sparkpost-api-key>@smtp.sparkpostmail.com:587"' \
+  --replace '/courier/smtp/connection_uri="smtp://SMTP_Injection:<sparkpost-api-key>@smtp.sparkpostmail.com:587/"' \
   --replace '/courier/smtp/from_address="no-reply@your-verified-domain.com"' \
   --replace '/courier/smtp/from_name="Your App"'
 ```
 
 The literal username `SMTP_Injection` is correct — SparkPost uses it as the SMTP login for all customers. The password is your API key.
 
-For the EU stack, replace the host with `smtp.eu.sparkpost.com`.
+SparkPost uses STARTTLS on port `587`, so the scheme is `smtp://`. `smtps://` on port `587` fails the TLS handshake.
+
+For the EU stack, replace the host with `smtp.eu.sparkpostmail.com`.
 
 ### REST API (alternative)
+
+The REST API goes through Kratos's HTTP email courier (`courier.delivery_strategy: http`). `courier.channels` only accepts the `sms` channel, so email over HTTP is configured under `courier.http`:
 
 ```bash
 ory patch identity-config \
   --project <your-project-id> \
   --workspace <your-workspace-id> \
-  --replace '/courier/channels=[{
-    "id": "email",
-    "type": "http",
-    "request_config": {
-      "url": "https://api.sparkpost.com/api/v1/transmissions",
-      "method": "POST",
-      "headers": {
-        "authorization": "<sparkpost-api-key>",
-        "content-type": "application/json"
-      },
-      "body": "base64://'"$(base64 < sparkpost-body.jsonnet)"'"
-    }
-  }]'
+  --replace '/courier/delivery_strategy="http"' \
+  --replace '/courier/http/request_config={
+    "url": "https://api.sparkpost.com/api/v1/transmissions",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "auth": {
+      "type": "api_key",
+      "config": { "name": "Authorization", "value": "<sparkpost-api-key>", "in": "header" }
+    },
+    "body": "base64://'"$(base64 < sparkpost-body.jsonnet | tr -d '\n')"'"
+  }'
 ```
 
 `sparkpost-body.jsonnet`:
@@ -68,11 +72,16 @@ function(ctx) {
   content: {
     from: { email: 'no-reply@your-verified-domain.com', name: 'Your App' },
     subject: ctx.subject,
-    html: ctx.body.html,
-    text: ctx.body.plaintext,
-  },
+    text: ctx.body,
+  } + (
+    if std.objectHas(ctx, 'html_body') && ctx.html_body != ''
+    then { html: ctx.html_body }
+    else {}
+  ),
 }
 ```
+
+The courier passes the rendered plaintext body as `ctx.body` and the rendered HTML body, when the template has one, as `ctx.html_body`. See the [`ctx` reference](https://www.ory.com/docs/kratos/emails-sms/sending-emails-smtp#payload).
 
 For the EU stack, replace the API base with `https://api.eu.sparkpost.com`.
 
@@ -81,7 +90,7 @@ For the EU stack, replace the API base with `https://api.eu.sparkpost.com`.
 | Field | Value |
 |---|---|
 | SMTP host (US) | `smtp.sparkpostmail.com` |
-| SMTP host (EU) | `smtp.eu.sparkpost.com` |
+| SMTP host (EU) | `smtp.eu.sparkpostmail.com` |
 | SMTP port | `587` (STARTTLS) |
 | SMTP login | literal string `SMTP_Injection` |
 | SMTP password | your SparkPost API key |

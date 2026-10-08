@@ -1,40 +1,68 @@
 # LexisNexis InstantID identity-verification hooks.
+#
+# Ory Kratos Identities runs the flow-level after.hooks list only for a method
+# that has no hooks of its own, so the hooks go in the method lists. The
+# password lists are aliased into the oidc, code, passkey, and webauthn lists,
+# so every sign-in method runs the same hooks. Alias them into any other
+# method you enable, such as saml, the same way.
+#
+# The verify hook uses response.parse, so it runs before the identity is saved
+# and can reject the registration. The handler returns the result in the
+# response, and Ory saves it with the new identity.
+#
+# On Ory Network, replace each file:// body with
+# base64://<base64-encoded-jsonnet>.
 
 selfservice:
   flows:
     registration:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/lexisnexis/verify
-              method: POST
-              body: file://./jsonnet/verify.jsonnet
-              can_interrupt: false
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &registration_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/lexisnexis/verify
+                method: POST
+                body: file://./jsonnet/verify.jsonnet
+                response:
+                  parse: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+            - hook: session
+        oidc:
+          hooks: *registration_after_hooks
+        code:
+          hooks: *registration_after_hooks
+        passkey:
+          hooks: *registration_after_hooks
+        webauthn:
+          hooks: *registration_after_hooks
     login:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/lexisnexis/validate
-              method: POST
-              body: file://./jsonnet/validate.jsonnet
-              can_interrupt: true
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &login_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/lexisnexis/validate
+                method: POST
+                body: file://./jsonnet/validate.jsonnet
+                response:
+                  parse: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+        oidc:
+          hooks: *login_after_hooks
+        code:
+          hooks: *login_after_hooks
+        passkey:
+          hooks: *login_after_hooks
+        webauthn:
+          hooks: *login_after_hooks

@@ -8,18 +8,16 @@ category: identity-verification
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Phone-anchored identity verification — telecom signals, SIM-swap detection, identity prefill, and continuous
-  phone-ownership verification — across three Ory Actions lifecycle points: pre-registration lookup (prefill),
-  post-registration enrollment, and per-login validation.
+  Phone-anchored identity verification — telecom signals and continuous phone-ownership verification — at two
+  Ory Actions lifecycle points: post-registration enrollment and per-login validation.
 useCase: >-
-  A US-focused product wants signup friction reduced (Prove prefill cuts forms by autofilling name/address from
-  the phone number) AND wants ongoing phone-ownership verification so a SIM-swapped phone can't be used to
-  resume an existing account.
+  A US-focused product wants ongoing phone-ownership verification so a changed or SIM-swapped phone can't be
+  used to resume an existing account.
 coreFunctionality: |-
-  - Three sync endpoints: POST /prove/lookup (registration.before with can_interrupt — prefill or block on SIM swap), POST /prove/enroll (registration.after — enroll phone with Prove Identity Manager, store prove_identity_id), POST /prove/validate (login.after with can_interrupt — confirm continuous phone ownership, block on a fail).
-  - All sync — Prove's APIs return decisions in the response, no async callbacks.
-  - Phone collection is a prerequisite — identity schema must capture E.164 phone number before /prove/lookup fires.
-  - Identity-side state stored in metadata_admin via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+  - Two endpoints: POST /prove/enroll (registration.after without response.parse, after the identity is saved — enroll phone with Prove Identity Manager, store prove_identity_id in metadata_public), POST /prove/validate (login.after with response.parse — confirm the phone on file still matches, block on a mismatch).
+  - Prove's APIs return decisions in the response, no async callbacks. Prefill isn't covered: a registration.before action has no phone number or traits.
+  - Phone collection is a prerequisite — identity schema must capture an E.164 phone number.
+  - Identity-side state stored in metadata_public via @ory/client (IdentityApi.getIdentity + patchIdentity), because the webhook payload has no metadata_admin.
   - Uses Prove's official SDK (@prove-identity/prove-api) for the API surface.
   - Defaults to UAT (platform.uat.proveapis.com); override PROVE_SERVER_URL for production.
 oryMechanism:

@@ -20,15 +20,13 @@ The Ory docs page covers the SMS courier configuration in general. Plivo-specifi
 
 1. Sign up at [plivo.com](https://www.plivo.com); grab the **Auth ID** and **Auth Token** from the console.
 2. Buy an SMS-enabled phone number — this is your `src`.
-3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) using the values in the table above. Plivo accepts E.164 directly (no `+` stripping needed).
+3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) using the values in the table above. Plivo accepts E.164 directly (no `+` stripping needed). Set the `basic_auth` `user` and `password` to the plain Auth ID and Auth Token strings, and set the Jsonnet template below, encoded, as `body: base64://<base64-encoded-jsonnet>`. The template returns the request body object directly.
 
 ```jsonnet
 function(ctx) {
-  body: std.manifestJsonEx({
-    src: "+1XXXXXXXXXX",
-    dst: ctx.recipient,
-    text: ctx.body,
-  }, "  "),
+  src: '+1XXXXXXXXXX',
+  dst: ctx.recipient,
+  text: ctx.body,
 }
 ```
 

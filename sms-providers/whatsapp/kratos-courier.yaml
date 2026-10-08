@@ -1,6 +1,9 @@
 # Snippet to merge into the Kratos identity-config under /courier/channels.
 # Replace ORY_WEBHOOK_SECRET with the value you set in webhook/.env, and the URL
 # with your deployed handler URL.
+#
+# On Ory Network, set body to the Base64-encoded template instead:
+#   body: base64://<output of: base64 < jsonnet/sms-body.jsonnet | tr -d '\n'>
 courier:
   channels:
     - id: sms

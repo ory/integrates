@@ -19,7 +19,7 @@ A consumer product wants WhatsApp as the OTP channel for verification, recovery,
 
 1. A user enters their phone number on a flow that uses OTP delivery (verification, recovery, or MFA via SMS code).
 2. Ory Kratos generates an OTP and POSTs the rendered message to this handler at `/whatsapp/send` (Kratos courier HTTP target).
-3. The handler verifies the shared secret, extracts the OTP from the message body using a strict regex (`/\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i`), and normalizes the recipient to E.164.
+3. The handler verifies the shared secret, takes the OTP from the `otp` field that the body template reads from `template_data` (falling back to a strict regex over the rendered message, `/\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i`), and normalizes the recipient to E.164.
 4. The handler POSTs to `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/messages` with a `type: template` payload, passing the OTP as both the body parameter and the copy-code button parameter.
 5. WhatsApp delivers the templated message. The handler returns `200` (with the WhatsApp message id) to Kratos so Kratos marks the delivery as sent.
 
@@ -61,7 +61,7 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Kratos
 
-This is a **courier**, not an Ory Action. Use the snippet in [`kratos-courier.yaml`](kratos-courier.yaml) (not `ory-actions.yaml`) under `courier.channels` in your Kratos config. The body template is [`jsonnet/sms-body.jsonnet`](jsonnet/sms-body.jsonnet).
+This is a **courier**, not an Ory Action. Use the snippet in [`kratos-courier.yaml`](kratos-courier.yaml) (not `ory-actions.yaml`) as the `sms` channel under `courier.channels` in your Kratos config. The body template is [`jsonnet/sms-body.jsonnet`](jsonnet/sms-body.jsonnet). On Ory Network, `file://` paths aren't available: encode the template with `base64 < jsonnet/sms-body.jsonnet | tr -d '\n'` and set `body: base64://<encoded-template>`.
 
 Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `x-webhook-secret` value declared in the Kratos courier config.
 
@@ -71,7 +71,7 @@ WhatsApp Business pricing, template-approval gotchas, and try-WA / fallback-SMS 
 
 - **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` doesn't match `x-webhook-secret` in the Kratos courier config.
 - **`401 Unauthorized` from Graph** — access token expired or insufficiently scoped. Use a system-user permanent token with WhatsApp messaging permission.
-- **`422 otp_extract_failed`** — the regex didn't find an OTP in the Kratos body. Either change the Kratos verification template, or relax the regex in `extractOtp()` to match your template's wording.
+- **`422 otp_extract_failed`** — the request had no `otp` field and the regex didn't find an OTP in the Kratos body. Use the body template from this directory, change the Kratos SMS template, or relax the regex in `extractOtp()` to match your template's wording.
 - **`Template name does not exist`** — template name / language code mismatch. The Meta Business Manager values are case-sensitive.
 - **`recipient not on WhatsApp`** — the number isn't on WhatsApp. There's no automatic SMS fallback; if your audience may not be on WhatsApp, layer a try-WA / fallback-SMS pattern in your courier config or in this handler.
 

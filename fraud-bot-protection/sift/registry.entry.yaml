@@ -9,16 +9,16 @@ type: webhook
 maintainedBy: Community contributors
 description: >-
   Digital trust & safety via Sift — real-time ML-based fraud and account-abuse scoring. Wired into Ory via
-  two Actions: a sync check on submission (registration.after / login.after with can_interrupt) reading the
-  user's current Sift abuse score and blocking when above threshold, plus an async post-event reporter
-  emitting Sift events that feed the model.
+  two Actions: a sync check at sign-in (login.after with response.parse) reading the user's current Sift abuse
+  score and blocking with a 4xx when above threshold, plus a post-event reporter (response.ignore) emitting Sift
+  events that feed the model.
 useCase: >-
   A consumer product (marketplace, fintech, gaming) needs ML-driven account-abuse prevention beyond bot
   defense — repeat-fraudster detection, payment-fraud signals, network-effect risk — and is willing to feed
   Sift the event stream needed to build a useful longitudinal model.
 coreFunctionality: |-
-  - Two flows must run for Sift to be useful: pre-flow check (block on fail) AND post-event reporter (signal collection).
-  - Pre-flow: GET https://api.sift.com/v205/users/{user_id}/score; block if score > threshold (start permissive at 80, tighten with data).
+  - Two flows must run for Sift to be useful: sign-in check (block on fail) AND post-event reporter (signal collection).
+  - Sign-in check: GET https://api.sift.com/v205/users/{user_id}/score; block if score > threshold (scores are 0-1 in the API; start permissive at 0.8, tighten with data).
   - Post-event: POST https://api.sift.com/v205/events with reserved event names ($create_account, $login, $transaction) including IP, user agent, session, traits.
   - Both flows authenticated via a single server-side API Key.
   - User IDs must be stable across sessions — Sift's model is keyed on user_id.

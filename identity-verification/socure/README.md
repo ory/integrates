@@ -13,8 +13,8 @@ A regulated B2C product needs ML-driven identity verification at signup with str
 
 ## How it works
 
-1. **Synchronous path** — A user completes registration; Ory fires the sync post-registration Action to `POST /socure/verify-identity`. The handler verifies the shared secret, calls Socure ID+ (`POST /api/3.0/EmailAuthScore`) with the configured `SOCURE_MODULES`, and echoes back `reference_id`, `decision` (`kyc.fieldValidations`), and `fraud_score`. Ory's response-parse Jsonnet applies policy.
-2. **Asynchronous path** — When Socure is configured to send async results (long-running checks), Socure POSTs to `/socure/results-callback` with an HMAC-SHA256 signature over the raw body in `X-Socure-Signature`. The handler verifies the signature, and when `ORY_SDK_URL` + `ORY_ADMIN_API_KEY` are set, PATCHes the final `decision` to `metadata_public.socure_decision` on the matching identity.
+1. **Synchronous path** — A user completes registration; Ory calls `POST /socure/verify-identity` from a registration action with `response.parse: true`, before it saves the identity. The handler verifies the shared secret and calls Socure ID+ (`POST /api/3.0/EmailAuthScore`) with the configured `SOCURE_MODULES` and its own reference as `customerUserId`. The handler applies the policy: when Socure's `decision.value` is `reject`, or the first fraud score is at or above `SOCURE_FRAUD_THRESHOLD` (default `0.9`), it responds `400` with a `messages` body and Ory rejects the registration. Otherwise it responds `200` with `{"identity": {"external_id": "<reference>", "metadata_public": {"socure_verification_status": ...}}}`. Any `200` lets the registration through.
+2. **Asynchronous path** — When Socure is configured to send async results (long-running checks), Socure POSTs to `/socure/results-callback` with an HMAC-SHA256 signature over the raw body in `X-Socure-Signature`. The handler verifies the signature, finds the identity with `GET /admin/identities/by/external/<customerUserId>` and writes the final `decision` to `metadata_public.socure_decision`. It returns 2xx only after the write succeeds, so Socure retries a failed delivery.
 
 ## Prerequisites
 
@@ -43,9 +43,27 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 ## Configure Ory
 
 1. In the Ory Console, configure the sync Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml).
-2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). Socure benefits from a `device_session_id` collected client-side via the Socure SDK; pass it through `identity.traits.socure_device_session_id` or `transient_payload.device_session_id`.
+2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). Socure benefits from a `device_session_id` collected client-side via the Socure SDK; pass it through `transient_payload.device_session_id` or `identity.traits.socure_device_session_id`.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
-4. For the async callback path, configure the callback URL and signing secret in Socure Admin → Webhooks, and put the same secret in `SOCURE_CALLBACK_SECRET`. Optionally set `ORY_SDK_URL` and `ORY_ADMIN_API_KEY` to enable the metadata write-back.
+4. For the async callback path, configure the callback URL and signing secret in Socure Admin → Webhooks, and put the same secret in `SOCURE_CALLBACK_SECRET`, `ORY_SDK_URL`, and `ORY_ADMIN_API_KEY`. The callback returns 503 until all three are set.
+
+- Put the hook in the method-specific list, such as `selfservice.flows.registration.after.password.hooks`, and repeat it for every method you enable, such as `oidc` or `code`. Ory runs the global `registration.after.hooks` list only for a method that has no hooks of its own. Keep the `session` hook last.
+- `body: file://./jsonnet/...` works for self-hosted Ory Kratos. On Ory Network, encode the template with `base64 < jsonnet/identity.jsonnet | tr -d '\n'` and set `body: base64://<encoded>`.
+- With `response.parse: true`, the action runs before the identity is saved, so `ctx.identity.id` is `00000000-0000-0000-0000-000000000000`. The handler sends its own reference to the vendor and returns it as the identity's `external_id`; look the identity up later with `GET /admin/identities/by/external/<reference>`.
+- Ory waits about 30 seconds for the handler and retries a `5xx` response (three attempts in total).
+
+To reject the flow, the handler responds with a `4xx` status code and this body. Ory shows the `text` to the user:
+
+```json
+{
+  "messages": [
+    {
+      "instance_ptr": "#/",
+      "messages": [{ "id": 9000302, "text": "We couldn't verify your identity.", "type": "error" }]
+    }
+  ]
+}
+```
 
 Identity-schema extensions for KYC fields, Socure module configuration, and per-module decision interpretation: see the [docs page](https://ory.com/docs/integrates-with/identity-verification/socure).
 

@@ -34,6 +34,7 @@ if (!ORY_WEBHOOK_SECRET || !PHONE_NUMBER_ID || !ACCESS_TOKEN) {
 interface KratosCourierRequest {
   recipient?: string;
   body?: string;
+  otp?: string | null;
   [field: string]: unknown;
 }
 
@@ -93,7 +94,10 @@ app.post(
       return;
     }
 
-    const otp = extractOtp(body);
+    const otp =
+      typeof req.body?.otp === "string" && /^\d{4,10}$/.test(req.body.otp)
+        ? req.body.otp
+        : extractOtp(body);
     if (!otp) {
       // We could fall back to a regular text message here, but the Cloud API's
       // text type requires a 24-hour customer-initiated session window. OTPs go

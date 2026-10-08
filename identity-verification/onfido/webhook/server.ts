@@ -3,16 +3,16 @@
 // Onfido <> Ory Actions webhook handler.
 //
 // Three endpoints:
-//   POST /onfido/initiate  — sync post-registration. Creates an Onfido
-//                             applicant + workflow run, returns the SDK
-//                             token to the client, and writes IDs into
-//                             metadata_public.
+//   POST /onfido/initiate  — called by your backend after sign-up. Creates
+//                             an Onfido applicant + workflow run, writes IDs
+//                             into metadata_public, and returns the SDK token
+//                             to the caller.
 //   POST /onfido/callback  — async webhook FROM Onfido. HMAC-SHA256 of the
 //                             raw body via X-SHA2-Signature; resolves the
 //                             Kratos identity from custom_data.kratos_identity_id
 //                             we set on initiate.
-//   POST /onfido/validate  — sync post-login. Blocks login when stored
-//                             status is "declined".
+//   POST /onfido/validate  — sync post-login Ory Action. Blocks login when
+//                             the stored status is "declined".
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -21,7 +21,7 @@ import express, {
   type Request,
   type Response,
 } from "express";
-import { Configuration, IdentityApi, JsonPatchOpEnum } from "@ory/client";
+import { Configuration, IdentityApi, type JsonPatch, JsonPatchOpEnum } from "@ory/client";
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
@@ -55,6 +55,40 @@ const ONFIDO_BASE_URL = ONFIDO_BASE_URLS[ONFIDO_REGION];
 const kratos = new IdentityApi(
   new Configuration({ basePath: KRATOS_ADMIN_URL, accessToken: ORY_API_KEY }),
 );
+
+const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+
+// Replaces the metadata objects as a whole, because a JSON Patch to a nested
+// path fails while the parent object is still null.
+async function mergeMetadata(
+  id: string,
+  update: { metadata_public?: Record<string, unknown>; metadata_admin?: Record<string, unknown> },
+): Promise<void> {
+  const { data: identity } = await kratos.getIdentity({ id });
+  const jsonPatch: JsonPatch[] = [];
+  if (update.metadata_public) {
+    jsonPatch.push({
+      op: JsonPatchOpEnum.Add,
+      path: "/metadata_public",
+      value: { ...(identity.metadata_public ?? {}), ...update.metadata_public },
+    });
+  }
+  if (update.metadata_admin) {
+    jsonPatch.push({
+      op: JsonPatchOpEnum.Add,
+      path: "/metadata_admin",
+      value: { ...(identity.metadata_admin ?? {}), ...update.metadata_admin },
+    });
+  }
+  await kratos.patchIdentity({ id, jsonPatch });
+}
+
+// Ory Kratos Identities shows `text` to the user only for this response shape.
+function block(res: Response, text: string): void {
+  res.status(403).json({
+    messages: [{ instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] }],
+  });
+}
 
 interface InitiateRequest {
   kratos_identity_id?: string;
@@ -143,13 +177,15 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+// Your backend calls this after sign-up with the identity ID and traits from
+// the Ory session, then renders the Onfido SDK with the returned sdk_token.
 app.post(
   "/onfido/initiate",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, InitiateRequest>, res: Response) => {
     const { kratos_identity_id, first_name, last_name, email, date_of_birth } = req.body;
-    if (!kratos_identity_id || !first_name || !last_name) {
-      res.status(400).json({ error: "kratos_identity_id, first_name, last_name are required" });
+    if (!kratos_identity_id || kratos_identity_id === NIL_UUID || !first_name || !last_name) {
+      res.status(400).json({ error: "a saved kratos_identity_id, first_name, and last_name are required" });
       return;
     }
 
@@ -167,50 +203,30 @@ app.post(
         custom_data: { kratos_identity_id },
       });
 
-      await kratos.patchIdentity({
-        id: kratos_identity_id,
-        jsonPatch: [
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/onfido_verification_status", value: "initiated" },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/onfido_applicant_id", value: applicant.id },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/onfido_workflow_run_id", value: workflowRun.id },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/onfido_initiated_at", value: new Date().toISOString() },
-          ...(workflowRun.sdk_token
-            ? [{ op: JsonPatchOpEnum.Replace, path: "/metadata_admin/onfido_sdk_token", value: workflowRun.sdk_token }]
-            : []),
-          ...(workflowRun.dashboard_url
-            ? [{ op: JsonPatchOpEnum.Replace, path: "/metadata_admin/onfido_dashboard_url", value: workflowRun.dashboard_url }]
-            : []),
-        ],
+      await mergeMetadata(kratos_identity_id, {
+        metadata_public: {
+          onfido_verification_status: "initiated",
+          onfido_applicant_id: applicant.id,
+          onfido_workflow_run_id: workflowRun.id,
+          onfido_initiated_at: new Date().toISOString(),
+        },
+        ...(workflowRun.dashboard_url && {
+          metadata_admin: { onfido_dashboard_url: workflowRun.dashboard_url },
+        }),
       });
 
-      res.json({
-        success: true,
-        sdk_token: workflowRun.sdk_token,
-        workflow_run_id: workflowRun.id,
-      });
+      res.json({ sdk_token: workflowRun.sdk_token, workflow_run_id: workflowRun.id });
     } catch (err) {
       console.error("Onfido initiate error:", (err as Error).message);
-      try {
-        await kratos.patchIdentity({
-          id: kratos_identity_id,
-          jsonPatch: [
-            {
-              op: JsonPatchOpEnum.Replace,
-              path: "/metadata_admin/onfido_initiation_error",
-              value: (err as Error).message,
-            },
-          ],
-        });
-      } catch (e) {
-        console.error("Failed to record initiation error:", (e as Error).message);
-      }
-      res.status(200).json({ success: false, error: (err as Error).message });
+      res.status(502).json({ error: "onfido_initiate_failed" });
     }
   },
 );
 
 // Async callback FROM Onfido. HMAC-SHA256 over the RAW body (not a
-// re-serialized JSON copy) using the configured webhook token.
+// re-serialized JSON copy) using the configured webhook token. The handler
+// answers 2xx only after the identity is updated, so Onfido retries a delivery
+// that failed to apply.
 app.post(
   "/onfido/callback",
   async (req: Request<unknown, unknown, OnfidoCallbackBody>, res: Response) => {
@@ -236,9 +252,8 @@ app.post(
     }
 
     const { resource_type, action, object } = req.body.payload ?? {};
-    res.json({ received: true });
-
     if (resource_type !== "workflow_run" || action !== "workflow_run.completed" || !object?.id) {
+      res.json({ received: true, ignored: true });
       return;
     }
     const workflowRunId = object.id;
@@ -248,65 +263,36 @@ app.post(
       const kratosIdentityId = wr.custom_data?.kratos_identity_id;
       if (!kratosIdentityId) {
         console.error(`Onfido workflow_run ${workflowRunId} missing custom_data.kratos_identity_id`);
+        res.json({ received: true, ignored: true });
         return;
       }
-      await kratos.patchIdentity({
-        id: kratosIdentityId,
-        jsonPatch: [
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/onfido_verification_status", value: wr.status ?? "unknown" },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/onfido_completed_at", value: object.completed_at_iso8601 ?? new Date().toISOString() },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_admin/onfido_output", value: JSON.stringify(wr.output ?? null) },
-        ],
+      await mergeMetadata(kratosIdentityId, {
+        metadata_public: {
+          onfido_verification_status: wr.status ?? "unknown",
+          onfido_completed_at: object.completed_at_iso8601 ?? new Date().toISOString(),
+        },
+        metadata_admin: { onfido_output: JSON.stringify(wr.output ?? null) },
       });
       console.log(`Onfido callback: kratos=${kratosIdentityId} status=${wr.status}`);
+      res.json({ received: true });
     } catch (err) {
       console.error("Onfido callback processing failed:", (err as Error).message);
+      res.status(500).json({ error: "processing_failed" });
     }
   },
 );
 
+// Ory Kratos Identities ignores identity changes in a login.after response,
+// so this only decides. "review" and unknown statuses are allowed.
 app.post(
   "/onfido/validate",
   verifyWebhookSecret,
-  async (req: Request<unknown, unknown, ValidateRequest>, res: Response) => {
-    const { kratos_identity_id, onfido_verification_status } = req.body;
-    if (!kratos_identity_id || !onfido_verification_status) {
-      res.json({ success: true });
+  (req: Request<unknown, unknown, ValidateRequest>, res: Response) => {
+    if (req.body.onfido_verification_status === "declined") {
+      block(res, "Identity verification failed. Please contact support.");
       return;
     }
-    if (onfido_verification_status === "approved") {
-      try {
-        await kratos.patchIdentity({
-          id: kratos_identity_id,
-          jsonPatch: [
-            {
-              op: JsonPatchOpEnum.Replace,
-              path: "/metadata_public/onfido_last_validated_at",
-              value: new Date().toISOString(),
-            },
-          ],
-        });
-      } catch (err) {
-        console.warn("Could not update last_validated_at:", (err as Error).message);
-      }
-      res.json({ success: true });
-      return;
-    }
-    if (onfido_verification_status === "declined") {
-      res.status(400).json({
-        messages: [
-          {
-            instance_ptr: "#/",
-            message: "Identity verification failed. Please contact support.",
-            type: "error",
-            context: { reason: "identity_verification_declined" },
-          },
-        ],
-      });
-      return;
-    }
-    // "review" or unknown — allow with a warning.
-    res.json({ success: true, warning: "Identity verification under review" });
+    res.json({});
   },
 );
 

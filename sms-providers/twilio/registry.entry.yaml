@@ -16,8 +16,8 @@ useCase: >-
 coreFunctionality: |-
   - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms (the example uses Twilio directly).
   - Endpoint POST https://api.twilio.com/2010-04-01/Accounts/<SID>/Messages.json with HTTP Basic auth (Account SID : Auth Token).
-  - Content-Type MUST be application/x-www-form-urlencoded (Twilio rejects JSON); body is URL-encoded To, From, Body.
-  - For production, prefer a Twilio Messaging Service (replace From=... with MessagingServiceSid=MGxxxx...) for sender pooling and per-country routing.
+  - Content-Type MUST be application/x-www-form-urlencoded (Twilio rejects JSON); the Jsonnet template returns an object of string fields To, From, Body, which the courier form-encodes.
+  - For production, prefer a Twilio Messaging Service (replace From with MessagingServiceSid) for sender pooling and per-country routing.
   - Twilio Test Credentials (separate SID/Token) simulate sends without delivery or charges — useful for CI.
 oryMechanism:
   - courier-spi

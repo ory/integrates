@@ -23,7 +23,7 @@ useCase: >-
   authentication-template message.
 coreFunctionality: |-
   - Kratos courier-spi HTTP target (configured via kratos-courier.yaml, not ory-actions.yaml).
-  - Extracts the OTP from the rendered Kratos body via strict regex /\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i.
+  - Takes the OTP from template_data (login_code, registration_code, or verification_code) via the body template, falling back to extracting it from the rendered Kratos body via strict regex /\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i.
   - Normalizes recipient to E.164 (leading "+" then digits).
   - POSTs to graph.facebook.com/{version}/{phone_id}/messages with type: template, sending the OTP as both the body parameter and the copy-code button parameter.
   - 422 otp_extract_failed when the message body doesn't yield a digit run — explicit instead of silently sending an empty template.

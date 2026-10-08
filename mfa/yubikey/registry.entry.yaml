@@ -18,7 +18,7 @@ useCase: >-
   are the hardware reference but the same mechanism backs TouchID / Windows Hello / Android biometrics.
 coreFunctionality: |-
   - Configured per Ory docs at /kratos/mfa/webauthn-fido-yubikey; Ory Console → Authentication → Multi-factor → enable WebAuthn.
-  - Relying Party (RP) config: id (eTLD+1 the credential is scoped to), origins (full URLs users sign in from), display_name (shown in enrollment prompt).
+  - Relying Party (RP) config: id (domain of the login page or a parent domain, no scheme or port), origins (exact origins of the pages that prompt for WebAuthn, each under id), display_name (shown in enrollment prompt).
   - Covers all FIDO2 authenticators (YubiKey, TouchID, Face ID, Windows Hello, Android biometrics) — "YubiKey" in the doc title is historical.
   - Phishing-resistant: WebAuthn binds credential to origin, blocking credential theft via look-alike domains.
   - AAL2 (NIST 800-63) compliance: WebAuthn satisfies AAL2 paired with a password-or-passkey first factor.

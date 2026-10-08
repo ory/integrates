@@ -1,6 +1,10 @@
-function(ctx) {
-  identity_id: ctx.identity.id,
-  // The user must already be enrolled in Okta Verify; identity.traits.okta_user_id
-  // holds the Okta user ID that owns the factor.
-  okta_user_id: if std.objectHas(ctx.identity.traits, "okta_user_id") then ctx.identity.traits.okta_user_id else null,
-}
+// The login UI sends the Okta Verify code in the flow's transient_payload under
+// `okta_pass_code`. metadata_public is null until something writes to it.
+function(ctx)
+  local metadata = std.get(ctx.identity, 'metadata_public', null);
+  local payload = std.get(ctx.flow, 'transient_payload', null);
+  {
+    identity_id: ctx.identity.id,
+    okta_user_id: if metadata == null then null else std.get(metadata, 'okta_user_id', null),
+    pass_code: if payload == null then null else std.get(payload, 'okta_pass_code', null),
+  }

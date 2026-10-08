@@ -2,16 +2,14 @@
 //
 // Prove (phone-anchored identity) <> Ory Actions webhook handler.
 //
-// Three endpoints — all sync Ory Action calls authenticated by the shared
+// Two endpoints, both Ory Action calls authenticated by the shared
 // ORY_WEBHOOK_SECRET. The handler uses Prove's official SDK
 // (@prove-identity/prove-api) for the API surface.
 //
-//   POST /prove/lookup    pre-registration phone-number lookup. Returns
-//                          identity-prefill metadata if Prove knows the
-//                          phone number.
-//   POST /prove/enroll    post-registration enrollment. Registers the
-//                          user's phone number with Prove's Identity Manager
-//                          and stores the resulting prove_identity_id.
+//   POST /prove/enroll    post-registration enrollment, after the identity is
+//                          saved. Registers the user's phone number with
+//                          Prove's Identity Manager and stores the resulting
+//                          prove_identity_id in metadata_public.
 //   POST /prove/validate  post-login validation. Confirms the user's stored
 //                          phone matches what Prove has on file; blocks login
 //                          on mismatch.
@@ -24,7 +22,7 @@ import express, {
   type Response,
 } from "express";
 import { Proveapi } from "@prove-identity/prove-api";
-import { Configuration, IdentityApi, JsonPatchOpEnum } from "@ory/client";
+import { Configuration, IdentityApi, type JsonPatch, JsonPatchOpEnum } from "@ory/client";
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
@@ -56,17 +54,46 @@ const kratos = new IdentityApi(
   new Configuration({ basePath: KRATOS_ADMIN_URL, accessToken: ORY_API_KEY }),
 );
 
-interface LookupRequest {
-  phone_number?: string;
-}
-
 interface EnrollRequest {
   kratos_identity_id?: string;
   phone_number?: string;
 }
 
+const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+
+// Replaces the metadata objects as a whole, because a JSON Patch to a nested
+// path fails while the parent object is still null.
+async function mergeMetadata(
+  id: string,
+  update: { metadata_public?: Record<string, unknown>; metadata_admin?: Record<string, unknown> },
+): Promise<void> {
+  const { data: identity } = await kratos.getIdentity({ id });
+  const jsonPatch: JsonPatch[] = [];
+  if (update.metadata_public) {
+    jsonPatch.push({
+      op: JsonPatchOpEnum.Add,
+      path: "/metadata_public",
+      value: { ...(identity.metadata_public ?? {}), ...update.metadata_public },
+    });
+  }
+  if (update.metadata_admin) {
+    jsonPatch.push({
+      op: JsonPatchOpEnum.Add,
+      path: "/metadata_admin",
+      value: { ...(identity.metadata_admin ?? {}), ...update.metadata_admin },
+    });
+  }
+  await kratos.patchIdentity({ id, jsonPatch });
+}
+
+// Ory Kratos Identities shows `text` to the user only for this response shape.
+function block(res: Response, text: string): void {
+  res.status(403).json({
+    messages: [{ instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] }],
+  });
+}
+
 interface ValidateRequest {
-  kratos_identity_id?: string;
   phone_number?: string;
   prove_identity_id?: string;
 }
@@ -101,105 +128,16 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// Pre-fill identity traits from Prove's phone-anchored identity graph.
-app.post(
-  "/prove/lookup",
-  verifyWebhookSecret,
-  async (req: Request<unknown, unknown, LookupRequest>, res: Response) => {
-    const { phone_number } = req.body;
-    if (!phone_number) {
-      res.status(400).json({ error: "phone_number is required" });
-      return;
-    }
-
-    try {
-      const lookup = await prove.identity.v3GetIdentitiesByPhoneNumber(phone_number);
-      const list = unwrap<{ items?: unknown[] }>(lookup, "v3GetIdentitiesByPhoneNumberResponse");
-      const items = Array.isArray(list?.items) ? list.items : Array.isArray(lookup) ? lookup : [];
-
-      if (items.length === 0) {
-        res.json({
-          identity: {
-            metadata_public: {
-              prove_identity_status: "not_found",
-              prove_lookup_timestamp: new Date().toISOString(),
-            },
-          },
-        });
-        return;
-      }
-
-      const first = items[0] as Record<string, unknown>;
-      const provedIdentityId =
-        (first.identityId as string | undefined) ?? (first.identity_id as string | undefined);
-      if (!provedIdentityId) {
-        res.json({
-          identity: {
-            metadata_public: { prove_identity_status: "lookup_error" },
-            metadata_admin: { prove_error_message: "missing identityId in lookup item" },
-          },
-        });
-        return;
-      }
-
-      const detailResp = await prove.identity.v3GetIdentity(provedIdentityId);
-      const details =
-        unwrap<Record<string, unknown>>(detailResp, "v3GetIdentityResponse") ??
-        (detailResp as Record<string, unknown>);
-
-      if (!details || details.success !== true) {
-        res.json({
-          identity: {
-            metadata_public: {
-              prove_identity_status: "lookup_error",
-            },
-            metadata_admin: {
-              prove_error_message: "Could not retrieve identity details",
-            },
-          },
-        });
-        return;
-      }
-
-      res.json({
-        identity: {
-          traits: { phone_number: (details.phoneNumber as string | undefined) ?? phone_number },
-          metadata_public: {
-            prove_identity_status: "verified",
-            prove_identity_id: details.identityId,
-            prove_phone_number: details.phoneNumber,
-            prove_carrier: details.carrier,
-            prove_line_type: details.lineType,
-            prove_is_active: details.active,
-            prove_lookup_timestamp: new Date().toISOString(),
-          },
-          metadata_admin: {
-            prove_correlation_id: first.correlationId,
-            prove_client_customer_id: first.clientCustomerId,
-            prove_country_code: details.countryCode,
-          },
-        },
-      });
-    } catch (err) {
-      console.error("Prove lookup error:", (err as Error).message);
-      res.json({
-        identity: {
-          metadata_public: { prove_identity_status: "lookup_error" },
-          metadata_admin: { prove_error_message: (err as Error).message },
-        },
-      });
-    }
-  },
-);
-
-// Enroll the user's phone number in Prove's Identity Manager.
+// Enroll the user's phone number in Prove's Identity Manager. Configure this
+// action without response.parse so it runs after the identity is saved and
+// receives the real identity ID.
 app.post(
   "/prove/enroll",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, EnrollRequest>, res: Response) => {
     const { kratos_identity_id, phone_number } = req.body;
-    if (!kratos_identity_id || !phone_number) {
-      res.status(400).json({ error: "kratos_identity_id and phone_number are required" });
+    if (!kratos_identity_id || kratos_identity_id === NIL_UUID || !phone_number) {
+      res.status(400).json({ error: "a saved kratos_identity_id and phone_number are required" });
       return;
     }
 
@@ -216,28 +154,28 @@ app.post(
         throw new Error(`Enrollment failed: ${enrollData?.verificationResult ?? "unknown error"}`);
       }
 
-      await kratos.patchIdentity({
-        id: kratos_identity_id,
-        jsonPatch: [
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_identity_enrolled", value: true },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_identity_id", value: enrollData.identityId },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_verification_result", value: enrollData.verificationResult },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_enrollment_timestamp", value: new Date().toISOString() },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_admin/prove_correlation_id", value: enrollData.correlationId },
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_admin/prove_client_customer_id", value: enrollData.clientCustomerId },
-        ],
+      await mergeMetadata(kratos_identity_id, {
+        metadata_public: {
+          prove_identity_enrolled: true,
+          prove_identity_id: enrollData.identityId,
+          prove_verification_result: enrollData.verificationResult,
+          prove_enrollment_timestamp: new Date().toISOString(),
+        },
+        metadata_admin: {
+          prove_correlation_id: enrollData.correlationId,
+          prove_client_customer_id: enrollData.clientCustomerId,
+        },
       });
 
       res.json({ success: true, prove_identity_id: enrollData.identityId });
     } catch (err) {
       console.error("Prove enrollment error:", (err as Error).message);
       try {
-        await kratos.patchIdentity({
-          id: kratos_identity_id,
-          jsonPatch: [
-            { op: JsonPatchOpEnum.Replace, path: "/metadata_admin/prove_enrollment_error", value: (err as Error).message },
-            { op: JsonPatchOpEnum.Replace, path: "/metadata_admin/prove_enrollment_attempted", value: new Date().toISOString() },
-          ],
+        await mergeMetadata(kratos_identity_id, {
+          metadata_admin: {
+            prove_enrollment_error: (err as Error).message,
+            prove_enrollment_attempted: new Date().toISOString(),
+          },
         });
       } catch (e) {
         console.error("Failed to record enrollment error:", (e as Error).message);
@@ -248,24 +186,16 @@ app.post(
 );
 
 // Post-login validation: confirm the stored phone matches what Prove has.
+// Ory Kratos Identities ignores identity changes in a login.after response,
+// so this only decides. Users without a Prove enrollment, and Prove outages,
+// are let through.
 app.post(
   "/prove/validate",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, ValidateRequest>, res: Response) => {
-    const { kratos_identity_id, phone_number, prove_identity_id } = req.body;
-    if (!kratos_identity_id) {
-      res.status(400).json({ error: "kratos_identity_id required" });
-      return;
-    }
+    const { phone_number, prove_identity_id } = req.body;
     if (!prove_identity_id) {
-      res.json({
-        identity: {
-          metadata_public: {
-            prove_validation_status: "not_enrolled",
-            prove_last_validation: new Date().toISOString(),
-          },
-        },
-      });
+      res.json({});
       return;
     }
 
@@ -276,70 +206,20 @@ app.post(
         (identityResp as Record<string, unknown>);
 
       if (!data || data.success !== true) {
-        res.json({
-          identity: {
-            metadata_public: {
-              prove_validation_status: "retrieval_failed",
-              prove_last_validation: new Date().toISOString(),
-            },
-            metadata_admin: { prove_validation_error: "Failed to retrieve identity from Prove" },
-          },
-        });
+        console.warn(`Prove identity ${prove_identity_id} could not be retrieved`);
+        res.json({});
         return;
       }
 
       const provePhone = data.phoneNumber as string | undefined;
       if (phone_number && provePhone && provePhone !== phone_number) {
-        res.status(400).json({
-          messages: [
-            {
-              instance_ptr: "#/",
-              message: "Your phone number has changed. Please update your account information.",
-              type: "error",
-              context: {
-                reason: "phone_number_mismatch",
-                prove_phone: provePhone,
-                registered_phone: phone_number,
-              },
-            },
-          ],
-        });
+        block(res, "We couldn't confirm your phone number. Please contact support.");
         return;
       }
-
-      const verificationResult = data.verificationResult;
-      const updates = [
-        { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_validation_status", value: "verified" },
-        { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_verification_result", value: verificationResult },
-        { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_last_validation", value: new Date().toISOString() },
-        { op: JsonPatchOpEnum.Replace, path: "/metadata_public/prove_phone_verified", value: provePhone },
-        { op: JsonPatchOpEnum.Replace, path: "/metadata_admin/prove_correlation_id", value: data.correlationId },
-      ];
-
-      await kratos.patchIdentity({ id: kratos_identity_id, jsonPatch: updates });
-
-      res.json({
-        identity: {
-          metadata_public: {
-            prove_validation_status: "verified",
-            prove_verification_result: verificationResult,
-            prove_last_validation: new Date().toISOString(),
-            prove_phone_verified: provePhone,
-          },
-          metadata_admin: { prove_correlation_id: data.correlationId },
-        },
-      });
+      res.json({});
     } catch (err) {
       console.error("Prove validation error:", (err as Error).message);
-      res.json({
-        identity: {
-          metadata_public: {
-            prove_validation_status: "validation_error",
-            prove_last_validation: new Date().toISOString(),
-          },
-          metadata_admin: { prove_validation_error: (err as Error).message },
-        },
-      });
+      res.json({});
     }
   },
 );

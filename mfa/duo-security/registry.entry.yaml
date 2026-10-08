@@ -8,19 +8,17 @@ category: mfa
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Duo Security (a Cisco company) is an enterprise MFA platform with strong push and passcode flows. This integration
-  sends a Duo push challenge from an Ory Action webhook on login, polls Duo for the user's response, and returns the
-  verdict so Ory can step up authentication or fail the flow.
+  Duo Security (a Cisco company) is an enterprise MFA platform with push and passcode flows. This integration
+  verifies a Duo passcode from an Ory Action webhook at sign-in and blocks the sign-in unless Duo allows it.
 useCase: >-
-  An enterprise has already standardized its workforce on Duo Mobile for MFA and wants to reuse that enrollment from
-  Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Duo's push challenge runs inline
-  with Ory login; the integration relays the verdict so Ory can issue the session or fail the flow.
+  An enterprise has already standardized its workforce on Duo for MFA and wants to reuse that enrollment from
+  Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn.
 coreFunctionality: |-
-  - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
+  - Sync post-login Ory Action webhook in the method-specific login hook lists (response.parse: true).
+  - Reads the Duo passcode from the flow's transient_payload and the client IP from True-Client-Ip.
   - Signs Duo Auth API requests with HMAC-SHA1 over a canonicalized request line per Duo's spec.
-  - POSTs /auth/v2/auth (factor=push, async=1) and long-polls /auth/v2/auth_status?txid=... until the user responds or DUO_POLL_DEADLINE_SECONDS elapses.
-  - Returns { result: allow | deny | waiting, mfa_passed } so the post-flow Action can gate the session.
-  - 502 on Duo errors so a Duo outage never silently grants MFA.
+  - POSTs /auth/v2/auth with factor=passcode; Duo answers immediately with allow or deny.
+  - Responds 200 on allow and 403 with Ory UI messages otherwise, so Duo errors never grant access and Ory never retries.
 oryMechanism:
   - actions
 protocol:

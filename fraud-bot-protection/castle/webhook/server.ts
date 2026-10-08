@@ -2,9 +2,11 @@
 //
 // Castle.io <> Ory Actions webhook handler.
 //
-// Receives post-login and post-registration events from Ory, calls Castle's
-// Risk API, and translates the response into Ory's flow control: allow,
-// challenge (flag identity for MFA step-up), or deny (block the flow).
+// Receives post-login and post-registration events from Ory and calls Castle's
+// Risk API. At login, the handler allows the sign-in, requires a second factor
+// (challenge), or blocks it (deny). Registration events are reported after the
+// identity is saved; a deny there can deactivate the identity through the Ory
+// Admin API when ORY_SDK_URL and ORY_ADMIN_API_KEY are set.
 //
 // Castle authenticates server-to-server with HTTP Basic auth: empty username,
 // API secret as password.
@@ -23,6 +25,8 @@ const CASTLE_API_SECRET = process.env.CASTLE_API_SECRET;
 const CASTLE_API_BASE = process.env.CASTLE_API_BASE || "https://api.castle.io";
 const CHALLENGE_THRESHOLD = parseFloat(process.env.CASTLE_CHALLENGE_THRESHOLD || "0.6");
 const DENY_THRESHOLD = parseFloat(process.env.CASTLE_DENY_THRESHOLD || "0.9");
+const ORY_SDK_URL = process.env.ORY_SDK_URL;
+const ORY_ADMIN_API_KEY = process.env.ORY_ADMIN_API_KEY;
 
 if (!ORY_WEBHOOK_SECRET || !CASTLE_API_SECRET) {
   console.error("ORY_WEBHOOK_SECRET and CASTLE_API_SECRET must be set in .env");
@@ -30,18 +34,10 @@ if (!ORY_WEBHOOK_SECRET || !CASTLE_API_SECRET) {
 }
 
 interface OryWebhookBody {
-  identity: {
-    id: string;
-    traits?: { email?: string };
-    metadata_public?: Record<string, unknown>;
-    created_at?: string;
-  };
-  flow: {
-    id: string;
-    type: string;
-    transient_payload?: { castle_request_token?: string } & Record<string, unknown>;
-  };
-  request_headers?: Record<string, string[]>;
+  request_token?: string | null;
+  user: { id: string; email?: string | null; registered_at?: string | null };
+  ip?: string | null;
+  headers?: Record<string, string[]>;
 }
 
 interface CastleRiskResponse {
@@ -49,13 +45,6 @@ interface CastleRiskResponse {
   policy: { action: "allow" | "challenge" | "deny"; id: string; name: string };
   signals?: Record<string, unknown>;
   device?: { token?: string; fingerprint?: string };
-}
-
-interface RiskAssessment {
-  score: number;
-  action: CastleRiskResponse["policy"]["action"];
-  policy_name: string;
-  assessed_at: string;
 }
 
 const app = express();
@@ -74,11 +63,6 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
 }
 
 const CASTLE_AUTH = `Basic ${Buffer.from(`:${CASTLE_API_SECRET}`).toString("base64")}`;
-
-function clientIp(headers: Record<string, string[]> | undefined): string {
-  const xff = headers?.["x-forwarded-for"]?.[0];
-  return xff ? (xff.split(",")[0]?.trim() ?? "0.0.0.0") : "0.0.0.0";
-}
 
 function flatHeaders(
   headers: Record<string, string[]> | undefined,
@@ -99,17 +83,16 @@ async function callCastle(
     type: eventType,
     status: "$succeeded",
     user: {
-      id: payload.identity.id,
-      email: payload.identity.traits?.email,
-      registered_at: payload.identity.created_at,
+      id: payload.user.id,
+      ...(payload.user.email && { email: payload.user.email }),
+      ...(payload.user.registered_at && { registered_at: payload.user.registered_at }),
     },
     context: {
-      ip: clientIp(payload.request_headers),
-      headers: flatHeaders(payload.request_headers),
+      ip: payload.ip,
+      headers: flatHeaders(payload.headers),
     },
   };
-  const requestToken = payload.flow?.transient_payload?.castle_request_token;
-  if (requestToken) body.request_token = requestToken;
+  if (payload.request_token) body.request_token = payload.request_token;
 
   const res = await fetch(`${CASTLE_API_BASE}/v1/risk`, {
     method: "POST",
@@ -124,47 +107,64 @@ async function callCastle(
   return (await res.json()) as CastleRiskResponse;
 }
 
+// Ory Kratos Identities rejects the flow and shows `text` to the user only for
+// a 4xx response in this shape.
+function rejectFlow(res: Response, id: number, text: string) {
+  res.status(403).json({
+    messages: [{ instance_ptr: "#/", messages: [{ id, text, type: "error" }] }],
+  });
+}
+
+async function deactivateIdentity(identityId: string): Promise<void> {
+  if (!ORY_SDK_URL || !ORY_ADMIN_API_KEY) {
+    console.log(`Castle denied registration ${identityId}: ORY_SDK_URL / ORY_ADMIN_API_KEY unset, not deactivating`);
+    return;
+  }
+  const res = await fetch(`${ORY_SDK_URL}/admin/identities/${identityId}`, {
+    method: "PATCH",
+    headers: { authorization: `Bearer ${ORY_ADMIN_API_KEY}`, "content-type": "application/json" },
+    body: JSON.stringify([{ op: "replace", path: "/state", value: "inactive" }]),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Ory patch ${res.status}: ${detail}`);
+  }
+}
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// Post-login: synchronous interrupt-capable hook.
-//   risk >= DENY_THRESHOLD or policy.action === "deny" -> 400 (block)
-//   risk >= CHALLENGE_THRESHOLD or policy.action === "challenge" -> 200 with requires_mfa_stepup=true
-//   otherwise -> 200, risk recorded in metadata_public
-// Castle outage falls open: 200 with empty body so authentication continues.
+// Login, configured with response.parse: true:
+//   risk >= DENY_THRESHOLD or policy.action === "deny" -> 403 with a message (block)
+//   risk >= CHALLENGE_THRESHOLD or policy.action === "challenge" -> 200 with
+//     required_aal: aal2, which requires the webhook_response_directives feature
+//     flag and is ignored without it
+//   otherwise -> 200
+// Ory doesn't save identity changes returned at login, so the handler returns
+// no metadata. A Castle outage falls open so authentication continues.
 app.post(
   "/castle/login",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, OryWebhookBody>, res: Response) => {
     try {
       const result = await callCastle(req.body, "$login");
-      const assessment: RiskAssessment = {
-        score: result.risk,
-        action: result.policy.action,
-        policy_name: result.policy.name,
-        assessed_at: new Date().toISOString(),
-      };
+      console.log(
+        `Castle login: user=${req.body.user.id} risk=${result.risk} action=${result.policy.action}`,
+      );
 
       if (result.risk >= DENY_THRESHOLD || result.policy.action === "deny") {
-        res.status(400).json({
-          messages: [{
-            instance_ptr: "#/",
-            message: "Login blocked due to suspicious activity. Please contact support.",
-            type: "error",
-          }],
-        });
+        rejectFlow(res, 9000401, "Sign-in blocked. Please contact support.");
         return;
       }
 
-      const requires_mfa_stepup =
-        result.risk >= CHALLENGE_THRESHOLD || result.policy.action === "challenge";
+      if (result.risk >= CHALLENGE_THRESHOLD || result.policy.action === "challenge") {
+        res.status(200).json({ required_aal: "aal2" });
+        return;
+      }
 
-      res.status(200).json({
-        identity: {
-          metadata_public: { risk_assessment: assessment, requires_mfa_stepup },
-        },
-      });
+      res.status(200).json({});
     } catch (err) {
       console.error("Castle login risk assessment failed:", (err as Error).message);
       res.status(200).json({});
@@ -172,35 +172,21 @@ app.post(
   },
 );
 
-// Post-registration: same shape, registration-specific event type. Risk goes
-// into metadata_admin so it's available to support tooling but not exposed.
+// Registration, configured with response.ignore: true so it runs after the
+// identity is saved and receives its real ID. Ory doesn't read this response.
 app.post(
   "/castle/registration",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, OryWebhookBody>, res: Response) => {
     try {
       const result = await callCastle(req.body, "$registration");
-      const assessment: RiskAssessment = {
-        score: result.risk,
-        action: result.policy.action,
-        policy_name: result.policy.name,
-        assessed_at: new Date().toISOString(),
-      };
-
+      console.log(
+        `Castle registration: user=${req.body.user.id} risk=${result.risk} action=${result.policy.action}`,
+      );
       if (result.policy.action === "deny") {
-        res.status(400).json({
-          messages: [{
-            instance_ptr: "#/",
-            message: "Registration blocked. Please try again or contact support.",
-            type: "error",
-          }],
-        });
-        return;
+        await deactivateIdentity(req.body.user.id);
       }
-
-      res.status(200).json({
-        identity: { metadata_admin: { risk_assessment: assessment } },
-      });
+      res.status(200).json({});
     } catch (err) {
       console.error("Castle registration risk assessment failed:", (err as Error).message);
       res.status(200).json({});
