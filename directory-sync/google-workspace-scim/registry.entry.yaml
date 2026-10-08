@@ -16,7 +16,7 @@ useCase: >-
   update / disable) in Workspace to flow into Ory automatically — no manual user management, no stale
   identities after offboarding.
 coreFunctionality: |-
-  - Configured in Google Workspace Admin Console → Apps → Web and mobile apps → app → Auto-provisioning. Pastes SCIM endpoint URL + access token from Ory's setup-link.
+  - Google Workspace provisions only to apps in its supported-app catalog, not to custom SCIM endpoints; the Ory Network guide adds the Keeper Web (SAML) catalog app and enters the Ory SCIM client's base URL and authorization header secret as its provisioning endpoint and token.
   - Attribute mapping: primary email → userName; given/family name → name.givenName / name.familyName; groups → groups.
   - Workspace pushes lifecycle events on its own schedule (typically within a few minutes of directory change) — no manual "push now".
   - Deactivation in Workspace becomes a deactivate in Ory (preserves identity record) — not a hard delete.

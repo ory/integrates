@@ -2,22 +2,23 @@
 
 > **Maintained by:** Community contributors
 
-[BambooHR](https://bamboohr.com) is an HRIS popular with SMB and mid-market companies. This integration enriches Ory identities with employee data from BambooHR via an Ory Action webhook on login or registration, returning `{ employed, employee_id, job_title, department, hire_date }` so a post-flow Action can gate access on employment status or write the fields into identity metadata.
+[BambooHR](https://bamboohr.com) is an HRIS popular with SMB and mid-market companies. This integration checks employment status in BambooHR from an Ory Action webhook on login or registration, and blocks the flow when the user isn't an active employee.
 
 **Type:** webhook (Ory Action calls a handler during a flow)
 **Docs page:** [ory.com/docs/integrates-with/directory-sync/bamboohr](https://www.ory.com/docs/integrates-with/directory-sync/bamboohr)
 
 ## Use case
 
-A company runs internal SaaS for employees and wants login to gate on employment status — off-boarded employees automatically lose access without a separate deprovision step. BambooHR is the HRIS source of truth; the integration looks up the user's BambooHR employee record at login and returns the employment flag so Ory can fail the flow on `employed: false`.
+A company runs internal SaaS for employees and wants login to gate on employment status — off-boarded employees automatically lose access without a separate deprovision step. BambooHR is the HRIS source of truth; the integration looks up the user's BambooHR employee record at login and blocks the sign-in when there is no active record.
 
 ## How it works
 
 1. A user logs in (or registers) through an Ory flow.
 2. Ory fires the sync Action webhook to this handler. The handler verifies the shared secret.
 3. The handler calls `GET /employees/directory` and filters by `workEmail` (BambooHR lacks a direct lookup-by-email API).
-4. On match, the handler calls `GET /employees/<id>?fields=status,jobTitle,department,hireDate,terminationDate` and returns `{ employed: status === "Active", employee_id, job_title, department, hire_date }`.
-5. On no match, the handler returns `{ employed: false }` so Ory can decide (some companies want to allow non-employee logins; others gate access entirely).
+4. On match, the handler calls `GET /employees/<id>?fields=status,jobTitle,department,hireDate,terminationDate`. An `Active` employee gets `204 No Content`, and the flow continues.
+5. On no match or a non-`Active` status, the handler responds with `403` and a [`messages` body](https://www.ory.com/docs/kratos/hooks/configure-hooks#webhook-responses), so Ory stops the flow and shows the user why. A `200` response doesn't block anything, whatever its body says.
+6. If BambooHR is slow or unreachable, the handler responds with `502`, and Ory fails the flow. This check makes every sign-in depend on BambooHR, so decide whether to keep that fail-closed behavior or let users in when BambooHR can't answer.
 
 ## Prerequisites
 
@@ -42,9 +43,9 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Ory
 
-1. Configure the Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml) — register on `after:login` and optionally `after:registration`.
+1. Configure the Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml). Add it to the login method lists, for example `selfservice.flows.login.after.password.hooks`, and optionally the registration method lists. Ory runs the global `selfservice.flows.login.after.hooks` list only for a method that has no hooks of its own.
 2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet); only `email` is required.
-3. Keep `response.parse: true` and `response.ignore: false` so Ory consumes the enrichment payload.
+3. Keep `response.parse: true` and `response.ignore: false` so Ory reads the `messages` body of a `403` and shows it to the user.
 4. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
 Off-boarded-employee gating, role-based attribute mapping, and saved-report lookups for large directories: see the [docs page](https://ory.com/docs/integrates-with/directory-sync/bamboohr).

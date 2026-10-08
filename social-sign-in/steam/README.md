@@ -10,11 +10,9 @@ Steam by Valve uses **OpenID 2.0** (the legacy spec from 2007), not OAuth 2.0 or
 
 ## How to integrate Steam
 
-Two viable approaches; pick based on whether you want to write a bridge or run one.
+### OpenID 2.0 → OIDC proxy
 
-### Option 1 — OpenID 2.0 → OIDC proxy (recommended)
-
-Deploy a small proxy that exposes an OIDC-compliant interface in front of Steam's OpenID 2.0 endpoint. Configure the proxy as a generic OIDC provider in Kratos. The proxy:
+Deploy a small proxy that exposes an OIDC-compliant interface in front of Steam's OpenID 2.0 endpoint. Configure the proxy as a generic OIDC provider in Kratos. Ory doesn't provide this proxy: you build and operate it. The proxy:
 
 1. Receives the standard OIDC authorization request from Kratos.
 2. Translates to Steam's OpenID 2.0 flow (`https://steamcommunity.com/openid/login`).
@@ -23,10 +21,6 @@ Deploy a small proxy that exposes an OIDC-compliant interface in front of Steam'
 5. Returns an `id_token` to Kratos shaped as a normal OIDC response.
 
 Then configure Kratos against the proxy's issuer URL with the [generic provider docs](https://www.ory.com/docs/kratos/social-signin/generic).
-
-### Option 2 — Bypass Kratos's social sign-in entirely
-
-Implement Steam OpenID 2.0 in your application backend, then create/look up the Ory identity via the [Kratos Admin API](https://www.ory.com/docs/kratos/reference/api) and mint an Ory session. This skips the social-signin subsystem but is more complex than Option 1.
 
 ## Steam-specific quirks to expect
 

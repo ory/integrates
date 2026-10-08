@@ -9,7 +9,7 @@ type: config
 maintainedBy: Ory Engineering
 description: >-
   Spotify as a social sign-in provider in Ory Network. Users sign in with their Spotify account; Ory maps Spotify's
-  OAuth2 response (id, email, display name, country, product tier) to the identity schema. Common in music,
+  profile (user ID, display name, email address, and profile image) to the identity schema. Common in music,
   entertainment, and creator-tool products.
 useCase: >-
   An entertainment or music-adjacent product wants sign-in via the OAuth provider its users already use to listen.
@@ -17,7 +17,7 @@ useCase: >-
 coreFunctionality: |-
   - First-party Kratos OAuth2 provider (`provider: spotify`); Spotify is not OIDC, so Ory calls the Spotify API to populate the claims envelope.
   - Common scopes: user-read-email, user-read-private (basic identity); add music-data scopes for personalization.
-  - Default Jsonnet maps email + display_name; can extend to country, product (free/premium), or Spotify URI.
+  - Default Jsonnet maps email + display name; Ory doesn't fetch country or product (free/premium) — call the Spotify API with the access token if you need them.
   - Spotify apps start in Development mode with a 25-user whitelist; production requires Spotify approval.
   - Refresh tokens supported by default.
 oryMechanism:

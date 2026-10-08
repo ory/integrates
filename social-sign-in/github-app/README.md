@@ -14,10 +14,10 @@ This is a **variant of the standard GitHub provider** — the user-facing OAuth 
 1. Follow the [Ory docs page](https://www.ory.com/docs/kratos/social-signin/github) for the **base GitHub provider configuration**, but at the GitHub side create a **GitHub App** at [github.com/settings/apps/new](https://github.com/settings/apps/new) instead of an OAuth App:
    - Set the **Callback URL** to the Ory redirect URI (`https://$PROJECT_SLUG.projects.oryapis.com/self-service/methods/oidc/callback/github-app`).
    - Enable **Request user authorization (OAuth) during installation**.
-   - Configure the **Permissions** the app needs (e.g. repository contents, pull requests).
+   - Configure the **Permissions** the app needs (e.g. repository contents, pull requests). Under **Account permissions**, grant **Email addresses** read access: the `github-app` provider reads the user's email addresses from GitHub on every sign-in, and the sign-in fails without this permission.
    - Generate and download a **Private Key** (`.pem`) — used later for server-to-server JWTs, not for Ory.
    - Note the **App ID**, **Client ID**, **Client Secret**.
-2. Configure the provider via Ory CLI with `provider: github-app`. Use `provider: github` for a plain GitHub OAuth App. The `id` is what appears in the redirect URI; the `provider` tells Kratos which OAuth grammar to use.
+2. Configure the provider via Ory CLI with `provider: github-app` and no `scope` list — GitHub Apps use permissions instead of OAuth scopes. Use `provider: github` for a plain GitHub OAuth App. The `id` is what appears in the redirect URI; the `provider` tells Kratos which OAuth grammar to use.
 3. **Server-to-server** (acting as the app itself) is **out of scope for the Ory provider** — your application code mints a JWT signed with the `.pem` key and exchanges it at `POST /app/installations/{installation_id}/access_tokens` for an installation token. Ory only handles user identification.
 
 ## When to choose this over the regular `github` provider

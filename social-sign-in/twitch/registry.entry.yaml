@@ -16,7 +16,7 @@ useCase: >-
   already use. Optional Twitch scopes (channel info, follows, subscriptions) enable feature gating on creator tier.
 coreFunctionality: |-
   - Configured as a generic OIDC provider (`provider: generic`, `id: twitch`, issuer https://id.twitch.tv/oauth2) — there is no first-party `twitch` provider in Kratos. CLI-only configuration.
-  - Twitch publishes /.well-known/openid-configuration but the `openid` claim isn't returned in the access_token; Ory hits Twitch's /me API to populate the claims envelope.
+  - Twitch supports OIDC: Ory reads the claims from the ID token. email and email_verified appear only when requested via requested_claims.id_token together with the user:read:email scope.
   - Default Jsonnet returns email gated on email_verified.
   - Configured via the Twitch Developer Portal; scopes follow the Twitch Helix scope catalog.
 oryMechanism:

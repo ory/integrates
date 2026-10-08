@@ -8,14 +8,14 @@ category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Patreon as a social sign-in provider in Ory Network. Patreon's OAuth response includes the user's identity plus
-  their pledge / membership data, which downstream code can use to gate access on tier or campaign membership.
+  Patreon as a social sign-in provider in Ory Network. Ory maps the user's Patreon identity (user ID, name, email,
+  profile image); Ory doesn't fetch pledge or membership data.
 useCase: >-
   A creator-economy product or member-only platform wants sign-in via the OAuth provider its patrons already use.
   Application code can read the Patreon membership API after sign-in to gate content on pledge tier.
 coreFunctionality: |-
   - First-party Kratos OIDC provider (`provider: patreon`); CLI-only configuration.
-  - Supported claims: Subject, Email, Name, GivenName, FamilyName, LastName, Picture.
+  - Supported claims: sub, email, name, given_name, family_name, last_name, picture.
   - Default Jsonnet maps email; downstream apps typically call Patreon's membership API with the access_token to gate access on tier.
   - Configured via Patreon's OAuth client portal; consent screen is Patreon-managed.
 oryMechanism:

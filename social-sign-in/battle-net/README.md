@@ -9,14 +9,28 @@ Add Battle.net (Blizzard) as a social sign-in provider in Ory Network. Useful fo
 
 ## Setup
 
-Battle.net is OIDC-certified, so configure it as a generic OIDC provider in Ory. Full generic-provider walkthrough is at the docs page above. Short version:
+Battle.net supports OpenID Connect, so configure it as a [generic provider](https://www.ory.com/docs/kratos/social-signin/generic) in Ory. Short version:
 
-1. Create a new client at the [Battle.net Developer Portal](https://develop.battle.net/access/clients) and add the redirect URI from the Ory Console.
-2. Copy the Client ID and Client Secret. Note the regional issuer URL:
-   - Americas: `https://oauth.battle.net`
-   - Europe: `https://oauth.battle.net` (regional aliases exist; Battle.net does identity globally on the same issuer)
-3. In the Ory Console, **Authentication → Social Sign-In → Add a Generic Provider**. Set Client ID, Client Secret, and Issuer URL.
-4. Add the `openid` scope (and `wow.profile`, `sc2.profile` etc. if you want game-specific data) plus a Jsonnet snippet mapping the `sub`, `battle_tag`, `email` claims to your identity schema.
+1. Create a client at the [Battle.net Developer Portal](https://develop.battle.net/access/clients) and add the Ory redirect URI: `https://$PROJECT_SLUG.projects.oryapis.com/self-service/methods/oidc/callback/battle-net`. The last path segment is the provider ID that you set in Ory.
+2. Copy the Client ID and Client Secret. The issuer URL is `https://oauth.battle.net`. For the China region, use `https://oauth.battlenet.com.cn` instead.
+3. In the Ory Console, **Authentication → Social Sign-In → Add a Generic Provider**, or use the Ory CLI with `provider: generic`. Set Client ID, Client Secret, Issuer URL, and the `openid` scope.
+4. Add a Jsonnet data mapping. Battle.net doesn't release email addresses. The ID token's `sub` claim is the user's numeric Battle.net account ID, and Ory passes every ID token claim to the mapping under `claims.raw_claims`:
+
+   ```jsonnet
+   local claims = std.extVar('claims');
+   local raw = if 'raw_claims' in claims then claims.raw_claims else {};
+
+   {
+     identity: {
+       traits: {
+         battlenet_account_id: claims.sub,
+         [if 'battle_tag' in raw then 'battletag' else null]: raw.battle_tag,
+       },
+     },
+   }
+   ```
+
+   Your identity schema must define the `battlenet_account_id` and `battletag` traits and must not require an email address.
 5. Save and trigger a registration flow to test.
 
 ## Status

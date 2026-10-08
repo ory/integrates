@@ -8,18 +8,18 @@ category: directory-sync
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  BambooHR is an HRIS popular with SMB and mid-market companies. This integration enriches Ory identities with employee
-  data from BambooHR via an Ory Action webhook on login or registration, returning employment status, job title,
-  department, and hire date so a post-flow Action can gate access or write the fields into identity metadata.
+  BambooHR is an HRIS popular with SMB and mid-market companies. This integration checks employment status in
+  BambooHR from an Ory Action webhook on login or registration and blocks the flow for users who aren't active
+  employees.
 useCase: >-
   A company runs internal SaaS for employees and wants login to gate on employment status — off-boarded employees lose
   access automatically without a separate deprovision step. BambooHR is the HRIS source of truth; the integration looks
-  up the user's BambooHR record at login and returns the employment flag so Ory can fail the flow on employed: false.
+  up the user's BambooHR record at login and blocks the sign-in when there is no active record.
 coreFunctionality: |-
-  - Sync Ory Action webhook (response.parse: true) on after:login and optionally after:registration.
-  - Looks up the employee via /employees/directory filtered by workEmail (BambooHR has no direct lookup-by-email API).
-  - Fetches detail fields (status, jobTitle, department, hireDate, terminationDate) and returns { employed, employee_id, job_title, department, hire_date }.
-  - Returns { employed: false } on no match so Ory can branch on member-vs-non-member traffic instead of erroring.
+  - Sync Ory Action webhook (response.parse: true) in the login method hook lists (for example selfservice.flows.login.after.password.hooks) and optionally registration.
+  - Looks up the employee via /employees/directory filtered by workEmail (BambooHR has no direct lookup-by-email API), then fetches the employee's status.
+  - Active employees get 204 No Content; no match or a non-Active status gets 403 with a Kratos `messages` body, which blocks the flow and shows the reason.
+  - BambooHR errors return 502, which fails the flow, so every sign-in depends on BambooHR availability.
   - BambooHR Basic auth: API key as username, literal "x" as password — documented in code so it doesn't look like a typo.
 oryMechanism:
   - actions

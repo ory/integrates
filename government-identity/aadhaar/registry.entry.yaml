@@ -16,6 +16,7 @@ useCase: >-
   identity verification at signup and is willing to integrate via a licensed eKYC provider.
 coreFunctionality: |-
   - Architecture: Ory Kratos webhook → your verification service → licensed ASA/AUA provider → UIDAI CIDR.
+  - The webhook runs without response.parse in a registration method hook list (e.g. selfservice.flows.registration.after.password.hooks) so it runs after the identity is saved and receives the real identity ID for the Admin API write-back.
   - Common licensed providers: Signzy, Digio, Karza Technologies, IDfy. Direct UIDAI API access is prohibited.
   - OTP-based eKYC flow is the typical path; biometric flow is also possible but requires registered devices.
   - Compliance non-negotiables: NEVER store the full Aadhaar number (mask / last 4 only); explicit `consent: "Y"` per call; data localization (Aadhaar-derived data must stay in India — keep full eKYC in India-hosted infra, only store masked/verified-status in Ory metadata which is global); 5-year audit trail.

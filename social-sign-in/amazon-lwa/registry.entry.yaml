@@ -17,7 +17,7 @@ coreFunctionality: |-
   - First-party Kratos OIDC provider (`provider: amazon`); registered as an "OpenID Connect provider" in the Ory Console wizard.
   - Standard scope `profile` (also `postal_code` if needed). Amazon doesn't issue an id_token, so Ory calls the LWA customer-profile API and exposes name / email as claims.
   - Default Jsonnet maps email to traits.email; email may be empty if the user denied the email permission on the consent screen.
-  - Configured via Amazon Security Profile (Login with Amazon → Create a New Security Profile); the Allowed Return URLs in Web Settings must include the Ory redirect URI.
+  - Configured via Amazon Security Profile (Login with Amazon → Create a New Security Profile); the Allowed Return URLs in Web Settings must include https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback — the provider rejects the default `pkce: auto`, so set `pkce: force`, which drops the provider ID from the redirect URI.
 oryMechanism:
   - standards
 protocol:

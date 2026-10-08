@@ -16,6 +16,7 @@ useCase: >-
 coreFunctionality: |-
   - First-party Kratos OIDC provider (`provider: uaepass`); both Console wizard and CLI configurations supported.
   - Issuer URL is environment-specific: https://id.uaepass.ae for production, https://stg-id.uaepass.ae for staging.
+  - Ory always uses PKCE with UAE PASS unless `pkce: never` is set, so register the redirect URI https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/callback (no provider ID).
   - Default Jsonnet maps sub → subject, email → email, fullnameEN → name.
   - Onboarding is gated — applications must be registered with the UAE PASS partner portal and approved before going live.
   - Supports both web and mobile authentication flows; mobile-app handoff to the UAE PASS app is documented on the partner portal.

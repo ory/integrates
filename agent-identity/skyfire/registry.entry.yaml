@@ -10,17 +10,17 @@ maintainedBy: Community contributors
 description: >-
   Pair Skyfire's "Know Your Agent" (KYA) verification with Ory for AI-agent identity — Skyfire issues
   verifiable credentials per agent; a customer-built provisioning service maps each Skyfire agent to an Ory
-  Kratos identity, and Hydra issues OAuth2 access tokens (client_credentials) for the agent to call APIs.
+  Hydra OAuth2 client, and Hydra issues OAuth2 access tokens (client_credentials) for the agent to call APIs.
 useCase: >-
   A product running autonomous AI agents that need to authenticate to backend APIs wants the agents to have
   verifiable identity (so the call site can answer "which agent is this and is it KYA-verified") plus
   per-agent spend controls — patterns that combining Skyfire and Ory makes natural.
 coreFunctionality: |-
-  - Each agent = one Kratos identity (not one user with multiple agents) — keeps audit and revocation clean.
-  - metadata_public.skyfire stores agent_id + kya_status on the Kratos identity.
-  - Ory Hydra issues access tokens via client_credentials; sub = Kratos identity id.
-  - API gateways validate tokens at the edge (see api-gateways/*) and can read metadata_public.skyfire.agent_id for access control.
-  - Skyfire can revoke agents — periodically re-check KYA status before token issuance to respect revocations.
+  - Each agent = one Hydra OAuth2 client (not one user with multiple agents) — keeps audit and revocation clean.
+  - The client's metadata stores skyfire.agent_id + kya_status.
+  - Ory Hydra issues access tokens via client_credentials; sub = the OAuth2 client ID.
+  - API gateways validate tokens at the edge (see api-gateways/*) and map sub to the agent via the client's metadata, or read an agent ID claim added by an OAuth2 token webhook.
+  - Skyfire can revoke agents — re-check KYA status on token issuance; the OAuth2 token webhook runs on every token request and can deny it with 403.
   - Payment / spend controls stay on the Skyfire side.
   - Status: community/proposed — emerging space, reference architecture more than turnkey product.
 oryMechanism:

@@ -9,14 +9,14 @@ type: config
 maintainedBy: Community contributors
 description: >-
   Naver Login as a social sign-in provider in Ory Network. Naver is South Korea's largest search portal — a
-  complementary sign-in option to Kakao for products targeting Korean users. OAuth 2.0 (not OIDC).
+  complementary sign-in option to Kakao for products targeting Korean users. Ory has no built-in Naver provider.
 useCase: >-
   A consumer product targeting South Korean users wants sign-in via Naver in addition to (or instead of) Kakao —
   Naver dominates search and adjacent services in Korea while Kakao dominates messaging.
 coreFunctionality: |-
-  - Configured via the Ory CLI as a generic provider — Naver isn't OIDC (no /.well-known/openid-configuration), so the Console wizard's discovery flow doesn't apply.
-  - Authorization endpoint: https://nid.naver.com/oauth2.0/authorize; Token endpoint: https://nid.naver.com/oauth2.0/token; Profile API: https://openapi.naver.com/v1/nid/me.
-  - Default Jsonnet maps response.id (Naver user id), response.email, response.nickname.
+  - Ory's generic provider works only with OpenID Connect providers: it reads endpoints from discovery and claims from the ID token, and doesn't accept explicit authorization, token, or profile endpoints.
+  - Naver's classic OAuth 2.0 API (nid.naver.com/oauth2.0, profile at openapi.naver.com/v1/nid/me) returns no ID token, so it needs an OAuth 2.0 to OIDC bridge that you build and operate, configured in Ory as a generic provider.
+  - Naver also publishes OIDC discovery at https://nid.naver.com/.well-known/openid-configuration; check whether your app can sign in with a generic provider on issuer https://nid.naver.com before building a bridge.
   - Configured at the Naver Developers Console (developers.naver.com/apps).
   - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/naver; contributions welcome.
 oryMechanism:

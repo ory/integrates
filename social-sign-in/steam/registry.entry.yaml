@@ -17,7 +17,7 @@ useCase: >-
 coreFunctionality: |-
   - Steam is NOT natively supported by Kratos — it speaks OpenID 2.0 (2007 spec), not OAuth 2.0/OIDC.
   - Recommended pattern: deploy a small OpenID 2.0 → OIDC proxy that wraps Steam's `https://steamcommunity.com/openid/login` endpoint and exposes a normal OIDC issuer; configure Kratos against the proxy as a generic provider.
-  - Alternative: implement Steam OpenID 2.0 in your backend and create/lookup identities via the Kratos Admin API, bypassing the social-signin subsystem.
+  - Ory doesn't provide the proxy; you build and operate it.
   - Steam does NOT share email; design the identity schema to use the 64-bit Steam ID as the credential identifier.
   - A Steam Web API key (from steamcommunity.com/dev/apikey) is needed to fetch profile data via GetPlayerSummaries; profile visibility may be restricted.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/social-sign-in/steam.

@@ -36,7 +36,9 @@ Common brokers:
 
 ## Assurance levels
 
-eIDAS defines three assurance levels — map these to Ory session AAL:
+eIDAS defines three levels of assurance (LoA): low, substantial, and high. The broker reports the level in the ID token's `acr` claim. The eIDAS specifications identify the levels as `http://eidas.europa.eu/LoA/low`, `http://eidas.europa.eu/LoA/substantial`, and `http://eidas.europa.eu/LoA/high`. Check which values your broker emits.
+
+Decide which levels count as AAL2 for your sessions:
 
 | eIDAS LoA | Description | Ory AAL |
 | --- | --- | --- |
@@ -44,7 +46,31 @@ eIDAS defines three assurance levels — map these to Ory session AAL:
 | Substantial | Verified via national eID, no biometrics | aal1 / aal2 |
 | High | Hardware-backed, biometric, or in-person | aal2 |
 
-The broker reports the LoA in the ID token; map it in Jsonnet and surface as `metadata_public.eidas.loa` for downstream policy.
+Mapping the LoA into identity metadata with Jsonnet doesn't change the session's authenticator assurance level (AAL). To mark a session as AAL2, list the matching `acr` values in the provider's `aal2_acr_values`. Ory compares them with the `acr` claim at every sign-in:
+
+```yaml
+selfservice:
+  methods:
+    oidc:
+      enabled: true
+      config:
+        providers:
+          - id: eidas
+            provider: generic
+            client_id: <your-client-id>
+            client_secret: <your-client-secret>
+            issuer_url: <your-broker-issuer-url>
+            mapper_url: base64://<base64-encoded-jsonnet>
+            scope:
+              - openid
+              - profile
+            aal2_acr_values:
+              - http://eidas.europa.eu/LoA/high
+```
+
+Sessions with any other `acr` value stay at AAL1. To ask the broker for a specific level, include `upstream_parameters: {"acr_values": "http://eidas.europa.eu/LoA/high"}` when submitting the login flow with `method: oidc` and the provider ID. See [Upstream MFA carry-over](https://www.ory.com/docs/kratos/social-signin/upstream-mfa).
+
+You can still map the LoA to `metadata_public.eidas.loa` with Jsonnet for downstream policy.
 
 ## Status
 

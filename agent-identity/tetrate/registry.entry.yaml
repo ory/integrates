@@ -20,7 +20,7 @@ useCase: >-
   for sensitive data.
 coreFunctionality: |-
   - Two-layer architecture: Ory is the authorization/policy layer (what an agent or user may access at the resource level); Tetrate Agent Router Enterprise is the network/gateway layer that enforces policy on live traffic.
-  - Agents are first-class identities authenticated through Ory; Hydra issues OAuth2/OIDC tokens via client_credentials.
+  - Each agent is a Hydra OAuth2 client using client_credentials, so the token's sub is the client ID and Keto policies refer to that ID; agents acting for a user use a consented flow (e.g. authorization code), where sub is the user and the agent is the token's client_id.
   - Authorization policies defined in Ory Keto; Tetrate evaluates each agent request (tool call + request parameters) against them at the point an agent invokes an MCP tool.
   - Parameter-level enforcement: Tetrate can gate not just which tools an agent may use but which request parameters are allowed, based on Keto policies.
   - Step-up auth: requests exceeding a risk threshold can pause, trigger an authentication/approval flow through Ory, and issue short-lived elevated access.

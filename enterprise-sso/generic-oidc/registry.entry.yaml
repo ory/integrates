@@ -8,7 +8,7 @@ category: enterprise-sso
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Configure ANY OIDC-compliant Identity Provider into Ory Polis as the OIDC Relying Party. Canonical reference
+  Configure ANY OIDC-compliant Identity Provider for enterprise SSO. On Ory Network, Ory Kratos is the OIDC Relying Party for an organization's connection; when self-hosting, Ory Polis is the RP. Canonical reference
   for OIDC-based enterprise SSO with Ory and the fallback when no provider-specific guide covers an IdP. Same
   source page is mirrored under generic-protocols/generic-oidc.
 useCase: >-
@@ -17,8 +17,8 @@ useCase: >-
   documented for debugging or non-default configuration.
 coreFunctionality: |-
   - Configured per the canonical Ory Polis page at /polis/sso-providers/generic-oidc; Polis acts as the OIDC RP, IdP as the OP.
-  - Discovery via /.well-known/openid-configuration on the issuer URL — Polis fetches and caches automatically.
-  - Required from the IdP: issuer URL, client id, client secret, plus the Polis ACS URL configured on the IdP side as the redirect URI.
+  - Discovery via /.well-known/openid-configuration on the issuer URL — Ory fetches and caches automatically.
+  - Required from the IdP: issuer URL, client id, client secret, plus the organization's OIDC redirect URI (https://<project-slug>.projects.oryapis.com/self-service/methods/oidc/organization/<organization-id>/callback/<connection-id>, or /self-service/methods/oidc/callback with pkce: force) configured on the IdP side.
   - Standard scopes: openid (required), profile, email; add groups if attribute mapping needs them.
   - Same content mirrored at generic-protocols/generic-oidc — categorization choice; either entry resolves to the same Polis page.
 oryMechanism:

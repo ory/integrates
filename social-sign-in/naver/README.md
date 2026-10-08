@@ -4,21 +4,22 @@
 
 Add Naver Login as a social sign-in provider in Ory Network. Naver is South Korea's largest search portal — a complementary sign-in option to Kakao for products targeting Korean users.
 
-**Type:** config (Ory Console / CLI — no webhook code)
+**Type:** config (architectural pattern, not a turnkey provider)
 **Docs page:** [ory.com/docs/integrates-with/social-sign-in/naver](https://www.ory.com/docs/integrates-with/social-sign-in/naver)
 
 ## Setup
 
-Naver supports OAuth 2.0 (not OIDC) — Ory calls Naver's profile API to populate claims. Configure as a generic OAuth provider. Short version:
+Ory has no built-in Naver provider, and the [generic provider](https://www.ory.com/docs/kratos/social-signin/generic) works only with OpenID Connect providers: it reads the endpoints from the provider's discovery document and the user's claims from the ID token. It doesn't accept explicit authorization, token, or profile endpoints.
 
-1. Register a Naver Login application at the [Naver Developers Console](https://developers.naver.com/apps/) and add the redirect URI from the Ory Console.
-2. Note the Client ID and Client Secret. Naver's authorization endpoint is `https://nid.naver.com/oauth2.0/authorize`, token endpoint `https://nid.naver.com/oauth2.0/token`, profile endpoint `https://openapi.naver.com/v1/nid/me`.
-3. Configure as a generic provider in the Ory Console (or via CLI). Because Naver isn't OIDC, you'll need to use the CLI variant with explicit auth/token URLs rather than the Console wizard.
-4. Add a Jsonnet snippet mapping the Naver claims (`response.id`, `response.email`, `response.nickname`) to your identity schema.
+Naver Login's classic API (`https://nid.naver.com/oauth2.0/...`) is OAuth 2.0 only. It returns no ID token, and the profile comes from a separate API (`https://openapi.naver.com/v1/nid/me`) as `response.id`, `response.email`, and `response.nickname`. You can't configure this API in Ory directly.
 
-## Status
+Naver also publishes an OpenID Connect discovery document at `https://nid.naver.com/.well-known/openid-configuration`, and Ory resolves it for a generic provider with the issuer URL `https://nid.naver.com`. Check whether your Naver app can sign in through these endpoints before you build a bridge.
 
-Community/proposed — no dedicated Ory documentation yet. Naver isn't OIDC (no discovery URL), so the integration requires explicit auth/token endpoints in the provider config. Contributions to ory/docs would be valued.
+### OAuth 2.0 to OIDC bridge
+
+To use the classic API, run a bridge that acts as an OpenID Connect provider toward Ory, the same pattern as the [Steam](../steam/) and [WeChat](../wechat/) entries describe. Ory doesn't provide this bridge: you build and operate it.
+
+The bridge receives the authorization request from Ory, sends the user to Naver's authorization endpoint, exchanges the code at Naver's token endpoint, calls Naver's profile API, and returns an ID token built from the profile to Ory. Configure the bridge as a generic provider in Ory.
 
 ## License
 

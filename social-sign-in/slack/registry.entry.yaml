@@ -8,15 +8,15 @@ category: social-sign-in
 type: config
 maintainedBy: Ory Engineering
 description: >-
-  Slack as a social sign-in provider in Ory Network. The "Sign in with Slack" OIDC flow returns the user's identity
-  plus their Slack workspace (team) membership, useful for B2B products where workspace membership signals access.
+  Slack as a social sign-in provider in Ory Network. The provider uses Slack's OAuth 2.0 "Sign in with Slack" flow,
+  which returns the user's identity plus the ID of their Slack workspace (team), useful for B2B products where workspace membership signals access.
 useCase: >-
   A B2B SaaS, internal tool, or productivity app wants single-sign-on via the workspace its users already share. Sign
-  in with Slack returns the team_id claim so the app can scope access by Slack workspace.
+  in with Slack returns the workspace ID as the `team` claim so the app can scope access by Slack workspace.
 coreFunctionality: |-
-  - First-party Kratos OIDC provider (`provider: slack`); discovery at https://slack.com/.well-known/openid-configuration.
-  - Slack-specific scopes (openid, email, profile) under "User Token Scopes" on the Slack app config.
-  - Default Jsonnet maps email + name; Slack adds team-specific claims (https://slack.com/team_id, https://slack.com/team_name) that map well into identity metadata for workspace-based policy.
+  - First-party Kratos provider (`provider: slack`) using Slack's OAuth 2.0 identity flow (slack.com/oauth/authorize and users.identity), not OIDC.
+  - Scopes identity.basic and identity.email under "User Token Scopes" on the Slack app config; the provider needs both client_id and client_secret.
+  - Claims: sub, name, email, picture, and the workspace ID as `team`, which maps well into identity metadata for workspace-based policy.
   - App must be Installed to each workspace before users can sign in.
   - Tokens are workspace-scoped — a user in two Slack workspaces will have two different (sub, team_id) tuples even with the same email.
 oryMechanism:

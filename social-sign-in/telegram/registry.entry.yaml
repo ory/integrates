@@ -8,21 +8,22 @@ category: social-sign-in
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Telegram does not implement OAuth 2.0 / OIDC; it provides a Login Widget that posts an HMAC-SHA256-signed payload to
-  a customer-provided URL. This integration is a small bridge that validates the HMAC against the Telegram bot token
-  and returns the verified profile so applications can call the Ory Admin API to upsert the matching identity and
-  issue a session.
+  Telegram Login supports the OpenID Connect authorization code flow, so it connects to Ory as a generic provider
+  (issuer https://oauth.telegram.org). This integration also ships a validator for the legacy Login Widget's
+  HMAC-SHA256-signed payload, for teams that keep the widget behind their own OIDC bridge.
 useCase: >-
-  A consumer app wants Telegram as a sign-in option but Telegram has no OIDC, so Ory's native social-sign-in providers
-  don't apply. The bridge validates the Login Widget HMAC inline, returns suggested identity traits, and the
-  application uses Ory's Admin API to upsert the identity and start a session.
+  A consumer app wants Telegram as a sign-in option. New integrations configure Telegram's OIDC flow as a generic
+  provider; apps that keep the legacy widget verify its payload with the validator inside an OIDC bridge that they
+  build and operate.
 coreFunctionality: |-
-  - POST /telegram/validate verifies X-Webhook-Secret, computes HMAC-SHA256 over the sorted data_check_string with key SHA256(bot_token), and rejects expired auth_date.
-  - Returns the verified profile plus suggested_identity_traits (telegram_id, name, username) for the application's Admin API upsert.
-  - Configurable TELEGRAM_AUTH_MAX_AGE_SECONDS for replay window (default 24h per Telegram's recommendation; tighten for stricter session creation).
-  - Stateless and read-only — does not touch Ory directly; the application owns the upsert and session-bootstrap.
+  - OIDC: provider generic, issuer_url https://oauth.telegram.org, claims_source id_token (no UserInfo endpoint), scopes openid + profile (optionally phone); with pkce force, register /self-service/methods/oidc/callback in the bot's Allowed URLs.
+  - Telegram supplies sub, name, preferred_username, picture, and phone_number with the phone scope; no email address.
+  - Legacy widget: POST /telegram/validate verifies X-Webhook-Secret, computes HMAC-SHA256 over the sorted data_check_string with key SHA256(bot_token), and rejects expired auth_date.
+  - Configurable TELEGRAM_AUTH_MAX_AGE_SECONDS for the replay window (default 24h).
+  - The validator is stateless and does not call Ory; the bridge completes OIDC with the Telegram user ID as sub.
 oryMechanism:
   - actions
 protocol:
+  - oidc
   - custom
 status: active

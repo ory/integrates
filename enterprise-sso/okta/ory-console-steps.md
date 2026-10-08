@@ -1,6 +1,6 @@
 # Okta — Ory Console setup steps
 
-This is the manual setup flow for adding Okta as an OIDC social-signin provider to an Ory Network project. The full walkthrough with screenshots lives at [ory.com/docs/integrations/okta](https://ory.com/docs/integrations/okta).
+This is the manual setup flow for adding Okta as an OIDC social-signin provider to an Ory Network project. The full walkthrough with screenshots lives at [ory.com/docs/integrates-with/enterprise-sso/okta](https://www.ory.com/docs/integrates-with/enterprise-sso/okta).
 
 ## 1. Create the Okta application
 
@@ -46,15 +46,17 @@ By default Okta returns `sub`, `email`, `name`, and `picture` in the `profile` a
    {
      identity: {
        traits: {
-         email: claims.email,
+         [if 'email' in claims && claims.email_verified then 'email' else null]: claims.email,
          name: {
-           first: claims.given_name,
-           last: claims.family_name,
+           [if 'given_name' in claims then 'first' else null]: claims.given_name,
+           [if 'family_name' in claims then 'last' else null]: claims.family_name,
          },
        },
      },
    }
    ```
+
+   This mapping works with identity schemas that define `email`, `name.first`, and `name.last` traits, such as `preset://basic`. Okta leaves out claims it has no value for, so the mapping only sets a trait when its claim is present.
 
 6. Click **Save**.
 
