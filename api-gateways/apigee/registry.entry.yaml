@@ -15,8 +15,8 @@ useCase: >-
   An enterprise API team running Apigee wants OAuth2 access tokens issued by Ory (Hydra) validated at the
   gateway layer so backend services don't need to re-validate every request.
 coreFunctionality: |-
-  - SharedFlow with VerifyJWT policy: PublicKey JWKS URL points at Ory's https://<project>.projects.oryapis.com/.well-known/jwks.json; Issuer = the Ory project URL; Audience = the API's audience identifier from Ory's OAuth2 client.
-  - Algorithm RS256; Apigee caches the JWKS by URL — tune CacheTTLInSeconds for the freshness/KMS-call trade-off.
+  - SharedFlow with VerifyJWT policy: PublicKey JWKS URL points at Ory's https://<project>.projects.oryapis.com/.well-known/jwks.json; Issuer = https://<project>.projects.oryapis.com (no trailing slash); Audience = the audience set on the Ory OAuth2 client and requested in the token request. Requires JWT access tokens enabled on the project.
+  - Algorithm RS256; Apigee caches a JWKS fetched from a URL for 300 seconds and selects the key by the token's kid.
   - Apigee KVM holds per-environment audience values without redeploying the shared flow.
   - For claim-based authorization (per-scope or per-role checks), add an AssignMessage or JavaScript policy after VerifyJWT to inspect the JWT claims.
   - SharedFlow attached to the API proxy's PreFlow runs before every request.

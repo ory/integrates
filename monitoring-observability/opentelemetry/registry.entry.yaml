@@ -9,13 +9,13 @@ type: config
 maintainedBy: Ory Engineering
 description: >-
   Ory natively supports OpenTelemetry across all self-hosted products — listed as the first/recommended
-  tracing backend in the Ory observability docs. Self-hosted products ship OTLP via standard
-  OTEL_EXPORTER_OTLP_* env vars. Self-hosted only: Ory Network does not export OTLP to customer collectors.
+  tracing backend in the Ory observability docs. Self-hosted products ship OTLP/HTTP configured
+  through the tracing config (TRACING_* env vars). Self-hosted only: Ory Network does not export OTLP to customer collectors.
 useCase: >-
   An Ory customer wants distributed traces in their own observability backend without being locked into a
   single vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
 coreFunctionality: |-
-  - Self-hosted: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES) on each Ory product.
+  - Self-hosted: TRACING_PROVIDER=otel, TRACING_PROVIDERS_OTLP_SERVER_URL (host:port, no scheme, OTLP/HTTP port 4318), TRACING_PROVIDERS_OTLP_INSECURE for plain-HTTP collectors, TRACING_SERVICE_NAME. TRACING_DEPLOYMENT_ENVIRONMENT sets deployment.environment.name. OTEL_RESOURCE_ATTRIBUTES merges in other resource attributes; OTEL_EXPORTER_OTLP_HEADERS applies unless the OTLP authorization_header is set; OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_SERVICE_NAME are ignored.
   - TRACING_PROVIDER accepts otel, jaeger, or zipkin; use otel for OTLP.
   - OTLP carries traces only; metrics come from the Prometheus endpoint and logs from stdout.
   - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port), so there is no customer-facing OTLP export.

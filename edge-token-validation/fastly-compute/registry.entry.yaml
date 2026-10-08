@@ -17,11 +17,11 @@ useCase: >-
 coreFunctionality: |-
   - WASM module (Rust / JS / AssemblyScript / TinyGo) fires on every request; reads session cookie or Authorization: Bearer.
   - Hydra JWT: verify signature against cached Ory JWKS using language-native JWT library compiled to WASM.
-  - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via a registered Fastly backend. Compute@Edge cannot make ad-hoc outbound calls — the Ory hostname MUST be registered as a named backend in the service config.
+  - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via a registered Fastly backend. Register the Ory hostname as a named backend in the service config, or have Fastly enable dynamic backends for the service and enable them in the SDK.
   - Caching: Fastly KV Store keyed by cookie hash for 30-60s; per-execution memory is request-scoped only.
-  - Edge dictionaries for non-secret config (Ory project URL, audience IDs); edge secrets for JWKS pinning / service tokens.
+  - Config Store for non-secret config (Ory project URL, audience IDs); Secret Store for service tokens.
   - On valid: inject X-User-Id header; on invalid: synthesize 401 at the edge.
-  - Rust is the most performant; JavaScript (via Quick.js) is the easiest path porting from the Cloudflare reference.
+  - Rust is the most performant; JavaScript (SpiderMonkey compiled to WebAssembly) is the easiest path porting from the Cloudflare reference.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/fastly-compute.
 oryMechanism:
   - standards

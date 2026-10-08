@@ -1,30 +1,33 @@
-# Kong Declarative Configuration for Ory Token Validation
+# Kong declarative configuration for validating Ory-issued JWT access tokens.
 #
-# This configures Kong to validate Ory-issued JWTs on protected routes
-# using the built-in JWT plugin with Ory's JWKS endpoint.
+# Kong's open source jwt plugin does not fetch JWKS. It verifies the RS256
+# signature with the PEM public key stored on the Consumer's JWT credential
+# and selects that credential by the token's `iss` claim. The post-function
+# then requires the API audience on the same token the jwt plugin accepted.
 #
-# Two approaches are shown:
-#   1. JWT plugin (open-source) — validates JWT signatures via JWKS
-#   2. OpenID Connect plugin (Enterprise) — full OIDC flow with Ory Hydra
-#
-# Replace YOUR_ORY_PROJECT with your actual Ory Network project slug.
+# Before you load this file:
+#   1. Switch the Ory project to JWT access tokens and issue tokens with an
+#      audience (see the README).
+#   2. Replace YOUR_ORY_PROJECT with your project slug and
+#      https://api.example.com with your API's audience.
+#   3. Paste the complete PEM of the JWKS key that signs your tokens under
+#      rsa_public_key (see the README for a conversion command).
+#   4. Allow the post-function to load the JWT parser in the Lua sandbox with
+#      untrusted_lua_sandbox_requires = kong.plugins.jwt.jwt_parser
+#      (KONG_UNTRUSTED_LUA_SANDBOX_REQUIRES in docker-compose.yaml).
 
 _format_version: "3.0"
 
-# === Approach 1: JWT Plugin (Kong Open Source) ===
-#
-# This approach validates JWT access tokens issued by Ory Hydra.
-# The JWT plugin fetches the public keys from Ory's JWKS endpoint
-# and verifies the token signature, expiration, and claims.
-
 consumers:
-  - username: ory-jwt-consumer
+  - username: ory
     jwt_secrets:
       - algorithm: RS256
-        # Ory's JWKS URL — Kong fetches public keys from here
-        # For Ory Network: https://YOUR_ORY_PROJECT.projects.oryapis.com/.well-known/jwks.json
         key: https://YOUR_ORY_PROJECT.projects.oryapis.com
-        secret: "unused-for-RS256"
+        secret: unused-for-rs256
+        rsa_public_key: |
+          -----BEGIN PUBLIC KEY-----
+          REPLACE-WITH-THE-COMPLETE-PEM-FROM-THE-ORY-JWKS
+          -----END PUBLIC KEY-----
 
 services:
   - name: protected-api
@@ -37,14 +40,54 @@ services:
     plugins:
       - name: jwt
         config:
-          # Where to find the JWT in the request
           header_names:
             - Authorization
-          # Claims to validate
+          uri_param_names: []
+          cookie_names: []
           claims_to_verify:
             - exp
-          # Forward decoded claims as headers to upstream
-          run_on_preflight: false
+      - name: post-function
+        config:
+          access:
+            - |
+              local token = kong.ctx.shared.authenticated_jwt_token
+              if type(token) ~= "string" then
+                return kong.response.exit(401, { message = "Unauthorized" })
+              end
+
+              local jwt = require("kong.plugins.jwt.jwt_parser"):new(token)
+              if not jwt then
+                return kong.response.exit(401, { message = "Unauthorized" })
+              end
+
+              local nbf = jwt.claims.nbf
+              if nbf ~= nil and (type(nbf) ~= "number" or nbf > ngx.time()) then
+                return kong.response.exit(401, { message = "Unauthorized" })
+              end
+
+              local expected = "https://api.example.com"
+              local audience = jwt.claims.aud
+              local allowed = audience == expected
+              if type(audience) == "table" then
+                for _, value in ipairs(audience) do
+                  if type(value) ~= "string" then
+                    return kong.response.exit(403, { message = "Forbidden" })
+                  end
+                  if value == expected then
+                    allowed = true
+                  end
+                end
+              end
+
+              if not allowed then
+                return kong.response.exit(403, { message = "Forbidden" })
+              end
+
+              local sub = jwt.claims.sub
+              if type(sub) ~= "string" then
+                return kong.response.exit(403, { message = "Forbidden" })
+              end
+              kong.service.request.set_header("X-User-Id", sub)
 
   - name: public-api
     url: http://your-backend:8080
@@ -54,39 +97,8 @@ services:
           - /public
           - /health
         strip_path: false
-
-# === Post-authentication header injection ===
-# Use the post-function plugin to extract JWT claims and set upstream headers
-
-  - name: protected-api-with-headers
-    url: http://your-backend:8080
-    routes:
-      - name: api-headers-route
-        paths:
-          - /api/v2
-        strip_path: false
     plugins:
-      - name: jwt
-        config:
-          header_names:
-            - Authorization
-          claims_to_verify:
-            - exp
-      - name: post-function
+      - name: pre-function
         config:
           access:
-            - |
-              -- Extract JWT claims and set upstream headers
-              local jwt_claims = kong.ctx.shared.authenticated_jwt_token
-              if jwt_claims then
-                local cjson = require("cjson")
-                local claims = cjson.decode(
-                  ngx.decode_base64(jwt_claims:match("%.(.+)%.")))
-                kong.service.request.set_header("X-User-Id", claims.sub or "")
-                kong.service.request.set_header("X-User-Email",
-                  claims.email or claims.ext and claims.ext.email or "")
-                if claims.ext and claims.ext.subscription_plan then
-                  kong.service.request.set_header("X-User-Plan",
-                    claims.ext.subscription_plan)
-                end
-              end
+            - kong.service.request.clear_header("X-User-Id")

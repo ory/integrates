@@ -16,7 +16,7 @@ useCase: >-
   same codebase and deployment pipeline as the rest of their infrastructure.
 coreFunctionality: |-
   - NO official Ory Pulumi provider exists today.
-  - Recommended path: bridge the official ory/ory Terraform provider via pulumi-terraform-bridge to generate a Pulumi-callable SDK.
+  - Recommended path: generate a local SDK from the official ory/ory Terraform provider with `pulumi package add terraform-provider ory/ory <version>` (pulumi-terraform-bridge); import it as @pulumi/ory in TypeScript.
   - Alternative: write a Pulumi `dynamic` provider that calls the Ory Network REST API using @ory/client (TypeScript) or ory-client (Go/Python). State diffing and CRUD logic is the implementer's responsibility.
   - Escape hatch: keep Ory resources in Terraform via the official provider (iac-devops/terraform) and only use Pulumi for the rest.
 oryMechanism:

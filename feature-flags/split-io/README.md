@@ -12,19 +12,23 @@
 This is **not a webhook integration** — feature evaluation happens in your application via the Split.io SDK. The integration is the convention for what to pass:
 
 ```typescript
-// In your app, after Ory session resolution:
-const session = await ory.sessions.toSession();
-const identity = session.data.identity;
+// In your app, after Ory session resolution with @ory/client-fetch:
+const session = await ory.toSession();
+const identity = session.identity!;
+const meta = (identity.metadata_public ?? {}) as Record<string, any>;
 
 const attributes = {
   email: identity.traits.email,
-  org_id: identity.metadata_public?.org_id,
-  subscription_tier: identity.metadata_public?.recurly?.subscription_tier,
-  // ...
+  org_id: meta.org_id,
+  tier: meta.subscription_tier,
+  groups: meta.groups,
 };
 
+await splitClient.whenReady();
 const treatment = splitClient.getTreatment(identity.id, "my-feature", attributes);
 ```
+
+With `@ory/client`, `toSession()` returns an Axios response, so read the identity from `session.data.identity`.
 
 ## What to pass to Split
 
@@ -39,7 +43,8 @@ const treatment = splitClient.getTreatment(identity.id, "my-feature", attributes
 ## Notable
 
 - Pass **stable identifiers** as the `key` (use `identity.id`, not email — email can change).
-- For server-side evaluation, use the Split server SDK; for client-side, use the Split JavaScript SDK and pass attributes via the `Track` API.
+- Wait for `whenReady()` before you evaluate flags. Until the SDK is ready, `getTreatment` returns `control`.
+- Use the Split server SDK on the server side and the Split JavaScript SDK on the client side. Pass attributes to `getTreatment`; in the JavaScript SDK you can also bind them once with `setAttributes()`. The `track()` method records events for metrics. It doesn't set attributes.
 - Split's **Impact measurement** features need event-stream integration too — that's a separate concern; see [`cdp-analytics/segment`](../../cdp-analytics/segment/) for event ingestion patterns.
 - Compare with [`feature-flags/launchdarkly`](../launchdarkly/) — same pattern, different vendor.
 

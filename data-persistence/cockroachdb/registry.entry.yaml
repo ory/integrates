@@ -8,17 +8,16 @@ category: data-persistence
 type: config
 maintainedBy: Community contributors
 description: >-
-  Use CockroachDB as the primary datastore for self-hosted Ory components (Kratos, Hydra, Keto, Oathkeeper)
-  via its PostgreSQL wire-protocol compatibility. Right choice for deployments needing geographic distribution
-  or HA beyond a single Postgres node. Documented at ory.com/docs/integrates-with/data-persistence/cockroachdb — same DSN format Ory uses for Postgres works
-  for Cockroach with Cockroach-aware tuning.
+  Use CockroachDB as the primary datastore for self-hosted Ory Kratos, Ory Hydra, and Ory Keto with a
+  cockroach:// DSN. Right choice for deployments needing geographic distribution
+  or HA beyond a single Postgres node. Documented at ory.com/docs/integrates-with/data-persistence/cockroachdb — cockroach:// DSN plus Cockroach-aware tuning.
 useCase: >-
   A self-hosted Ory deployment needs multi-region survivability, horizontal scalability beyond a single
   Postgres node, or strong consistency under geographic distribution — and is willing to tune for Cockroach's
   distributed-transaction model.
 coreFunctionality: |-
-  - Cockroach speaks Postgres wire protocol — Ory product DSN format unchanged: postgres://user:password@cockroach-host:26257/<db>?sslmode=verify-full&options=--cluster%3D<cluster-id>.
-  - Migrations run with `kratos migrate sql` (etc.) against Cockroach without changes.
+  - DSN: cockroach://user:password@cockroach-host:26257/<db>?sslmode=verify-full. The cockroach:// scheme selects CockroachDB-specific migrations; a postgres:// DSN selects the PostgreSQL migrations, which can fail partway.
+  - Migrations run with `kratos migrate sql` (etc.) against the cockroach:// DSN.
   - FK-heavy schema: expect some 40001 retry errors under high concurrency; clients should retry transactions per Cockroach's standard pattern.
   - UUID PKs (good — distribute across nodes) vs SERIAL (would hot-shard) — verify no Ory product version uses SERIAL.
   - Serverless tier has request-per-second limits unsuitable for production identity workloads; use Self-hosted (Dedicated) tier.

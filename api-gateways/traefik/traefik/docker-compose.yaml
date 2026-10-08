@@ -5,11 +5,13 @@
 
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.7
     command:
       - --api.insecure=true
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.aliasHeadersStrategy=delete
+      - --entrypoints.websecure.http.aliasHeadersStrategy=delete
       - --providers.docker=true
       - --providers.docker.exposedByDefault=false
       - --providers.file.filename=/etc/traefik/dynamic-config.yaml

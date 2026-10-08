@@ -1,16 +1,16 @@
 # Traefik dynamic configuration.
 #
 # Wires up Traefik's forwardAuth middleware to the Ory session validator
-# in forwardauth/server.js. Traefik copies the response headers we set
-# (X-User-*, X-Session-Id, X-Auth-AAL, X-User-Metadata) into the upstream
-# request via authResponseHeaders.
+# in forwardauth/server.ts. Traefik replaces each header listed in
+# authResponseHeaders with the validator's value, or removes it when the
+# validator doesn't set it, so clients can't supply identity headers.
+# Routes without ory-auth use strip-identity-headers instead.
 
 http:
   middlewares:
     ory-auth:
       forwardAuth:
         address: http://ory-forwardauth:4181
-        trustForwardHeader: true
         authResponseHeaders:
           - X-User-Id
           - X-User-Email
@@ -18,6 +18,16 @@ http:
           - X-Session-Id
           - X-Auth-AAL
           - X-User-Metadata
+
+    strip-identity-headers:
+      headers:
+        customRequestHeaders:
+          X-User-Id: ""
+          X-User-Email: ""
+          X-User-Name: ""
+          X-Session-Id: ""
+          X-Auth-AAL: ""
+          X-User-Metadata: ""
 
   routers:
     api:
@@ -32,6 +42,8 @@ http:
     public:
       rule: PathPrefix(`/public`) || Path(`/health`)
       service: api-service
+      middlewares:
+        - strip-identity-headers
       entryPoints:
         - websecure
       tls: {}

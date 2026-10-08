@@ -16,7 +16,8 @@
  *     false,        // default value
  *   );
  *
- * The wrapper maps Ory identity traits (email, plan, role, etc.) to
+ * The wrapper maps Ory identity traits and metadata_public (email, name,
+ * subscription_tier, groups, org_id) to
  * LaunchDarkly context attributes for targeting rules.
  *
  * SECURITY: Store LAUNCHDARKLY_SDK_KEY in a secret manager.
@@ -46,6 +47,17 @@ export interface OrySession {
   authenticator_assurance_level?: string;
 }
 
+const RESERVED_USER_ATTRIBUTES = new Set([
+  "key",
+  "kind",
+  "_meta",
+  "anonymous",
+  "subscription_tier",
+  "org_id",
+  "billing",
+  "risk_assessment",
+]);
+
 /**
  * Ory + LaunchDarkly wrapper.
  * Maps Ory sessions to LaunchDarkly multi-context for flag evaluation.
@@ -60,43 +72,43 @@ export class OryLaunchDarkly {
   /**
    * Build a LaunchDarkly multi-kind context from an Ory session.
    *
-   * Creates two context kinds:
-   *   - "user": keyed by Ory identity ID, with traits as attributes
-   *   - "session": keyed by session ID, with AAL and session metadata
+   * Creates up to three context kinds:
+   *   - "user": keyed by Ory identity ID, with traits and metadata_public as
+   *     attributes (`tier` from subscription_tier, `groups`)
+   *   - "organization": keyed by metadata_public.org_id, when present
+   *   - "session": keyed by session ID, with the AAL
    */
   buildContext(session: OrySession): LDMultiKindContext {
     const identity = session.identity;
     const traits = identity.traits;
-    const metadata = identity.metadata_public || {};
+    const metadata = identity.metadata_public ?? {};
 
-    return {
+    const context: LDMultiKindContext = {
       kind: "multi",
       user: {
+        ...Object.fromEntries(
+          Object.entries(metadata).filter(([k]) => !RESERVED_USER_ATTRIBUTES.has(k)),
+        ),
         key: identity.id,
         email: traits.email,
         firstName: traits.name?.first,
         lastName: traits.name?.last,
         name: [traits.name?.first, traits.name?.last].filter(Boolean).join(" ") || undefined,
-        // Map metadata fields as custom attributes for targeting
-        plan: metadata.billing && typeof metadata.billing === "object"
-          ? (metadata.billing as any).plan
-          : undefined,
-        subscriptionStatus: metadata.billing && typeof metadata.billing === "object"
-          ? (metadata.billing as any).status
-          : undefined,
-        // Ory-specific attributes
+        tier: metadata.subscription_tier,
+        groups: metadata.groups,
         schemaId: identity.schema_id,
         createdAt: identity.created_at,
-        // Spread any other metadata as custom attributes
-        ...Object.fromEntries(
-          Object.entries(metadata).filter(([k]) => k !== "billing" && k !== "risk_assessment"),
-        ),
       } as LDContextCommon,
       session: {
         key: session.id,
         aal: session.authenticator_assurance_level,
       } as LDContextCommon,
     };
+
+    if (typeof metadata.org_id === "string" && metadata.org_id) {
+      context.organization = { key: metadata.org_id };
+    }
+    return context;
   }
 
   /** Evaluate a boolean flag using the Ory session as context */

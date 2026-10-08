@@ -1,9 +1,9 @@
 # Multi-Environment Terraform Configuration for Ory Network
 #
 # Manages separate Ory projects for staging and production
-# using Terraform workspaces or separate .tfvars files.
+# using Terraform workspaces and separate .tfvars files.
 #
-# Usage:
+# Export ORY_WORKSPACE_API_KEY (ory_wak_...) and TF_VAR_webhook_secret, then:
 #   terraform workspace new staging
 #   terraform apply -var-file=staging.tfvars
 #
@@ -15,7 +15,7 @@ terraform {
   required_providers {
     ory = {
       source  = "ory/ory"
-      version = "~> 0.1"
+      version = "~> 26.3"
     }
   }
 
@@ -27,7 +27,9 @@ terraform {
   # }
 }
 
-provider "ory" {}
+provider "ory" {
+  project_id = var.project_id
+}
 
 # --- Variables ---
 
@@ -79,7 +81,6 @@ variable "enable_splunk_webhook" {
 
 locals {
   is_production = var.environment == "production"
-  project_name  = "MyApp - ${title(var.environment)}"
 
   # Only enable debug-friendly CORS origins in non-production
   cors_origins = concat(
@@ -88,109 +89,77 @@ locals {
   )
 }
 
-# --- Project ---
+# --- Project Configuration ---
 
-resource "ory_project" "main" {
-  id   = var.project_id
-  name = local.project_name
+resource "ory_project_config" "main" {
+  cors_enabled = true
+  cors_origins = local.cors_origins
 
-  cors_public {
-    enabled = true
-    origins = local.cors_origins
-  }
-
-  selfservice_ui {
-    login_url        = "${var.app_url}/auth/login"
-    registration_url = "${var.app_url}/auth/registration"
-    recovery_url     = "${var.app_url}/auth/recovery"
-    verification_url = "${var.app_url}/auth/verification"
-    settings_url     = "${var.app_url}/auth/settings"
-    error_url        = "${var.app_url}/auth/error"
-  }
+  selfservice_flows_login_ui_url        = "${var.app_url}/auth/login"
+  selfservice_flows_registration_ui_url = "${var.app_url}/auth/registration"
+  selfservice_flows_recovery_ui_url     = "${var.app_url}/auth/recovery"
+  selfservice_flows_verification_ui_url = "${var.app_url}/auth/verification"
+  selfservice_flows_settings_ui_url     = "${var.app_url}/auth/settings"
+  selfservice_flows_error_ui_url        = "${var.app_url}/auth/error"
 }
 
 # --- Conditional Webhooks ---
 
 resource "ory_action" "stripe_registration" {
-  count      = var.enable_stripe_webhook ? 1 : 0
-  project_id = var.project_id
-  flow       = "registration"
-  hook       = "after"
+  count = var.enable_stripe_webhook ? 1 : 0
 
-  config = jsonencode({
-    hook = "web_hook"
-    config = {
-      url    = "${var.webhook_base_url}/webhooks/stripe/registration"
-      method = "POST"
-      response = { parse = true, ignore = false }
-      can_interrupt = false
-      auth = {
-        type = "api_key"
-        config = {
-          name = "X-Webhook-Secret"
-          value = var.webhook_secret
-          in = "header"
-        }
-      }
-    }
-  })
+  flow           = "registration"
+  timing         = "after"
+  auth_method    = "password"
+  url            = "${var.webhook_base_url}/webhooks/stripe/registration"
+  method         = "POST"
+  body           = file("${path.module}/jsonnet/registration.jsonnet")
+  response_parse = true
+  can_interrupt  = false
+
+  webhook_auth_type          = "api_key"
+  webhook_auth_api_key_name  = "X-Webhook-Secret"
+  webhook_auth_api_key_value = var.webhook_secret
+  webhook_auth_api_key_in    = "header"
 }
 
 resource "ory_action" "segment_login" {
-  count      = var.enable_segment_webhook ? 1 : 0
-  project_id = var.project_id
-  flow       = "login"
-  hook       = "after"
+  count = var.enable_segment_webhook ? 1 : 0
 
-  config = jsonencode({
-    hook = "web_hook"
-    config = {
-      url    = "${var.webhook_base_url}/webhooks/segment/login"
-      method = "POST"
-      response = { ignore = true }
-      can_interrupt = false
-      auth = {
-        type = "api_key"
-        config = {
-          name = "X-Webhook-Secret"
-          value = var.webhook_secret
-          in = "header"
-        }
-      }
-    }
-  })
+  flow            = "login"
+  timing          = "after"
+  auth_method     = "password"
+  url             = "${var.webhook_base_url}/webhooks/segment/login"
+  method          = "POST"
+  body            = file("${path.module}/jsonnet/login.jsonnet")
+  response_ignore = true
+  can_interrupt   = false
+
+  webhook_auth_type          = "api_key"
+  webhook_auth_api_key_name  = "X-Webhook-Secret"
+  webhook_auth_api_key_value = var.webhook_secret
+  webhook_auth_api_key_in    = "header"
 }
 
 resource "ory_action" "splunk_login" {
-  count      = var.enable_splunk_webhook ? 1 : 0
-  project_id = var.project_id
-  flow       = "login"
-  hook       = "after"
+  count = var.enable_splunk_webhook ? 1 : 0
 
-  config = jsonencode({
-    hook = "web_hook"
-    config = {
-      url    = "${var.webhook_base_url}/webhooks/splunk/login"
-      method = "POST"
-      response = { ignore = true }
-      can_interrupt = false
-      auth = {
-        type = "api_key"
-        config = {
-          name = "X-Webhook-Secret"
-          value = var.webhook_secret
-          in = "header"
-        }
-      }
-    }
-  })
+  flow            = "login"
+  timing          = "after"
+  auth_method     = "password"
+  url             = "${var.webhook_base_url}/webhooks/splunk/login"
+  method          = "POST"
+  body            = file("${path.module}/jsonnet/login.jsonnet")
+  response_ignore = true
+  can_interrupt   = false
+
+  webhook_auth_type          = "api_key"
+  webhook_auth_api_key_name  = "X-Webhook-Secret"
+  webhook_auth_api_key_value = var.webhook_secret
+  webhook_auth_api_key_in    = "header"
 }
 
 # --- Outputs ---
-
-output "project_name" {
-  value = local.project_name
-}
 
 output "environment" {
   value = var.environment

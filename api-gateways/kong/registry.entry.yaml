@@ -8,18 +8,19 @@ category: api-gateways
 type: config
 maintainedBy: Community contributors
 description: >-
-  Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's stock
-  `jwt` plugin (or jwt-signer / jwt-keycloak community plugins for JWKS auto-refresh); session validation via
-  request-transformer + pre-function calling /sessions/whoami. Documented at ory.com/docs/integrates-with/api-gateways/kong — universal pattern.
+  Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's open source
+  `jwt` plugin plus a post-function audience check (or Kong Enterprise's OpenID Connect plugin for JWKS
+  auto-refresh); session validation via a custom plugin or pre-function calling /sessions/whoami. Documented at
+  ory.com/docs/integrates-with/api-gateways/kong — universal pattern.
 useCase: >-
   A team running APIs behind Kong wants Ory-issued OAuth2 access tokens (Hydra) or Kratos session cookies
   validated at the gateway so backend services don't need to re-validate every request.
 coreFunctionality: |-
-  - Path A (Hydra JWTs): Kong jwt plugin with RS256 algorithm, public key from Ory JWKS (prefer jwt-signer or jwt-keycloak community plugins for JWKS auto-fetch over manual key loading). Configure claims_to_verify (typically exp) and key_claim_name.
-  - Path B (Kratos sessions): request-transformer + pre-function plugins (or a small custom plugin) call https://<project>.projects.oryapis.com/sessions/whoami with the session cookie; on 200 inject X-User-Id / X-User-Email headers downstream.
-  - Kong Enterprise's OIDC plugin handles Path A automatically with JWKS auto-discovery.
-  - Caching: cache whoami response per session cookie via Kong's proxy-cache plugin or a Redis-backed custom cache to avoid hammering Ory.
-  - Rate-limit at the gateway keyed by the validated `sub` claim — Kong's rate-limiting plugin is the cleanest pattern.
+  - Prerequisite: Ory issues opaque access tokens by default; switch the project to JWT access tokens and request an audience.
+  - Path A (Hydra JWTs): Kong jwt plugin with an RS256 Consumer credential keyed by the issuer and holding the PEM public key converted from the Ory JWKS; claims_to_verify exp. A post-function requires the API audience and nbf and sets X-User-Id from sub. Reference kong.yaml and docker-compose.yaml for Kong 3.9.
+  - The open source jwt plugin does not fetch JWKS, so rotate rsa_public_key when Ory's signing key changes. Kong Enterprise's OpenID Connect plugin discovers and refreshes the JWKS automatically (kong-oidc-enterprise.yaml).
+  - Path B (Kratos sessions): a custom plugin or pre-function calls https://<project>.projects.oryapis.com/sessions/whoami with the session cookie or token; on 200 set X-User-Id / X-User-Email from the response body.
+  - Caching: cache the whoami result per session inside the plugin; Kong's proxy-cache plugin caches upstream responses, not plugin requests.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/kong.
 oryMechanism:
   - standards

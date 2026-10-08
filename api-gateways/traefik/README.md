@@ -37,9 +37,14 @@ npm install
 npm start
 ```
 
-The service listens on the port specified in `.env` (default 4181) and answers Traefik's ForwardAuth requests on **every path**:
+Or build the container image with the included `Dockerfile`:
 
-- `*` → Validates the session and emits identity headers, or returns 401/302.
+```bash
+docker build -t ory-forwardauth forwardauth/
+docker run -p 4181:4181 -e ORY_SDK_URL=https://<project>.projects.oryapis.com ory-forwardauth
+```
+
+The service listens on the port specified in `.env` (default 4181) and answers Traefik's ForwardAuth requests on **every path**: it validates the session and emits identity headers, or returns 401/302.
 
 ## Wire up Traefik
 
@@ -52,11 +57,19 @@ Reference Traefik configurations are in [`traefik/`](traefik):
 The middleware is set up to copy these headers from the auth response into the upstream request:
 
 - `X-User-Id` — Ory identity ID.
-- `X-User-Email` — `identity.traits.email`.
-- `X-User-Name` — concatenated `identity.traits.name.first` + `last`.
+- `X-User-Email` — `identity.traits.email`. Omitted when it contains non-ASCII characters.
+- `X-User-Name` — concatenated `identity.traits.name.first` + `last`. Omitted when it contains non-ASCII characters, because header values must be ASCII.
 - `X-Session-Id` — Ory session ID.
 - `X-Auth-AAL` — Authenticator Assurance Level (`aal1` / `aal2`).
-- `X-User-Metadata` — JSON-stringified `identity.metadata_public` (when present and non-empty).
+- `X-User-Metadata` — JSON-stringified `identity.metadata_public` (when present and non-empty), with non-ASCII characters escaped as `\uXXXX`. Decode it with a JSON parser.
+
+Traefik replaces each header listed in `authResponseHeaders` with the validator's value, or removes it when the validator doesn't set it, so a client can't supply these headers on protected routes. Keep every identity header your upstream trusts in that list. Routes that skip `ory-auth`, such as the public routes in the examples, use the `strip-identity-headers` middleware to remove them.
+
+On Traefik 3.7.12 or later, also set `http.aliasHeadersStrategy: delete` on each entrypoint (the compose file passes `--entrypoints.<name>.http.aliasHeadersStrategy=delete`). Traefik then deletes header names that contain dots, underscores, or other characters outside letters, digits, and hyphens, so a backend that normalizes header names can't read `X_User_Id` as `X-User-Id`. See [Traefik's entrypoint reference](https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#aliasheadersstrategy).
+
+Don't set `trustForwardHeader: true` on the middleware unless every client reaching Traefik is a trusted proxy. The validator reads the request path from `X-Forwarded-Uri` to decide which paths are public.
+
+Pointing `forwardAuth.address` straight at Ory's `/sessions/whoami` also works for gating, but `whoami` sets only the `X-Kratos-Authenticated-Identity-Id` response header, so the upstream receives no `X-User-*` headers. Use this validator to forward more identity data.
 
 Detailed setup with Kubernetes, sidecar deployments, and the JWKS-based alternative (for pure JWT validation without round-tripping Ory): see the [docs page](https://ory.com/docs/integrates-with/api-gateways/traefik).
 
@@ -64,8 +77,8 @@ Detailed setup with Kubernetes, sidecar deployments, and the JWKS-based alternat
 
 - **Every request returns `401`** — the user's session cookie isn't reaching the service. Check Traefik's `forwardAuth` middleware includes `authRequestHeaders: [Cookie, Authorization, X-Session-Token]` (or omit the field so all headers are forwarded), and confirm the cookie domain covers the Traefik hostname.
 - **Service returns `503`** — `ORY_SDK_URL` is wrong or unreachable from the service's pod/container. Try `curl $ORY_SDK_URL/sessions/whoami` from inside the container.
-- **Public paths still require auth** — `ALLOWED_PATHS` checks exact match or prefix match with a trailing `/`. `/health` matches `/health` and `/health/...` but not `/healthadmin`.
-- **`302` redirects to login but `return_to` is wrong** — the service reads the original path from `X-Forwarded-Uri`. Ensure Traefik forwards it (default ForwardAuth behavior).
+- **Public paths still require auth** — `ALLOWED_PATHS` checks the path without its query string, by exact match or prefix match with a trailing `/`. `/health` matches `/health` and `/health/...` but not `/healthadmin`.
+- **`302` redirects to login but `return_to` is wrong** — the service reads the original path from `X-Forwarded-Uri`, which Traefik sets on every ForwardAuth request.
 - **Identity headers don't reach the upstream** — Traefik's `authResponseHeaders` doesn't list the header you expect. Add the header name to that list in the middleware definition.
 
 ## License

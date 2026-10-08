@@ -93,25 +93,24 @@ function buildLDContext(orySession) {
       name: [traits.name?.first, traits.name?.last].filter(Boolean).join(" "),
       firstName: traits.name?.first,
       lastName: traits.name?.last,
-      // Custom attributes from traits/metadata
-      plan: metadata.subscription_plan || "free",
+      // Custom attributes from metadata_public
+      tier: metadata.subscription_tier,
+      groups: metadata.groups,
       companyName: metadata.enrichment?.company?.name,
       companySize: metadata.enrichment?.company?.size,
       industry: metadata.enrichment?.company?.industry,
       country: traits.address?.country || metadata.enrichment?.person?.country,
-      hasMfa:
-        (identity.credentials?.totp?.identifiers?.length || 0) > 0 ||
-        (identity.credentials?.webauthn?.identifiers?.length || 0) > 0,
       aal: orySession.authenticator_assurance_level,
       createdAt: identity.created_at,
     },
   ];
 
   // Add organization context if available
-  if (orySession.identity.organization_id) {
+  const orgId = metadata.org_id || identity.organization_id;
+  if (orgId) {
     contexts.push({
       kind: "organization",
-      key: orySession.identity.organization_id,
+      key: orgId,
       name: metadata.organization_name,
     });
   }
@@ -130,7 +129,7 @@ function buildLDContext(orySession) {
  * Evaluate a feature flag using Ory session context.
  */
 async function evaluateFlag(flagKey, orySession, defaultValue) {
-  await ldClient.waitForInitialization();
+  await ldClient.waitForInitialization({ timeout: 10 });
   const context = buildLDContext(orySession);
   return ldClient.variation(flagKey, context, defaultValue);
 }
@@ -141,12 +140,15 @@ async function evaluateFlag(flagKey, orySession, defaultValue) {
 function featureFlagMiddleware(oryProjectUrl) {
   return async (req, res, next) => {
     try {
-      // Get Ory session
-      const sessionCookie = req.headers.cookie;
+      // Get the Ory session from a browser cookie or a session token
+      const headers = {};
+      if (req.headers.cookie) headers.Cookie = req.headers.cookie;
+      if (req.headers.authorization) headers.Authorization = req.headers.authorization;
+      if (req.headers["x-session-token"]) headers["X-Session-Token"] = req.headers["x-session-token"];
       const { data: session } = await axios.get(
         `${oryProjectUrl}/sessions/whoami`,
         {
-          headers: { Cookie: sessionCookie },
+          headers,
           validateStatus: (s) => s === 200 || s === 401,
         }
       );
@@ -155,7 +157,7 @@ function featureFlagMiddleware(oryProjectUrl) {
         req.orySession = session;
         req.ldContext = buildLDContext(session);
         req.featureFlag = async (key, defaultValue) => {
-          await ldClient.waitForInitialization();
+          await ldClient.waitForInitialization({ timeout: 10 });
           return ldClient.variation(key, req.ldContext, defaultValue);
         };
       }
@@ -210,11 +212,11 @@ In the LaunchDarkly dashboard, create targeting rules that reference Ory identit
 
 | Rule | Attribute | Operator | Value | Variation |
 |------|-----------|----------|-------|-----------|
-| Enterprise users | `plan` | is one of | `enterprise`, `business` | `true` |
+| Enterprise users | `tier` | is one of | `enterprise`, `business` | `true` |
+| Beta testers | `groups` | contains | `beta` | `true` |
 | Large companies | `companySize` | greater than | `500` | `true` |
 | Specific org | `organization.key` | is | `org-uuid-123` | `true` |
-| MFA users only | `hasMfa` | is | `true` | `true` |
-| High assurance | `aal` | is | `aal2` | `true` |
+| High assurance (MFA) | `aal` | is | `aal2` | `true` |
 | Country rollout | `country` | is one of | `US`, `CA` | `true` |
 
 ### Step 5: Client-Side Integration (Optional)
@@ -228,7 +230,7 @@ app.get("/api/feature-flags", async (req, res) => {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
-  await ldClient.waitForInitialization();
+  await ldClient.waitForInitialization({ timeout: 10 });
   const context = buildLDContext(req.orySession);
   const allFlags = await ldClient.allFlagsState(context);
 
@@ -279,17 +281,17 @@ console.log(`new-dashboard flag: ${result}`);
 
 1. Go to **Users** in LaunchDarkly dashboard
 2. Search for your Ory identity ID
-3. Verify attributes (email, plan, companySize, etc.) are present
+3. Verify attributes (email, tier, groups, companySize, etc.) are present
 
 ## Troubleshooting
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| **All flags return defaults** | SDK not initialized | Await `ldClient.waitForInitialization()` |
+| **All flags return defaults** | SDK not initialized | Await `ldClient.waitForInitialization({ timeout: 10 })` |
 | **Missing user attributes** | Session traits not populated | Verify Ory identity schema includes required traits |
 | **Context key is undefined** | Session not validated | Check that Ory session is active before building context |
 | **Targeting rules not matching** | Attribute type mismatch | Ensure numeric attributes are sent as numbers, not strings |
-| **Organization context missing** | User not in an organization | Only add organization context when `organization_id` exists |
+| **Organization context missing** | User not in an organization | Only add organization context when `metadata_public.org_id` or `organization_id` exists |
 
 ## Resources
 

@@ -7,18 +7,27 @@ Raw Kubernetes manifests for deploying the open-source Ory stack (Kratos, Hydra,
 **Type:** config (deployment pattern)
 **Docs page:** [ory.com/docs/integrates-with/containerization/kubernetes](https://www.ory.com/docs/integrates-with/containerization/kubernetes)
 - [Kratos install](https://www.ory.com/docs/oss/kratos/install)
-- [Hydra install](https://www.ory.com/docs/hydra/self-hosted/install)
+- [Hydra Helm chart guide](https://www.ory.com/docs/hydra/self-hosted/kubernetes-helm-chart)
 - [Keto install](https://www.ory.com/docs/oss/keto/install)
 - [Oathkeeper install](https://www.ory.com/docs/oathkeeper/install)
 
-## What's in this directory
+## Generate the manifests
 
-Reference manifests for the full stack — Deployments, Services (split public/admin), ConfigMaps, Secrets, optional Ingress. Pattern: each Ory component as a separate Deployment, public APIs exposed via Service of type `ClusterIP` and reached through an Ingress.
+To start from known-good resources, render the official Helm chart with `helm template` and manage the output with your GitOps tooling:
+
+```bash
+helm repo add ory https://k8s.ory.sh/helm/charts
+helm repo update
+helm show values ory/kratos > kratos-values.yaml
+helm template kratos ory/kratos --namespace ory -f kratos-values.yaml > kratos.yaml
+```
+
+Repeat for `ory/hydra`, `ory/keto`, and `ory/oathkeeper`. The output follows the usual pattern: each Ory component as a separate Deployment, with split public/admin Services of type `ClusterIP` and the public API reached through an Ingress.
 
 ## When to use this vs. Helm
 
 - **Helm** ([`iac-devops/helm`](../../iac-devops/helm/)) is the officially maintained path. Pin the chart version, override values, done.
-- **Raw manifests** here when you need: GitOps with full visibility into each resource, customizations the Helm chart doesn't expose, or tight coupling with cluster-specific tooling (e.g. Kustomize overlays per environment).
+- **Raw manifests** when you need: GitOps with full visibility into each resource, customizations the Helm chart doesn't expose, or tight coupling with cluster-specific tooling (e.g. Kustomize overlays per environment).
 
 For every other case, prefer Helm.
 

@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-31T14:26:35Z
+  generated: 2026-10-08T18:28:36Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -87,8 +87,8 @@ integrations:
       An enterprise API team running Apigee wants OAuth2 access tokens issued by Ory (Hydra) validated at the gateway
       layer so backend services don't need to re-validate every request.
     coreFunctionality: |-
-      - SharedFlow with VerifyJWT policy: PublicKey JWKS URL points at Ory's https://<project>.projects.oryapis.com/.well-known/jwks.json; Issuer = the Ory project URL; Audience = the API's audience identifier from Ory's OAuth2 client.
-      - Algorithm RS256; Apigee caches the JWKS by URL — tune CacheTTLInSeconds for the freshness/KMS-call trade-off.
+      - SharedFlow with VerifyJWT policy: PublicKey JWKS URL points at Ory's https://<project>.projects.oryapis.com/.well-known/jwks.json; Issuer = https://<project>.projects.oryapis.com (no trailing slash); Audience = the audience set on the Ory OAuth2 client and requested in the token request. Requires JWT access tokens enabled on the project.
+      - Algorithm RS256; Apigee caches a JWKS fetched from a URL for 300 seconds and selects the key by the token's kid.
       - Apigee KVM holds per-environment audience values without redeploying the shared flow.
       - For claim-based authorization (per-scope or per-role checks), add an AssignMessage or JavaScript policy after VerifyJWT to inspect the JWT claims.
       - SharedFlow attached to the API proxy's PreFlow runs before every request.
@@ -115,7 +115,7 @@ integrations:
       services don't need to re-validate every request and can read the trusted `sub` from request context.
     coreFunctionality: |-
       - REST API: Lambda authorizer (Node.js / Python) verifies bearer JWT against https://<project>.projects.oryapis.com/.well-known/jwks.json with kid-based key selection; returns IAM policy + principalId (= JWT sub).
-      - HTTP API: native JWT authorizer pointing directly at the Ory issuer URL — no Lambda required for standard verification.
+      - HTTP API: native JWT authorizer with issuer https://<project>.projects.oryapis.com and your API's audience — no Lambda required for standard verification. Requires JWT access tokens and an audience requested in the token request.
       - Caching: REST uses authorizerResultTtlInSeconds (default 300s); HTTP uses resultsCacheTtlInSeconds. Tune for cold-start vs. revocation latency.
       - Use Lambda authorizer over native JWT when custom claim-based authorization logic is needed beyond signature/issuer/audience checks.
       - Cold start matters — keep the authorizer minimal; aws-jwt-verify is a lean JWKS library.
@@ -143,8 +143,8 @@ integrations:
       at the proxy so upstream services receive a trusted identity (or a 401 from the edge) without re-validating every
       request themselves.
     coreFunctionality: |-
-      - Path A (Hydra JWTs): `jwt_authn` HTTP filter with a remote_jwks pointing at https://<project>.projects.oryapis.com/.well-known/jwks.json; set issuer to the Ory project URL and audiences to the API's audience. Envoy caches the JWKS and refreshes on the configured interval.
-      - Path B (Kratos sessions): `ext_authz` HTTP filter calls Ory Oathkeeper (or a small validator) which hits /sessions/whoami; on success Envoy forwards identity headers (X-User-Id, X-User-Email) upstream, on failure returns 401 at the edge.
+      - Path A (Hydra JWTs): `jwt_authn` HTTP filter with a remote_jwks pointing at https://<project>.projects.oryapis.com/.well-known/jwks.json; set issuer to https://<project>.projects.oryapis.com (no trailing slash) and audiences to the audience requested in the token request. The remote_jwks cluster must use an UpstreamTlsContext with sni and a validation_context (trusted_ca plus a DNS SAN matcher). Requires JWT access tokens enabled on the Ory project. Envoy caches the JWKS and refreshes on the configured interval.
+      - Path B (Kratos sessions): `ext_authz` HTTP filter calls Ory Oathkeeper (or a small validator) which hits /sessions/whoami; on success Envoy forwards identity headers (X-User-Id, X-User-Email) read from the whoami response body upstream, on failure returns 401 at the edge.
       - Verified JWT claims can be forwarded upstream via the filter's payload_in_metadata / forwarding settings for downstream authorization.
       - Works the same whether Envoy is standalone, an Istio sidecar/gateway, or the data plane under a managed gateway.
       - Tetrate Agent Router Enterprise (see agent-identity/tetrate) is built on Envoy AI Gateway and applies this pattern to AI-agent traffic.
@@ -163,19 +163,19 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's stock `jwt`
-      plugin (or jwt-signer / jwt-keycloak community plugins for JWKS auto-refresh); session validation via
-      request-transformer + pre-function calling /sessions/whoami. Documented at
+      Validate Ory-issued JWTs or Kratos session cookies at the Kong API Gateway layer. JWTs via Kong's open source
+      `jwt` plugin plus a post-function audience check (or Kong Enterprise's OpenID Connect plugin for JWKS
+      auto-refresh); session validation via a custom plugin or pre-function calling /sessions/whoami. Documented at
       ory.com/docs/integrates-with/api-gateways/kong — universal pattern.
     useCase: >-
       A team running APIs behind Kong wants Ory-issued OAuth2 access tokens (Hydra) or Kratos session cookies validated
       at the gateway so backend services don't need to re-validate every request.
     coreFunctionality: |-
-      - Path A (Hydra JWTs): Kong jwt plugin with RS256 algorithm, public key from Ory JWKS (prefer jwt-signer or jwt-keycloak community plugins for JWKS auto-fetch over manual key loading). Configure claims_to_verify (typically exp) and key_claim_name.
-      - Path B (Kratos sessions): request-transformer + pre-function plugins (or a small custom plugin) call https://<project>.projects.oryapis.com/sessions/whoami with the session cookie; on 200 inject X-User-Id / X-User-Email headers downstream.
-      - Kong Enterprise's OIDC plugin handles Path A automatically with JWKS auto-discovery.
-      - Caching: cache whoami response per session cookie via Kong's proxy-cache plugin or a Redis-backed custom cache to avoid hammering Ory.
-      - Rate-limit at the gateway keyed by the validated `sub` claim — Kong's rate-limiting plugin is the cleanest pattern.
+      - Prerequisite: Ory issues opaque access tokens by default; switch the project to JWT access tokens and request an audience.
+      - Path A (Hydra JWTs): Kong jwt plugin with an RS256 Consumer credential keyed by the issuer and holding the PEM public key converted from the Ory JWKS; claims_to_verify exp. A post-function requires the API audience and nbf and sets X-User-Id from sub. Reference kong.yaml and docker-compose.yaml for Kong 3.9.
+      - The open source jwt plugin does not fetch JWKS, so rotate rsa_public_key when Ory's signing key changes. Kong Enterprise's OpenID Connect plugin discovers and refreshes the JWKS automatically (kong-oidc-enterprise.yaml).
+      - Path B (Kratos sessions): a custom plugin or pre-function calls https://<project>.projects.oryapis.com/sessions/whoami with the session cookie or token; on 200 set X-User-Id / X-User-Email from the response body.
+      - Caching: cache the whoami result per session inside the plugin; Kong's proxy-cache plugin caches upstream responses, not plugin requests.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/api-gateways/kong.
     oryMechanism:
       - standards
@@ -353,15 +353,15 @@ integrations:
     status: active
     description: >-
       Deployment patterns for running with Ory on AWS — both the managed Ory Network case (AWS app reaching out to Ory
-      over HTTPS) and the self-hosted case (Ory on EKS with RDS Postgres and optional ElastiCache). Not a vendor
-      integration in the registry sense; documentation of the AWS-side glue around standard Ory deployment.
+      over HTTPS) and the self-hosted case (Ory on EKS with RDS Postgres). Not a vendor integration in the registry
+      sense; documentation of the AWS-side glue around standard Ory deployment.
     useCase: >-
       An AWS-resident product team needs the AWS-specific configuration to either reach Ory Network from inside a VPC,
-      or to self-host the open-source Ory stack on EKS with the typical AWS managed services (RDS, ElastiCache, ALB,
-      ACM, Secrets Manager, Route 53).
+      or to self-host the open-source Ory stack on EKS with the typical AWS managed services (RDS, ALB, ACM, Secrets
+      Manager, Route 53).
     coreFunctionality: |-
-      - Pattern A (Ory Network from AWS): outbound HTTPS egress to *.oryapis.com; API key in AWS Secrets Manager (IAM-bound, not env vars); Route 53 CNAME to custom.oryapis.com for the custom auth domain.
-      - Pattern B (self-hosted on EKS): EKS cluster with --with-oidc, RDS PostgreSQL Multi-AZ for Kratos/Hydra/Keto datastores, optional ElastiCache Redis with at-rest + transit encryption.
+      - Pattern A (Ory Network from AWS): outbound HTTPS egress to *.oryapis.com; API key in AWS Secrets Manager (IAM-bound, not env vars); Route 53 CNAME from the custom auth domain to <project-slug>.projects.oryapis.com, with the domain added to the project in the Ory Console.
+      - Pattern B (self-hosted on EKS): EKS cluster with --with-oidc, RDS PostgreSQL Multi-AZ for Kratos/Hydra/Keto datastores.
       - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
       - AWS Load Balancer Controller (ALB Ingress) for HTTPS termination with an ACM certificate.
       - Documented at ory.com/docs/integrates-with/cloud-infrastructure/aws; the Ory self-hosted/operations pages cover the cloud-agnostic concerns.
@@ -386,8 +386,8 @@ integrations:
       VNet, or to self-host the open-source Ory stack on AKS with the typical Azure managed services (PostgreSQL
       Flexible Server, Key Vault, Workload Identity, Application Gateway Ingress).
     coreFunctionality: |-
-      - Pattern A (Ory Network from Azure): outbound HTTPS egress to *.oryapis.com (NSG + optional Azure Firewall app rule); API key in Azure Key Vault; Azure DNS CNAME to custom.oryapis.com.
-      - Pattern B (self-hosted on AKS): AKS with Workload Identity, Azure Database for PostgreSQL Flexible Server (Zone-Redundant HA in production), optional Azure Cache for Redis.
+      - Pattern A (Ory Network from Azure): outbound HTTPS egress to *.oryapis.com (NSG + optional Azure Firewall app rule); API key in Azure Key Vault; Azure DNS CNAME from the custom auth domain to <project-slug>.projects.oryapis.com.
+      - Pattern B (self-hosted on AKS): AKS with Workload Identity, Azure Database for PostgreSQL Flexible Server (Zone-Redundant HA in production).
       - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
       - Application Gateway Ingress Controller (AGIC) for HTTPS termination with a Key Vault-stored certificate.
       - For Microsoft Entra ID identity provider configuration, see social-sign-in/microsoft and enterprise-sso/microsoft-entra-id (separate concerns from cloud deployment).
@@ -412,8 +412,8 @@ integrations:
       to self-host the open-source Ory stack on GKE with the typical GCP managed services (Cloud SQL, Secret Manager,
       Workload Identity, GKE Gateway).
     coreFunctionality: |-
-      - Pattern A (Ory Network from GCP): outbound HTTPS egress to *.oryapis.com; API key in Secret Manager via Workload Identity; Cloud DNS CNAME to custom.oryapis.com.
-      - Pattern B (self-hosted on GKE): GKE Autopilot or Standard with Workload Identity, Cloud SQL for PostgreSQL HA, optional Memorystore Redis. Connect to Cloud SQL via the Cloud SQL Auth Proxy sidecar (preferred) or private IP with VPC peering.
+      - Pattern A (Ory Network from GCP): outbound HTTPS egress to *.oryapis.com; API key in Secret Manager via Workload Identity; Cloud DNS CNAME from the custom auth domain to <project-slug>.projects.oryapis.com.
+      - Pattern B (self-hosted on GKE): GKE Autopilot or Standard with Workload Identity, Cloud SQL for PostgreSQL HA. Connect to Cloud SQL via the Cloud SQL Auth Proxy sidecar (preferred) or private IP with VPC peering.
       - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
       - GKE Gateway or Ingress with GCLB for HTTPS termination with a Google-managed certificate.
       - For Google identity provider configuration, see social-sign-in/google and enterprise-sso/google-workspace (separate concerns from cloud deployment).
@@ -570,15 +570,15 @@ integrations:
     status: active
     description: >-
       Run the self-hosted Ory stack (Kratos, Hydra, Keto, Oathkeeper) using the official oryd/* Docker images. This
-      directory holds a reference docker-compose.yml for local development and CI reproduction; production deployments
-      should use the Helm charts.
+      entry points to the Docker Compose quickstarts in each product's repository for local development and CI
+      reproduction; production deployments should use the Helm charts.
     useCase: >-
       A developer wants to bring up the open-source Ory stack locally — for development, CI reproduction, or trying
       upgrades before promoting to a real cluster — without standing up Kubernetes.
     coreFunctionality: |-
-      - Reference docker-compose.yml runs Kratos, Hydra, Keto, Oathkeeper against a local Postgres with mailslurper for email testing.
+      - The Kratos and Hydra quickstarts start each product with Docker Compose from its repository.
       - Uses the official oryd/kratos, oryd/hydra, oryd/keto, oryd/oathkeeper images from Docker Hub.
-      - Per-product Docker setup is documented in each product's install guide (Kratos, Hydra, Keto, Oathkeeper) on ory.com/docs.
+      - Per-product Docker setup is documented in each product's install guide (Kratos, Keto, Oathkeeper) on ory.com/docs.
       - Hydra ships a Docker-Compose-based quickstart at /docs/hydra/self-hosted/quickstart.
       - For production, use the Helm charts under iac-devops/helm — docker-compose lacks the probes, rolling updates, and secret handling you'll want.
     oryMechanism:
@@ -601,7 +601,7 @@ integrations:
       A platform team running GitOps wants per-resource visibility into Ory deployments, or needs to customize resources
       beyond what the Ory Helm charts expose, and is willing to maintain the manifests instead of using Helm.
     coreFunctionality: |-
-      - Reference manifests for the full stack: Deployments, public/admin Services (type ClusterIP), ConfigMaps, Secrets, optional Ingress.
+      - Generate manifests by rendering the official Helm charts with `helm template`, then manage the output with GitOps tooling.
       - Pattern: each Ory component (Kratos, Hydra, Keto, Oathkeeper) as a separate Deployment with split public/admin Services.
       - For most teams the Helm charts (iac-devops/helm) are the recommended path — choose raw manifests only when GitOps visibility or non-default customization justifies the maintenance burden.
     oryMechanism:
@@ -752,17 +752,16 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Use CockroachDB as the primary datastore for self-hosted Ory components (Kratos, Hydra, Keto, Oathkeeper) via its
-      PostgreSQL wire-protocol compatibility. Right choice for deployments needing geographic distribution or HA beyond
-      a single Postgres node. Documented at ory.com/docs/integrates-with/data-persistence/cockroachdb — same DSN format
-      Ory uses for Postgres works for Cockroach with Cockroach-aware tuning.
+      Use CockroachDB as the primary datastore for self-hosted Ory Kratos, Ory Hydra, and Ory Keto with a cockroach://
+      DSN. Right choice for deployments needing geographic distribution or HA beyond a single Postgres node. Documented
+      at ory.com/docs/integrates-with/data-persistence/cockroachdb — cockroach:// DSN plus Cockroach-aware tuning.
     useCase: >-
       A self-hosted Ory deployment needs multi-region survivability, horizontal scalability beyond a single Postgres
       node, or strong consistency under geographic distribution — and is willing to tune for Cockroach's
       distributed-transaction model.
     coreFunctionality: |-
-      - Cockroach speaks Postgres wire protocol — Ory product DSN format unchanged: postgres://user:password@cockroach-host:26257/<db>?sslmode=verify-full&options=--cluster%3D<cluster-id>.
-      - Migrations run with `kratos migrate sql` (etc.) against Cockroach without changes.
+      - DSN: cockroach://user:password@cockroach-host:26257/<db>?sslmode=verify-full. The cockroach:// scheme selects CockroachDB-specific migrations; a postgres:// DSN selects the PostgreSQL migrations, which can fail partway.
+      - Migrations run with `kratos migrate sql` (etc.) against the cockroach:// DSN.
       - FK-heavy schema: expect some 40001 retry errors under high concurrency; clients should retry transactions per Cockroach's standard pattern.
       - UUID PKs (good — distribute across nodes) vs SERIAL (would hot-shard) — verify no Ory product version uses SERIAL.
       - Serverless tier has request-per-second limits unsuitable for production identity workloads; use Self-hosted (Dedicated) tier.
@@ -1006,7 +1005,7 @@ integrations:
       - Hydra JWT: verify signature against cached Ory JWKS using EdgeWorkers Crypto API.
       - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via httpRequest (EdgeWorkers doesn't have a fetch global). Cache responses in EdgeKV for 30-60s (fallback: per-isolate Map).
       - On valid: inject X-User-Id header; on invalid: 401 from the edge.
-      - CPU budget ~50ms wall-clock — JWKS verification fits comfortably; whoami calls eat into this.
+      - CPU time per event handler depends on the resource tier (10 ms Basic, 20 ms Dynamic, 70 ms Enterprise Compute), and HTTP sub-requests are capped; each whoami call is a sub-request.
       - Wired via Akamai Property Manager attaching the EdgeWorker to a behavior on the relevant hostname/path.
       - Reference implementation: edge-token-validation/cloudflare-workers (same pattern, different runtime).
       - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers.
@@ -1034,10 +1033,11 @@ integrations:
       and adds identity headers so downstream services can attribute the request without re-validating.
     coreFunctionality: |-
       - Cloudflare Worker deployed via wrangler — runs in V8 isolates at the Cloudflare edge.
-      - Two validation modes: session cookie (forwards to Ory /sessions/whoami with 30 s edge cache) and JWT Bearer token (validates RSASSA-PKCS1-v1_5 signatures against Ory's JWKS, JWKS cached at the edge for 1 h).
-      - Forwards authenticated requests to origin with X-User-Id, X-Session-Id, X-User-Email, X-User-Name, X-Auth-AAL, X-User-Metadata headers.
-      - Configurable PUBLIC_PATHS to skip auth on health, public, and static paths.
-      - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to login with return_to.
+      - JWT Bearer tokens: RS256 only, key selected by kid with JWKS refresh on unknown kid, and iss, aud (JWT_AUDIENCE), exp, and nbf enforced. Requires JWT access tokens enabled on the Ory project.
+      - Sessions: ory_session_* or ory_kratos_session cookies and ory_st_ session tokens are checked with Ory /sessions/whoami; active sessions are cached per credential hash for 30 s in bounded isolate memory.
+      - Removes client-supplied identity headers, then forwards authenticated requests to origin with X-User-Id, X-Session-Id, X-User-Email, X-User-Name, X-Auth-AAL, X-User-Metadata headers.
+      - Configurable PUBLIC_PATHS (exact path or prefix followed by /) to skip auth on health, public, and static paths.
+      - Optional LOGIN_REDIRECT_URL redirects browser requests to login with return_to.
     oryMechanism:
       - session-validation
     protocol:
@@ -1061,11 +1061,11 @@ integrations:
     coreFunctionality: |-
       - WASM module (Rust / JS / AssemblyScript / TinyGo) fires on every request; reads session cookie or Authorization: Bearer.
       - Hydra JWT: verify signature against cached Ory JWKS using language-native JWT library compiled to WASM.
-      - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via a registered Fastly backend. Compute@Edge cannot make ad-hoc outbound calls — the Ory hostname MUST be registered as a named backend in the service config.
+      - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via a registered Fastly backend. Register the Ory hostname as a named backend in the service config, or have Fastly enable dynamic backends for the service and enable them in the SDK.
       - Caching: Fastly KV Store keyed by cookie hash for 30-60s; per-execution memory is request-scoped only.
-      - Edge dictionaries for non-secret config (Ory project URL, audience IDs); edge secrets for JWKS pinning / service tokens.
+      - Config Store for non-secret config (Ory project URL, audience IDs); Secret Store for service tokens.
       - On valid: inject X-User-Id header; on invalid: synthesize 401 at the edge.
-      - Rust is the most performant; JavaScript (via Quick.js) is the easiest path porting from the Cloudflare reference.
+      - Rust is the most performant; JavaScript (SpiderMonkey compiled to WebAssembly) is the easiest path porting from the Cloudflare reference.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/fastly-compute.
     oryMechanism:
       - standards
@@ -1694,13 +1694,13 @@ integrations:
       LaunchDarkly's multi-kind context shape so feature-flag evaluation rules can target on Ory traits,
       metadata_public, and authenticator_assurance_level without ad-hoc mapping in every call site.
     useCase: >-
-      A product wants feature flags that target on identity attributes (subscription plan, role, MFA status) sourced
-      from Ory. Rather than writing the Ory → LaunchDarkly context mapping in every request handler, the helper
+      A product wants feature flags that target on identity attributes (subscription tier, groups, organization, AAL)
+      sourced from Ory. Rather than writing the Ory → LaunchDarkly context mapping in every request handler, the helper
       centralizes the mapping into one class and exposes typed boolVariation / stringVariation / numberVariation /
       jsonVariation / allFlagsState methods that accept an Ory session directly.
     coreFunctionality: |-
       - OryLaunchDarkly class wraps an LDClient, takes Ory session shape (id, identity, traits, metadata_public, authenticator_assurance_level).
-      - Builds a LaunchDarkly multi-kind context: { user: {key=identity.id, email, firstName, lastName, plan, ...metadata}, session: {key=session.id, aal} }.
+      - Builds a LaunchDarkly multi-kind context: { user: {key=identity.id, email, firstName, lastName, tier=metadata_public.subscription_tier, groups, ...metadata}, organization: {key=metadata_public.org_id} when present, session: {key=session.id, aal} }.
       - boolVariation / stringVariation / numberVariation / jsonVariation pass through to LDClient.variation with the constructed context.
       - allFlagsState lets you bootstrap client-side flag state for the current Ory session in one call.
       - Ships as an importable library (peer-depends on @launchdarkly/node-server-sdk ^9) — not a deployed HTTP service.
@@ -1728,7 +1728,7 @@ integrations:
       - sdk-client integration: not a webhook — application code resolves the Ory session, extracts attributes, and passes them to the Split SDK at evaluation time.
       - Stable key: use identity.id (not email) so bucketing is stable across identity changes.
       - Common attribute mapping: identity.traits.email → email; metadata_public.org_id → org_id; metadata_public.subscription_tier → tier; metadata_public.groups → groups.
-      - Server-side: Split server SDK; client-side: Split JavaScript SDK with Track API for attributes.
+      - Server-side: Split server SDK; client-side: Split JavaScript SDK. Pass attributes to getTreatment (or setAttributes in the JavaScript SDK) after whenReady(); track() records metric events, not attributes.
       - Impact measurement features need event-stream integration too — separate concern; see cdp-analytics/segment.
       - Status: community/proposed — convention guide, not turnkey code.
     oryMechanism:
@@ -2103,7 +2103,7 @@ integrations:
       codebase and deployment pipeline as the rest of their infrastructure.
     coreFunctionality: |-
       - NO official Ory Pulumi provider exists today.
-      - Recommended path: bridge the official ory/ory Terraform provider via pulumi-terraform-bridge to generate a Pulumi-callable SDK.
+      - Recommended path: generate a local SDK from the official ory/ory Terraform provider with `pulumi package add terraform-provider ory/ory <version>` (pulumi-terraform-bridge); import it as @pulumi/ory in TypeScript.
       - Alternative: write a Pulumi `dynamic` provider that calls the Ory Network REST API using @ory/client (TypeScript) or ory-client (Go/Python). State diffing and CRUD logic is the implementer's responsibility.
       - Escape hatch: keep Ory resources in Terraform via the official provider (iac-devops/terraform) and only use Pulumi for the rest.
     oryMechanism:
@@ -2120,19 +2120,19 @@ integrations:
     status: active
     description: >-
       Officially maintained Terraform provider for managing Ory Network resources as infrastructure-as-code — identity
-      schemas, OAuth2 clients, project configuration, identities, organizations, permissions, and webhooks. Source at
-      github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory` and on the OpenTofu
-      registry (search.opentofu.org/provider/ory/ory) under the same source — works with `tofu` as well as `terraform`.
-      Targets Ory Network only — does not manage self-hosted Ory deployments.
+      schemas, OAuth2 clients, project configuration, identities, organizations, permissions, and actions (webhooks).
+      Source at github.com/ory/terraform-provider-ory; published on the Terraform Registry as `ory/ory` and on the
+      OpenTofu registry (search.opentofu.org/provider/ory/ory) under the same source — works with `tofu` as well as
+      `terraform`. Targets Ory Network only — does not manage self-hosted Ory deployments.
     useCase: >-
       A platform team running Ory Network wants their identity and OAuth2 configuration in Git (not the Console) for
       code review, drift detection, and per-environment (dev/staging/prod) reproducibility.
     coreFunctionality: |-
-      - Registry source: ory/ory. Authentication via the `api_key` provider attribute or ORY_API_KEY env var; project via `project` or ORY_PROJECT/ORY_SDK_URL.
-      - Resources cover identity schemas (ory_identity_schema), OAuth2 clients (ory_oauth2_client), project config (ory_project_config), identities, organizations, permissions, and webhooks (ory_webhook).
+      - Registry source: ory/ory (version ~> 26.3). Authentication via the workspace_api_key / project_api_key provider arguments or ORY_WORKSPACE_API_KEY / ORY_PROJECT_API_KEY env vars; project via project_id / project_slug or ORY_PROJECT_ID / ORY_PROJECT_SLUG.
+      - Resources cover identity schemas (ory_identity_schema), OAuth2 clients (ory_oauth2_client), project config (ory_project_config), identities, organizations, permissions, and actions/webhooks (ory_action).
       - Many ory_project_config attributes were renamed to match OpenAPI spec; old names still work but emit deprecation warnings. The provider repo ships a migrate-deprecated-attrs.sh script for bulk rewrites.
-      - Two API key types in Ory — Workspace keys (manage projects) vs Project keys (manage in-project resources); pick the right scope.
-      - Existing resources can be adopted via `terraform import ory_<resource>.<name> <id>`.
+      - Two API key types: Workspace keys (ory_wak_) manage projects, project configuration, identity schemas, actions, social/SAML providers, SCIM clients, and email templates; Project keys (ory_pat_) manage identities, OAuth2 clients, and relationships.
+      - Existing resources can be adopted with `terraform import` using each resource's import ID format (after-hook ory_action: project_id:flow:after:auth_method:method:url; before-hooks omit auth_method); identity schemas can't be imported.
       - Provider is for Ory Network only — does NOT manage self-hosted Kratos/Hydra/Keto/Oathkeeper.
     oryMechanism:
       - standards
@@ -2483,7 +2483,7 @@ integrations:
     coreFunctionality: |-
       - There is no `datadog` tracing provider: TRACING_PROVIDER accepts otel, jaeger, or zipkin. Reach Datadog with TRACING_PROVIDER=otel over OTLP.
       - Ory's span helper sets Datadog-convention error attributes (error.message, error.stack, error.type), so OTLP traces render correctly in Datadog APM.
-      - Ingest either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports 4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
+      - Ory's exporter is OTLP over HTTP only. Ingest either via the Datadog Agent's OTLP HTTP receiver (port 4318) or directly to Datadog's OTLP intake on port 443 (dd-api-key header via OTEL_EXPORTER_OTLP_HEADERS, region-specific hosts). Configure with TRACING_PROVIDERS_OTLP_SERVER_URL (host:port, no scheme).
       - Prometheus metrics on /metrics/prometheus (each Ory service, admin port); ingest via the Datadog Agent's OpenMetrics check.
       - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
     oryMechanism:
@@ -2509,9 +2509,9 @@ integrations:
       observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate identity
       events with downstream service calls.
     coreFunctionality: |-
-      - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). OTLP/gRPC also supported.
+      - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). Ory's exporter uses OTLP/HTTP only.
       - Auth via header `api-key: <NEW_RELIC_LICENSE_KEY>` — use Account/Ingest-scope license keys, NEVER full user keys.
-      - Self-hosted Ory: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME).
+      - Self-hosted Ory: TRACING_PROVIDER=otel, TRACING_PROVIDERS_OTLP_SERVER_URL=otlp.nr-data.net:4318 (host:port, no scheme), OTEL_EXPORTER_OTLP_HEADERS=api-key=${NEW_RELIC_LICENSE_KEY}, TRACING_SERVICE_NAME. Ory ignores OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_SERVICE_NAME.
       - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
       - For production, prefer an OpenTelemetry Collector in front for batching/retries/sampling.
       - New Relic enforces attribute count/size limits — identity.id fine, identity.traits as flat blob not. Sample at SDK/collector level, not backend side, to preserve head-of-trace context.
@@ -2529,13 +2529,13 @@ integrations:
     status: active
     description: >-
       Ory natively supports OpenTelemetry across all self-hosted products — listed as the first/recommended tracing
-      backend in the Ory observability docs. Self-hosted products ship OTLP via standard OTEL_EXPORTER_OTLP_* env vars.
-      Self-hosted only: Ory Network does not export OTLP to customer collectors.
+      backend in the Ory observability docs. Self-hosted products ship OTLP/HTTP configured through the tracing config
+      (TRACING_* env vars). Self-hosted only: Ory Network does not export OTLP to customer collectors.
     useCase: >-
       An Ory customer wants distributed traces in their own observability backend without being locked into a single
       vendor — using the OTLP standard so they can swap backends or run multiple in parallel.
     coreFunctionality: |-
-      - Self-hosted: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES) on each Ory product.
+      - Self-hosted: TRACING_PROVIDER=otel, TRACING_PROVIDERS_OTLP_SERVER_URL (host:port, no scheme, OTLP/HTTP port 4318), TRACING_PROVIDERS_OTLP_INSECURE for plain-HTTP collectors, TRACING_SERVICE_NAME. TRACING_DEPLOYMENT_ENVIRONMENT sets deployment.environment.name. OTEL_RESOURCE_ATTRIBUTES merges in other resource attributes; OTEL_EXPORTER_OTLP_HEADERS applies unless the OTLP authorization_header is set; OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_SERVICE_NAME are ignored.
       - TRACING_PROVIDER accepts otel, jaeger, or zipkin; use otel for OTLP.
       - OTLP carries traces only; metrics come from the Prometheus endpoint and logs from stdout.
       - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port), so there is no customer-facing OTLP export.
