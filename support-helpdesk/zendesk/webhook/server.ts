@@ -62,8 +62,8 @@ interface OryIdentity {
   };
   credentials?: {
     totp?: { identifiers?: string[] };
-    webauthn?: { identifiers?: string[] };
-    [key: string]: { identifiers?: string[] } | undefined;
+    webauthn?: { config?: { credentials?: unknown[] } };
+    [key: string]: unknown;
   };
   created_at?: string;
   updated_at?: string;
@@ -212,9 +212,17 @@ app.get("/zendesk/sidebar/identity", verifySidebarSecret, async (req, res) => {
     );
     const sessions: OrySession[] = sessRes.ok ? ((await sessRes.json()) as OrySession[]) : [];
 
+    // Password identities can carry an empty webauthn credential, so only the
+    // registered keys in its config prove enrollment. TOTP is checked by
+    // presence alone, because including its config would return the secret.
+    const detailRes = await fetch(
+      `${ORY_SDK_URL}/admin/identities/${identity.id}?include_credential=webauthn`,
+      { headers, signal: AbortSignal.timeout(5000) },
+    );
+    const detail: OryIdentity | null = detailRes.ok ? ((await detailRes.json()) as OryIdentity) : null;
     const hasMfa =
-      (identity.credentials?.totp?.identifiers?.length ?? 0) > 0 ||
-      (identity.credentials?.webauthn?.identifiers?.length ?? 0) > 0;
+      Boolean(detail?.credentials?.totp) ||
+      (detail?.credentials?.webauthn?.config?.credentials?.length ?? 0) > 0;
 
     res.json({
       found: true,

@@ -16,11 +16,11 @@ useCase: >-
   impossible-travel, MFA-disabled, and account-takeover detections can run against identity activity alongside the rest
   of their telemetry, without making Splunk a critical-path dependency of user flows.
 coreFunctionality: |-
-  - Four async Ory Action endpoints (/splunk/registration, /splunk/login, /splunk/recovery, /splunk/settings); each returns 200 immediately so user flows are never blocked.
+  - Four Ory Action endpoints (/splunk/registration, /splunk/login, /splunk/recovery, /splunk/settings) behind actions with response.ignore: true, so Ory doesn't wait for them and user flows are never blocked.
   - Builds a CIM Authentication event with action, app, src, src_user, user, authentication_method, signature, and signature_id fields.
   - POSTs to Splunk HEC at /services/collector/event with Authorization: Splunk <token>, configurable index/source/sourcetype/host.
   - Fire-and-forget: HEC errors and timeouts are logged but dropped so Splunk outages never affect Ory.
-  - Authentication method inference from flow.type (oidc / totp / webauthn / lookup_secret / fallback password).
+  - Authentication method taken from the session's authentication_methods on login and settings events; registration and recovery events report unknown.
 oryMechanism:
   - actions
 protocol:

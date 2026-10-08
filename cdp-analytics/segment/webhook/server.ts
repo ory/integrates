@@ -2,10 +2,10 @@
 //
 // Segment <> Ory Actions webhook handler.
 //
-// Three async lifecycle hooks (registration, login, settings) translate the
-// Ory event into Segment HTTP Tracking API calls (identify and/or track).
-// The handler returns 200 to Ory immediately, then talks to Segment in the
-// background — Segment availability never blocks user flows.
+// Three lifecycle actions (registration, login, settings) translate the Ory
+// event into Segment HTTP Tracking API calls (identify and/or track). The
+// actions set response.ignore: true, so Ory doesn't wait for this handler and
+// Segment availability never blocks user flows.
 //
 // Authenticates to Segment with HTTP Basic auth: write key as username,
 // empty password.
@@ -37,15 +37,16 @@ interface OryWebhookBody {
     id?: string;
     traits?: {
       email?: string;
-      name?: { first?: string; last?: string };
+      name?: { first?: string; last?: string } | null;
     };
-    created_at?: string;
+    created_at?: string | null;
   };
   flow?: {
     id?: string;
     type?: string;
   };
-  request_headers?: Record<string, string[]>;
+  client_ip?: string | null;
+  user_agent?: string | null;
 }
 
 interface SegmentContext {
@@ -73,9 +74,8 @@ function messageId(): string {
 }
 
 function clientContext(body: OryWebhookBody): SegmentContext {
-  const headers = body?.request_headers;
-  const ip = headers?.["x-forwarded-for"]?.[0]?.split(",")[0]?.trim();
-  const userAgent = headers?.["user-agent"]?.[0];
+  const ip = body?.client_ip;
+  const userAgent = body?.user_agent;
   return {
     library: { name: LIBRARY_NAME, version: LIBRARY_VERSION },
     ...(ip && { ip }),
@@ -90,7 +90,7 @@ function traitsFromIdentity(
     email: identity?.traits?.email,
     firstName: identity?.traits?.name?.first,
     lastName: identity?.traits?.name?.last,
-    createdAt: identity?.created_at,
+    createdAt: identity?.created_at ?? undefined,
   };
 }
 
@@ -107,7 +107,6 @@ async function callSegment(path: string, body: unknown): Promise<void> {
       console.warn(`Segment ${path} ${res.status}: ${detail}`);
     }
   } catch (err) {
-    // Fire-and-forget: a Segment outage shouldn't propagate to Ory.
     console.warn(`Segment ${path} request failed: ${(err as Error).message}`);
   }
 }
@@ -163,7 +162,7 @@ app.post(
       track(
         identity.id,
         "User Registered",
-        { method: req.body?.flow?.type, flow_id: req.body?.flow?.id },
+        { flow_type: req.body?.flow?.type, flow_id: req.body?.flow?.id },
         ctx,
       ),
     ]);
@@ -183,7 +182,7 @@ app.post(
     await track(
       identity.id,
       "User Logged In",
-      { method: req.body?.flow?.type, flow_id: req.body?.flow?.id },
+      { flow_type: req.body?.flow?.type, flow_id: req.body?.flow?.id },
       clientContext(req.body),
     );
     console.log(`Segment: tracked login for ${identity.id}`);

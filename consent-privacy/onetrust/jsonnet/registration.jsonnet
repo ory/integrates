@@ -1,19 +1,20 @@
-// Body for the sync post-registration Ory Action that calls the OneTrust
-// webhook handler. The client must pass consent choices via transient_payload:
+// Body for both OneTrust registration actions. The client passes consent
+// choices in the registration flow's transient_payload:
 //
 //   { "transient_payload": { "consent": { "marketing": true, "analytics": false } } }
 //
-// The handler returns updated metadata_public.consent so Ory records the
-// choices on the new identity even if OneTrust is unreachable.
-function(ctx) {
-  identity: {
-    id: ctx.identity.id,
-    traits: ctx.identity.traits,
-    metadata_public: ctx.identity.metadata_public,
-  },
-  flow: {
-    id: ctx.flow.id,
-    type: ctx.flow.type,
-    transient_payload: ctx.flow.transient_payload,
-  },
-}
+// Jsonnet fails on a missing field, and a failing template fails the user's
+// registration for the response.parse action, so every optional field is read
+// with std.get.
+function(ctx)
+  local payload = std.get(ctx.flow, 'transient_payload', null);
+  local consent = if payload == null then null else std.get(payload, 'consent', null);
+  local metadataPublic = std.get(ctx.identity, 'metadata_public', null);
+  {
+    identity: {
+      id: ctx.identity.id,
+      email: std.get(ctx.identity.traits, 'email', null),
+      metadata_public: if metadataPublic == null then {} else metadataPublic,
+    },
+    consent: if std.isObject(consent) then consent else null,
+  }

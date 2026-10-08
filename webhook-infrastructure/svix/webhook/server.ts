@@ -7,15 +7,10 @@
 // consumer endpoints, automatic retries with exponential backoff, delivery
 // monitoring, and replay.
 //
-// All five hooks are async (response.ignore: true, can_interrupt: false):
-// the handler returns 200 to Ory immediately so user flows are never blocked
-// by Svix availability, then publishes to Svix in the background. Each event
-// uses a deterministic eventId (flow.id + event type) so retries are
-// naturally idempotent at the Svix layer.
-//
-// We talk to Svix's REST API directly with built-in fetch rather than the
-// Svix SDK so the handler stays consistent with the rest of the integration
-// family and has zero non-template dependencies.
+// The five actions set response.ignore: true, so Ory doesn't wait for this
+// handler and Svix availability never blocks user flows. Each event uses a
+// deterministic eventId (flow.id + event type) so duplicate deliveries are
+// deduplicated by Svix.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -41,15 +36,15 @@ interface OryWebhookBody {
     id?: string;
     traits?: {
       email?: string;
-      name?: { first?: string; last?: string };
+      name?: { first?: string; last?: string } | null;
     };
-    metadata_public?: Record<string, unknown>;
+    metadata_public?: Record<string, unknown> | null;
   };
   flow?: {
     id?: string;
     type?: string;
   };
-  request_headers?: Record<string, string[]>;
+  client_ip?: string | null;
 }
 
 interface SvixMessagePayload {
@@ -57,7 +52,7 @@ interface SvixMessagePayload {
   email?: string;
   name?: string;
   flowId?: string;
-  method?: string;
+  flowType?: string;
   timestamp: string;
   sourceIp?: string;
   metadata?: Record<string, unknown>;
@@ -77,11 +72,6 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-function extractClientIp(headers: Record<string, string[]> | undefined): string | undefined {
-  const xff = headers?.["x-forwarded-for"]?.[0];
-  return xff ? xff.split(",")[0]?.trim() : undefined;
-}
-
 function buildPayload(body: OryWebhookBody): SvixMessagePayload {
   const identity = body?.identity ?? {};
   const flow = body?.flow ?? {};
@@ -93,10 +83,10 @@ function buildPayload(body: OryWebhookBody): SvixMessagePayload {
     email: identity.traits?.email,
     name: fullName || undefined,
     flowId: flow.id,
-    method: flow.type,
+    flowType: flow.type,
     timestamp: new Date().toISOString(),
-    sourceIp: extractClientIp(body?.request_headers),
-    metadata: identity.metadata_public,
+    sourceIp: body?.client_ip ?? undefined,
+    metadata: identity.metadata_public ?? undefined,
   };
 }
 
@@ -127,7 +117,6 @@ async function publish(eventType: string, body: OryWebhookBody): Promise<void> {
     }
     console.log(`Svix: published ${eventType} for ${body?.identity?.id} (flow ${flowId})`);
   } catch (err) {
-    // Fire-and-forget: a Svix outage shouldn't propagate to Ory.
     console.warn(`Svix publish failed: ${(err as Error).message}`);
   }
 }
@@ -149,7 +138,7 @@ function asyncHook(eventType: string) {
 app.post("/svix/registration", verifyWebhookSecret, asyncHook("ory.identity.registered"));
 app.post("/svix/login", verifyWebhookSecret, asyncHook("ory.identity.logged_in"));
 app.post("/svix/settings", verifyWebhookSecret, asyncHook("ory.identity.updated"));
-app.post("/svix/recovery", verifyWebhookSecret, asyncHook("ory.identity.recovery_initiated"));
+app.post("/svix/recovery", verifyWebhookSecret, asyncHook("ory.identity.recovered"));
 app.post("/svix/verification", verifyWebhookSecret, asyncHook("ory.identity.verified"));
 
 app.listen(PORT, () => {

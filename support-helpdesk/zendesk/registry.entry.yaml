@@ -16,7 +16,7 @@ useCase: >-
   subscription plan, MFA status, active sessions, last login — and wants tickets correlated cleanly back to the Ory
   identity record for downstream reporting.
 coreFunctionality: |-
-  - Receives async post-registration and post-settings Ory Action webhooks, returns 200 immediately so user flows are never blocked.
+  - Receives async (response.ignore: true) Ory Action webhooks from the registration method lists and settings.after.profile.hooks, so user flows are never blocked by Zendesk.
   - Calls Zendesk POST /api/v2/users/create_or_update to upsert the corresponding Zendesk user, copying identity.id into external_id and selected metadata into Zendesk user_fields.
   - Exposes GET /zendesk/sidebar/identity?email=... for a Zendesk sidebar app, gated by a separate ZENDESK_SIDEBAR_SECRET so the Ory webhook secret can't be reused to enumerate identities.
   - Sidebar response includes state, MFA enrollment, active session count, last login, and metadata_public for inline agent-side rendering.

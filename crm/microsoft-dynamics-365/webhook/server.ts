@@ -105,8 +105,8 @@ app.post(
 
     try {
       const token = await getToken();
-      // Upsert by ory_identity_id alternate key (recommended) — falls back to
-      // email match if the alternate key isn't configured on Dataverse.
+      // A PATCH on the alternate key without If-Match or If-None-Match is an
+      // upsert: Dataverse creates the row when no contact has this key.
       const upsertRes = await fetch(
         `${DYNAMICS_RESOURCE_URL}/api/data/v9.2/contacts(ory_identity_id='${encodeURIComponent(identity_id)}')`,
         {
@@ -116,7 +116,6 @@ app.post(
             "content-type": "application/json",
             "OData-Version": "4.0",
             "OData-MaxVersion": "4.0",
-            "If-Match": "*", // upsert (create or update)
             Prefer: "return=representation",
           },
           body: JSON.stringify({

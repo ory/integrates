@@ -12,8 +12,8 @@
 1. In Didomi → **Consent Notice** → **Webhooks**, configure a webhook to fire on consent events with HMAC-signed payloads.
 2. Deploy a small service that:
    - Verifies the Didomi HMAC signature.
-   - Resolves the Ory identity by Didomi's `user_id` (typically matched against Ory's identity trait carrying the same id, or `metadata_public.didomi_user_id`).
-   - PATCHes `metadata_public.consent.didomi` on the identity with the consent record (purposes consented, vendors, timestamp, consent string).
+   - Resolves the Ory identity from the Didomi user ID with `GET /admin/identities/by/external/{externalID}`. For this, set the identity's `external_id` to the Didomi user ID when you create the identity, or later with a JSON Patch on `/external_id`. The Admin API can't look up identities by metadata.
+   - Reads the identity's current `metadata_public`. In one JSON Patch request (`PATCH /admin/identities/{id}`), initializes `/metadata_public` to `{}` only if it is null or absent, then initializes `/metadata_public/consent` to `{}` only if it is null or absent, and finally adds `/metadata_public/consent/didomi` with the consent record (purposes consented, vendors, timestamp, consent string). Preserve existing metadata and other consent providers' values. Serialize updates for the same identity so concurrent events don't overwrite each other's initialization.
 3. For **DSAR fulfillment** (GDPR Article 15 / 17 access + erasure):
    - Didomi forwards the request to your handler.
    - Handler queries `GET /admin/identities/{id}` and returns / deletes per Article requirements.

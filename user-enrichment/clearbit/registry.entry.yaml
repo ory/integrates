@@ -17,10 +17,10 @@ useCase: >-
   headcount, role, seniority) on every signup for lead routing, feature gating, and personalized onboarding, without
   expanding the registration form. New customers should use user-enrichment/fullcontact or user-enrichment/zoominfo.
 coreFunctionality: |-
-  - Receives the async post-registration Ory Action webhook, returns 200 immediately so registration is never blocked by enrichment.
+  - Receives the async (response.ignore: true) Ory Action webhook from the registration method lists after the identity is saved, so registration is never blocked by enrichment.
   - Calls Clearbit's /v2/combined/find endpoint with the user's email to retrieve person and company data.
   - Projects the response to a compact metadata shape (person.name/role/title/seniority, company.name/domain/industry/employees/raised/etc.).
-  - Fetches the identity via the Ory Admin API, merges the projection into metadata_admin.clearbit, and PUTs the identity back.
+  - Fetches the identity via the Ory Admin API and writes the projection to metadata_admin.clearbit with a JSON Patch.
   - Silently no-ops when Clearbit returns 404/422 (free email providers, missing data).
 oryMechanism:
   - actions

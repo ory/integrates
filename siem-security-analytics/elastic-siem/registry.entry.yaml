@@ -16,8 +16,8 @@ useCase: >-
   infrastructure — for correlation, detection rules (brute force, impossible travel, credential stuffing),
   and timeline analysis.
 coreFunctionality: |-
-  - Pattern: Ory Action async (response.ignore: true) on registration / login / logout / verification / MFA / recovery → handler verifies shared secret → handler transforms to ECS document → handler POSTs to Elasticsearch _bulk API.
-  - ECS mapping: event.action / event.category / event.outcome for the auth verb, user.id + user.email for the subject, source.ip + user_agent.original for context, authentication.factor for MFA.
+  - Pattern: Ory Action async (response.ignore: true) in the method-specific hook lists after registration / login / settings / recovery / verification → handler verifies shared secret → handler transforms to ECS document → handler POSTs to Elasticsearch _bulk API (create action for data streams).
+  - ECS mapping: event.action / event.category / event.outcome for the auth verb, user.id + user.email for the subject, source.ip (True-Client-Ip) + user_agent.original for context; authentication methods under a custom ory.* namespace, because ECS has no authentication-factor field.
   - Index pattern: logs-ory-* with an ILM policy for retention + tier transitions per compliance window.
   - Detection rules: pre-built Elastic Security Detection Engine rules (brute force, impossible travel, credential stuffing) target ECS-mapped events without custom rule authoring.
   - For Fleet-managed deployments, package as a custom Elastic Integration and ship via the Fleet UI.

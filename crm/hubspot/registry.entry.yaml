@@ -16,7 +16,7 @@ useCase: >-
   the Ory identity id stored on a custom property so any system can reverse-lookup. The integration upserts the contact
   via HubSpot's 409 Existing ID pattern so retries never duplicate.
 coreFunctionality: |-
-  - Sync Ory Action webhook (response.parse: true) on after:registration and (optionally) after:settings.
+  - Async Ory Action webhook (response.ignore: true) in the registration method lists (for example registration.after.password.hooks) and optionally settings.after.profile.hooks.
   - POST https://api.hubapi.com/crm/v3/objects/contacts with email, firstname, lastname, ory_identity_id.
   - On 409 Existing ID: parses the existing contact ID out of HubSpot's error message and PATCHes onto it for idempotent upsert.
   - 502 on HubSpot errors so the failure surfaces in Ory instead of being silently dropped.

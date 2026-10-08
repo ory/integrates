@@ -8,18 +8,18 @@ category: support-helpdesk
 type: config
 maintainedBy: Community contributors
 description: >-
-  Sync Ory identities into Freshdesk Contacts via Ory Actions on registration.after / settings.after so
+  Sync Ory identities into Freshdesk Contacts via an async Ory Action in the registration method lists so
   support agents see Ory identity context (verification state, MFA enrollment, recent activity) when handling
   tickets. Wiring is Ory Action config + Jsonnet body calling Freshdesk's REST API — no first-party handler.
 useCase: >-
   A SaaS product running customer support on Freshdesk wants support agents to see the same identity record
   in Freshdesk that exists in Ory — including verification and MFA state — without separate exports.
 coreFunctionality: |-
-  - Ory Action on registration.after / settings.after calls Freshdesk POST /api/v2/contacts (or PUT for updates).
+  - Async Ory Action (response.ignore: true) in the registration method lists (for example registration.after.password.hooks) calls Freshdesk POST /api/v2/contacts. Updating existing contacts on settings.after.profile.hooks needs your own handler.
   - Auth: HTTP Basic with the API key as username and "X" as password (Freshdesk convention).
   - Optional: custom contact field ory_identity_id for stable cross-system lookup.
   - response.ignore: true — Freshdesk availability never blocks user flows.
-  - 409 Conflict from POST means the contact already exists by email — handler should treat as success.
+  - 409 Conflict from POST means the contact already exists by email; the action ignores the response, so Ory only logs it.
   - For Ory identity context shown inside Freshdesk tickets, consider a Freshdesk Marketplace App calling Ory's admin API — separate integration, not covered here.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/support-helpdesk/freshdesk.
 oryMechanism:

@@ -1,16 +1,6 @@
-// Body for the sync post-registration Ory Action that calls the Stripe
-// webhook handler. The handler reads identity.id, identity.traits.email, and
-// identity.traits.name and returns updated metadata_admin.stripe_customer_id
-// + metadata_public.billing.
+// Body for the asynchronous post-registration Ory Action. It runs after the
+// identity is saved, so ctx.identity.id is the stable identity ID.
 function(ctx) {
-  identity: {
-    id: ctx.identity.id,
-    traits: ctx.identity.traits,
-    metadata_admin: ctx.identity.metadata_admin,
-    metadata_public: ctx.identity.metadata_public,
-  },
-  flow: {
-    id: ctx.flow.id,
-    type: ctx.flow.type,
-  },
+  identity_id: ctx.identity.id,
+  email: std.get(ctx.identity.traits, 'email', null),
 }

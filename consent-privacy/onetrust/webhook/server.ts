@@ -2,21 +2,21 @@
 //
 // OneTrust <> Ory Actions webhook handler.
 //
-// Two surfaces:
+// Three surfaces:
 //
-//   1. Post-registration (Ory -> handler) — sync hook that captures the
-//      user's consent choices from transient_payload, writes them to
-//      identity.metadata_public.consent so Ory holds the record of truth,
-//      and records a consent receipt in OneTrust via the Consent Manager
-//      API. The Ory call is synchronous (response.parse: true) so the
-//      consent metadata lands on the new identity; the OneTrust receipt
-//      call runs after the response goes back so OneTrust availability
-//      never blocks registration.
+//   1. POST /onetrust/registration (Ory -> handler, response.parse: true).
+//      Runs before Ory saves the identity and returns the user's consent
+//      choices in identity.metadata_public.consent. The identity has no ID
+//      yet, so this route doesn't call OneTrust.
 //
-//   2. DSR callback (OneTrust -> handler) — async webhook from OneTrust's
-//      Privacy Rights Automation workflow. Authenticates with a separate
-//      shared secret (X-OneTrust-Secret), then dispatches DELETE/ERASURE,
-//      EXPORT/ACCESS, or RECTIFICATION against Ory's Admin API.
+//   2. POST /onetrust/receipt (Ory -> handler, response.ignore: true). Runs
+//      after Ory saves the identity and records a OneTrust consent receipt
+//      keyed by the Ory identity ID.
+//
+//   3. POST /onetrust/dsr (OneTrust -> handler). Called by OneTrust's Privacy
+//      Rights Automation workflow with a separate shared secret
+//      (X-OneTrust-Secret). Dispatches DELETE/ERASURE, EXPORT/ACCESS, or
+//      RECTIFICATION against Ory's Admin API for the stored Ory identity ID.
 //
 // OneTrust authenticates with OAuth2 client_credentials. The handler caches
 // the access token in memory until 30s before its declared expiry and then
@@ -66,27 +66,33 @@ interface OryIdentity {
   id: string;
   schema_id?: string;
   state?: string;
-  traits?: { email?: string; [trait: string]: unknown };
-  metadata_public?: Record<string, unknown>;
-  metadata_admin?: Record<string, unknown>;
+  traits?: Record<string, unknown>;
+  metadata_public?: Record<string, unknown> | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
+// Shape produced by jsonnet/registration.jsonnet.
 interface OryRegistrationWebhookBody {
-  identity: OryIdentity;
-  flow: {
-    transient_payload?: { consent?: Record<string, boolean> };
+  identity?: {
+    id?: string;
+    email?: string | null;
+    metadata_public?: Record<string, unknown>;
   };
+  consent?: Record<string, unknown> | null;
 }
 
 interface OneTrustDsrBody {
   requestType?: string;
+  oryIdentityId?: string;
   dataSubject?: {
-    email?: string;
+    oryIdentityId?: string;
     corrections?: Record<string, unknown>;
   };
-  identifier?: string;
-  email?: string;
 }
+
+const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const app = express();
 app.use(express.json());
@@ -114,6 +120,14 @@ function verifyOneTrustDsrSecret(req: Request, res: Response, next: NextFunction
     return;
   }
   next();
+}
+
+function consentChoices(value: unknown): Record<string, boolean> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const choices = Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, boolean] => typeof entry[1] === "boolean"),
+  );
+  return Object.keys(choices).length > 0 ? choices : null;
 }
 
 interface CachedToken {
@@ -149,7 +163,8 @@ async function getOneTrustAccessToken(): Promise<string> {
 }
 
 async function recordConsentReceipt(
-  identity: OryIdentity,
+  identityId: string,
+  email: string | undefined,
   consent: Record<string, boolean>,
 ): Promise<void> {
   const purposes = Object.entries(consent)
@@ -159,19 +174,21 @@ async function recordConsentReceipt(
       Name: key,
       TransactionType: granted ? "CONFIRMED" : "OPT_OUT",
     }));
-  if (purposes.length === 0) return; // nothing mapped, nothing to send
+  if (purposes.length === 0) return;
 
   const token = await getOneTrustAccessToken();
   const receipt = {
-    identifier: identity.traits?.email,
-    identifierType: "email",
+    identifier: identityId,
     requestInformation: {
       language: "en-us",
       collectionPoint: "registration",
       collectionMethod: "web_form",
     },
     purposes,
-    dsDataElements: [{ Name: "ory_identity_id", Value: identity.id }],
+    dsDataElements: [
+      { Name: "ory_identity_id", Value: identityId },
+      ...(email ? [{ Name: "email", Value: email }] : []),
+    ],
     consentDate: new Date().toISOString(),
   };
 
@@ -194,70 +211,86 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// Sync post-registration. Consent goes into metadata_public IMMEDIATELY via the
-// response so Ory holds it even if OneTrust is unreachable; OneTrust is then
-// called in the background (after the response is flushed).
+// Ory replaces metadata_public as a whole, so the response carries the
+// existing metadata alongside the new consent record. Any input problem
+// returns 200 with no changes so registration is never blocked.
 app.post(
   "/onetrust/registration",
   verifyOryWebhookSecret,
-  async (req: Request<unknown, unknown, OryRegistrationWebhookBody>, res: Response) => {
-    const identity = req.body?.identity;
-    const consent = req.body?.flow?.transient_payload?.consent;
-
-    if (consent && typeof consent === "object") {
-      res.status(200).json({
-        identity: {
-          metadata_public: {
-            consent: { preferences: consent, recorded_at: new Date().toISOString() },
-          },
-        },
-      });
-    } else {
+  (req: Request<unknown, unknown, OryRegistrationWebhookBody>, res: Response) => {
+    const consent = consentChoices(req.body?.consent);
+    if (!consent) {
       res.status(200).json({});
+      return;
+    }
+    const existing = req.body?.identity?.metadata_public;
+    const metadataPublic =
+      existing && typeof existing === "object" && !Array.isArray(existing) ? existing : {};
+    res.status(200).json({
+      identity: {
+        metadata_public: {
+          ...metadataPublic,
+          consent: { preferences: consent, recorded_at: new Date().toISOString() },
+        },
+      },
+    });
+  },
+);
+
+// Ory ignores this response but retries 429 and 5xx responses other than 501,
+// so a failed OneTrust call returns 502.
+app.post(
+  "/onetrust/receipt",
+  verifyOryWebhookSecret,
+  async (req: Request<unknown, unknown, OryRegistrationWebhookBody>, res: Response) => {
+    const identityId = req.body?.identity?.id;
+    const consent = consentChoices(req.body?.consent);
+    if (!consent || !identityId || identityId === NIL_UUID) {
+      res.status(200).json({});
+      return;
     }
 
-    if (consent && identity?.id && identity.traits?.email) {
-      try {
-        await recordConsentReceipt(identity, consent);
-        console.log(`OneTrust: receipt recorded for ${identity.id}`);
-      } catch (err) {
-        console.warn(`OneTrust receipt failed for ${identity.id}: ${(err as Error).message}`);
-      }
+    try {
+      await recordConsentReceipt(identityId, req.body?.identity?.email ?? undefined, consent);
+      console.log(`OneTrust: receipt recorded for ${identityId}`);
+      res.status(200).json({});
+    } catch (err) {
+      console.warn(`OneTrust receipt failed for ${identityId}: ${(err as Error).message}`);
+      res.status(502).json({ error: "receipt_failed" });
     }
   },
 );
 
-async function findIdentityByEmail(email: string): Promise<OryIdentity | null> {
-  const res = await fetch(
-    `${ORY_SDK_URL}/admin/identities?credentials_identifier=${encodeURIComponent(email)}`,
-    {
-      headers: { authorization: `Bearer ${ORY_ADMIN_API_KEY}` },
-      signal: AbortSignal.timeout(5000),
-    },
-  );
+async function getIdentity(id: string): Promise<OryIdentity | null> {
+  const res = await fetch(`${ORY_SDK_URL}/admin/identities/${id}`, {
+    headers: { authorization: `Bearer ${ORY_ADMIN_API_KEY}` },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Ory lookup ${res.status}`);
-  const arr = (await res.json()) as OryIdentity[];
-  return Array.isArray(arr) && arr.length > 0 ? (arr[0] ?? null) : null;
+  return (await res.json()) as OryIdentity;
+}
+
+function escapeJsonPointer(segment: string): string {
+  return segment.replace(/~/g, "~0").replace(/\//g, "~1");
 }
 
 // DSR callback from OneTrust's Privacy Rights Automation workflow.
 // requestType: DELETE | ERASURE | EXPORT | ACCESS | RECTIFICATION
-// The handler runs the action against Ory's Admin API and returns a status to
-// OneTrust. OneTrust treats 2xx as completed and 4xx/5xx as failed.
+// OneTrust treats 2xx as completed and 4xx/5xx as failed.
 app.post(
   "/onetrust/dsr",
   verifyOneTrustDsrSecret,
   async (req: Request<unknown, unknown, OneTrustDsrBody>, res: Response) => {
     const requestType = String(req.body?.requestType ?? "").toUpperCase();
-    const email =
-      req.body?.dataSubject?.email ?? req.body?.identifier ?? req.body?.email;
-    if (!email) {
-      res.status(400).json({ error: "email required" });
+    const identityId = req.body?.oryIdentityId ?? req.body?.dataSubject?.oryIdentityId;
+    if (!identityId || !UUID_PATTERN.test(identityId)) {
+      res.status(400).json({ error: "oryIdentityId required" });
       return;
     }
 
     try {
-      const identity = await findIdentityByEmail(email);
+      const identity = await getIdentity(identityId);
       if (!identity) {
         res.status(404).json({ error: "identity_not_found" });
         return;
@@ -274,7 +307,7 @@ app.post(
           headers,
           signal: AbortSignal.timeout(5000),
         });
-        if (!del.ok) throw new Error(`Ory delete ${del.status}`);
+        if (!del.ok && del.status !== 404) throw new Error(`Ory delete ${del.status}`);
         console.log(`OneTrust DSR: deleted ${identity.id}`);
         res.json({ status: "completed", action: "deleted" });
         return;
@@ -289,6 +322,8 @@ app.post(
             traits: identity.traits,
             metadata_public: identity.metadata_public,
             state: identity.state,
+            created_at: identity.created_at,
+            updated_at: identity.updated_at,
           },
         });
         return;
@@ -296,23 +331,22 @@ app.post(
 
       if (requestType === "RECTIFICATION") {
         const corrections = req.body?.dataSubject?.corrections;
-        if (!corrections || typeof corrections !== "object") {
+        if (!corrections || typeof corrections !== "object" || Object.keys(corrections).length === 0) {
           res.status(400).json({ error: "corrections required" });
           return;
         }
-        const put = await fetch(`${ORY_SDK_URL}/admin/identities/${identity.id}`, {
-          method: "PUT",
+        const patch = Object.entries(corrections).map(([key, value]) => ({
+          op: "add",
+          path: `/traits/${escapeJsonPointer(key)}`,
+          value,
+        }));
+        const upd = await fetch(`${ORY_SDK_URL}/admin/identities/${identity.id}`, {
+          method: "PATCH",
           headers,
-          body: JSON.stringify({
-            schema_id: identity.schema_id,
-            traits: { ...(identity.traits ?? {}), ...corrections },
-            state: identity.state,
-            metadata_public: identity.metadata_public,
-            metadata_admin: identity.metadata_admin,
-          }),
+          body: JSON.stringify(patch),
           signal: AbortSignal.timeout(5000),
         });
-        if (!put.ok) throw new Error(`Ory put ${put.status}`);
+        if (!upd.ok) throw new Error(`Ory patch ${upd.status}`);
         console.log(`OneTrust DSR: rectified ${identity.id}`);
         res.json({ status: "completed", action: "rectified" });
         return;
@@ -321,7 +355,7 @@ app.post(
       res.status(400).json({ error: `unsupported requestType: ${requestType}` });
     } catch (err) {
       console.error(`OneTrust DSR failed: ${(err as Error).message}`);
-      res.status(500).json({ error: (err as Error).message });
+      res.status(500).json({ error: "dsr_failed" });
     }
   },
 );

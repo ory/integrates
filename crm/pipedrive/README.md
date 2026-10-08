@@ -15,7 +15,7 @@ A sales-led B2B product wants every registered user mirrored into Pipedrive as a
 
 1. **Sync (async post-registration / post-settings)** — Ory calls `POST /pipedrive/sync-user` with `identity.id`, traits, and `created_at`. The handler returns `200` immediately, then searches Pipedrive for an existing person by email and either creates a new person or updates the existing one, writing `ory_identity_id` to a custom field.
 2. **Track login (async post-login)** — Ory calls `POST /pipedrive/track-login-activity` with identity, session metadata, and request headers. The handler returns `200` immediately, finds the Pipedrive person by email, and creates a `task`-type activity with the login details (time, IP, device, method, session preview) marked done.
-3. Both hooks are fire-and-forget so Pipedrive availability never blocks user flows.
+3. All hooks set `response.ignore: true`, so Ory sends them in the background and Pipedrive availability never blocks user flows.
 
 ## Prerequisites
 
@@ -42,8 +42,13 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Ory
 
-1. Configure the three Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml) (post-registration, post-settings, post-login).
-2. Body templates: [`jsonnet/sync-user.jsonnet`](jsonnet/sync-user.jsonnet) and [`jsonnet/track-login.jsonnet`](jsonnet/track-login.jsonnet).
+1. Configure the three Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml). Attach each hook to the method-specific lists, not to the flow-level `after.hooks` lists:
+   - Registration: `selfservice.flows.registration.after.<method>.hooks` for each sign-up method you enable, such as `password` and `oidc`. On Ory Network, the `password` list contains `session`; keep it last.
+   - Settings: `selfservice.flows.settings.after.profile.hooks`.
+   - Login: `selfservice.flows.login.after.<method>.hooks` for each sign-in method.
+
+   See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
+2. Body templates: [`jsonnet/sync-user.jsonnet`](jsonnet/sync-user.jsonnet) and [`jsonnet/track-login.jsonnet`](jsonnet/track-login.jsonnet). Ory Network doesn't accept `file://` bodies, so set each `body` to `base64://` followed by the Base64-encoded template. The login template reads the client IP address from the `True-Client-Ip` request header.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
 <!-- TODO: link to hosted demo videos (basic user sync + login activity tracking). -->

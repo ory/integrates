@@ -17,7 +17,7 @@ A sales/marketing team running HubSpot wants every Ory-managed sign-up to land i
 2. Ory fires the Action webhook to this handler. The handler verifies the shared secret.
 3. The handler POSTs `https://api.hubapi.com/crm/v3/objects/contacts` with `email`, `firstname`, `lastname`, `ory_identity_id`.
 4. If HubSpot returns `409` because the contact already exists, the handler parses the existing ID out of HubSpot's error message and PATCHes the same properties onto that contact — idempotent upsert.
-5. The handler returns `200` to Ory.
+5. The handler returns `200`. Ory doesn't wait for the response, but it retries a `429` or `5xx` response other than `501`, for up to three attempts in total.
 
 ## Prerequisites
 
@@ -43,9 +43,14 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Ory
 
-1. Configure the Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml) — register on `after:registration` and (optionally) `after:settings`.
-2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet).
-3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
+1. Configure the Action hooks using the snippet in [`ory-actions.yaml`](ory-actions.yaml). Attach them to the method-specific lists, not to the flow-level `after.hooks` lists:
+   - Registration: `selfservice.flows.registration.after.<method>.hooks` for each sign-up method you enable, such as `password` and `oidc`. On Ory Network, the `password` list contains `session`; keep it last.
+   - Profile updates (optional): `selfservice.flows.settings.after.profile.hooks`.
+
+   See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
+2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). Ory Network doesn't accept `file://` bodies, so set `body` to `base64://` followed by the Base64-encoded template.
+3. Keep `response.ignore: true`. Ory then sends the request in the background, and a HubSpot error never fails the user's registration or profile update.
+4. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
 Private app provisioning, custom-property setup, and HubSpot workflow patterns: see the [docs page](https://ory.com/docs/integrates-with/crm/hubspot).
 

@@ -16,10 +16,10 @@ useCase: >-
   build webhook plumbing (retries, exponential backoff, replay, per-endpoint signing, dashboards, alerts). Ory Actions
   fire on the events; this router relays them to Svix, which fans out to consumer endpoints with at-least-once delivery.
 coreFunctionality: |-
-  - Five async Ory Action endpoints (/svix/registration, /svix/login, /svix/settings, /svix/recovery, /svix/verification); each returns 200 immediately so user flows are never blocked.
+  - Five Ory Action endpoints (/svix/registration, /svix/login, /svix/settings, /svix/recovery, /svix/verification) behind actions with response.ignore: true, so Ory doesn't wait for them and user flows are never blocked.
   - Publishes to Svix's REST API (POST /api/v1/app/{appId}/msg/) with built-in fetch — no svix SDK dependency, consistent with the rest of the integration family.
   - Each message uses a deterministic eventId of ory-<eventType>-<flowId> so duplicates are deduped at the Svix layer.
-  - Standardized event type names (ory.identity.registered, .logged_in, .updated, .recovery_initiated, .verified) so consumer endpoints filter cleanly.
+  - Standardized event type names (ory.identity.registered, .logged_in, .updated, .recovered, .verified) so consumer endpoints filter cleanly.
   - Fire-and-forget: Svix outages and 5xx responses are logged but never propagate to Ory.
 oryMechanism:
   - actions

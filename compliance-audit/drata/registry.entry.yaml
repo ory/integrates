@@ -15,11 +15,11 @@ useCase: >-
   An Ory Network customer pursuing or maintaining SOC 2 / ISO 27001 / similar compliance wants Drata to
   auto-collect IAM evidence from Ory rather than running manual evidence-gathering each audit cycle.
 coreFunctionality: |-
-  - Drata Generic Custom Connector polls the Ory admin API on a schedule using a Project-scoped API key with read access.
-  - Common evidence pulls: GET /admin/identities (user list + lifecycle timestamps + MFA enrollment), GET /admin/identities/{id} (per-user roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service accounts), Ory project config (password policy, session lifespan, MFA requirements).
-  - JML controls map to identity create / update / deactivate timestamps.
-  - Privileged access: OAuth2 clients with admin scopes can be flagged.
-  - MFA enforcement: flag identities without TOTP/WebAuthn credentials where policy requires it.
+  - Drata Generic Custom Connector polls the Ory admin API on a schedule with a project API key (full admin access; Ory Network has no read-only key) and reads the project configuration with a workspace API key.
+  - Common evidence pulls: GET /admin/identities (user list + lifecycle timestamps + MFA enrollment), GET /admin/identities/{id} (per-user roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service accounts), GET https://api.console.ory.com/projects/<project-id> (password policy, session lifespan, MFA requirements).
+  - JML controls map to created_at, updated_at, state, and state_changed_at.
+  - Privileged access: inventory OAuth2 clients and the scopes they're allowed to request.
+  - MFA enforcement: check credentials.webauthn.config.credentials with include_credential=webauthn, or the presence of a totp credential; credential types alone don't prove enrollment.
   - Status: community/proposed — documented at ory.com/docs/integrates-with/compliance-audit/drata; implementation lives in Drata's custom-connector layer.
 oryMechanism:
   - standards

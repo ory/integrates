@@ -9,13 +9,13 @@
 
 ## Use case
 
-A platform product wants to expose identity-lifecycle events (`user.registered`, `user.logged_in`, `user.updated`, `user.verified`) to its own customers as webhooks, but doesn't want to build webhook plumbing — retries, exponential backoff, replay, per-endpoint signing, dashboards, alerts. Ory Actions fire on the events; this router relays them to Svix, which fans out to consumer endpoints with at-least-once delivery and a managed monitoring surface.
+A platform product wants to expose identity-lifecycle events (registered, logged in, updated, recovered, verified) to its own customers as webhooks, but doesn't want to build webhook plumbing — retries, exponential backoff, replay, per-endpoint signing, dashboards, alerts. Ory Actions fire on the events; this router relays them to Svix, which fans out to consumer endpoints with at-least-once delivery and a managed monitoring surface.
 
 ## How it works
 
 1. A user completes a registration, login, settings, recovery, or verification flow in Ory.
-2. Ory fires the async post-flow Action webhook to this handler (`/svix/registration`, `/svix/login`, etc.). The handler verifies the shared secret.
-3. The handler returns `200` to Ory immediately and builds a Svix message payload in the background.
+2. Ory fires the post-flow Action webhook to this handler (`/svix/registration`, `/svix/login`, etc.) in the background (`response.ignore: true`), so the flow doesn't wait. The handler verifies the shared secret.
+3. The handler answers Ory and builds a Svix message payload. The client IP address comes from the `True-Client-Ip` request header that Ory Network sets; Ory doesn't forward `X-Forwarded-For` to webhooks.
 4. The handler POSTs to `${SVIX_API_BASE}/api/v1/app/${SVIX_APP_ID}/msg/` with `Authorization: Bearer ${SVIX_API_KEY}`. The message carries an `eventType` (e.g. `ory.identity.registered`) and a deterministic `eventId` of `ory-<eventType>-<flowId>` so retries are idempotent at the Svix layer.
 5. Svix fans the event out to every consumer endpoint subscribed to that event type, retries failures on its standard exponential schedule, signs each delivery with the endpoint's secret, and surfaces delivery health in the dashboard.
 
@@ -42,22 +42,24 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 - `POST /svix/registration` — publishes `ory.identity.registered`.
 - `POST /svix/login` — publishes `ory.identity.logged_in`.
 - `POST /svix/settings` — publishes `ory.identity.updated`.
-- `POST /svix/recovery` — publishes `ory.identity.recovery_initiated`.
+- `POST /svix/recovery` — publishes `ory.identity.recovered`.
 - `POST /svix/verification` — publishes `ory.identity.verified`.
 
 ## Configure Ory
 
-1. In the Ory Console, configure the five Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml).
-2. The body template is [`jsonnet/event.jsonnet`](jsonnet/event.jsonnet) — shared by all five hooks.
+1. Configure the five Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml). Registration and login actions go in the method-specific lists, for example `selfservice.flows.registration.after.password.hooks`; repeat them for every method you enable, such as `oidc`, `code`, or `passkey`. Ory runs the flow-level `after.hooks` list only for a method without its own list, and on Ory Network the password registration list already contains `session`, so keep `session` last. Profile changes use `selfservice.flows.settings.after.profile.hooks`. Recovery and verification have only flow-level lists.
+2. The body template is [`jsonnet/event.jsonnet`](jsonnet/event.jsonnet), shared by all five hooks. Encode it with `base64 < jsonnet/event.jsonnet | tr -d '\n'` and set `body: base64://<encoded>`; Ory Network doesn't accept `file://` URLs. The webhook context never contains `metadata_admin`; a template that reads it fails and Ory drops the request.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
-4. Register the five event types in Svix (one-time) and add consumer endpoints — covered in the [docs page](https://ory.com/docs/integrates-with/webhook-infrastructure/svix).
+4. Register the five event types in Svix (one-time) and add consumer endpoints — covered in the [docs page](https://www.ory.com/docs/integrates-with/webhook-infrastructure/svix).
+
+Ory retries a delivery that fails or receives `429` or a `5xx` status other than `501`, up to three attempts within a few seconds. Svix adds durable retries and replay from the handler onward.
 
 ## Troubleshooting
 
 - **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` in `.env` doesn't match the `X-Webhook-Secret` value in the Ory hook config.
 - **`Svix 401`** in handler logs — `SVIX_API_KEY` is invalid or revoked.
 - **`Svix 404`** — `SVIX_APP_ID` doesn't exist in your Svix account. Create it via `svix application create` or the API.
-- **`Svix 422`** — the event type isn't registered in Svix. Register `ory.identity.{registered, logged_in, updated, recovery_initiated, verified}` in Svix admin.
+- **`Svix 422`** — the event type isn't registered in Svix. Register `ory.identity.{registered, logged_in, updated, recovered, verified}` in Svix admin.
 - **Consumers never receive events** — confirm consumer endpoints in Svix have `filterTypes` covering the event types you're publishing (or no filter at all to receive everything).
 
 ## License

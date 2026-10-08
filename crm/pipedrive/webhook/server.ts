@@ -10,9 +10,9 @@
 //                                          person by email and logs a "User Login"
 //                                          activity with device + IP context.
 //
-// Both endpoints are async (response.ignore: true): the handler returns 200 to
-// Ory immediately and runs the Pipedrive calls in the background so Pipedrive
-// availability never blocks user flows.
+// Both actions set response.ignore: true, so Ory doesn't wait for these
+// responses. The handler still answers 200 before calling Pipedrive, because
+// Ory retries 5xx responses.
 
 import "dotenv/config";
 import crypto from "node:crypto";

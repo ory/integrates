@@ -9,21 +9,22 @@
 
 ## Setup outline
 
-1. Create an **Ory API key** (Project-scoped) with read access to identities, OAuth2 clients, and configuration.
-2. In Vanta → **Integrations** → **Add Custom Integration** (or via the Vanta API), configure an API poller against the Ory admin API on a schedule.
-3. Common evidence to pull:
-   - `GET /admin/identities` → user list, creation/deletion timestamps, MFA enrollment.
-   - `GET /admin/identities/{id}` → per-user roles, credentials, recovery method.
+1. Create a **project API key** for the Ory Admin API (identities and OAuth2 clients). Ory Network has no read-only API key: a project API key has full admin access to the project's data, and it can't read the project configuration. Store it as a secret in Vanta.
+2. To collect configuration evidence, create a **workspace API key** and read the project with `GET https://api.console.ory.com/projects/<project-id>`. A workspace API key can also change the configuration of the projects in the workspace. See [API keys](https://www.ory.com/docs/concepts/personal-access-token#workspace-api-keys-vs-project-api-keys).
+3. In Vanta → **Integrations** → **Add Custom Integration** (or via the Vanta API), configure an API poller against these APIs on a schedule.
+4. Common evidence to pull:
+   - `GET /admin/identities` → user list, lifecycle timestamps. Returns credentials only with `include_credential`.
+   - `GET /admin/identities/{id}` → per-user roles, credential types, recovery method.
    - `GET /admin/clients` → OAuth2 clients (treat as service accounts).
-   - Ory project config → password policy, session lifespan, MFA requirements.
-4. Map the returned fields to Vanta's compliance Tests (Personnel, Access Reviews, MFA, Termination, Password Policy).
+   - `GET https://api.console.ory.com/projects/<project-id>` (workspace API key) → password policy, session lifespan, MFA requirements.
+5. Map the returned fields to Vanta's compliance Tests (Personnel, Access Reviews, MFA, Termination, Password Policy).
 
 ## Notable evidence patterns
 
-- **Access reviews**: pull the full identity list + their last-active timestamp; Vanta can flag dormant accounts.
-- **Termination controls**: deactivation timestamps in Ory close the loop on offboarding evidence.
-- **MFA enforcement**: pull each identity's credentials array; Vanta flags identities without TOTP / WebAuthn where policy requires it.
-- **Password policy**: pull project config; Vanta validates against the configured minimum complexity rules.
+- **Access reviews**: pull the full identity list; for last activity, list each identity's sessions (`GET /admin/identities/{id}/sessions`). Vanta can flag dormant accounts.
+- **Termination controls**: `state: inactive` and `state_changed_at` close the loop on offboarding evidence.
+- **MFA enforcement**: credential types alone don't prove MFA enrollment: password identities can have an empty `webauthn` credential. Request `GET /admin/identities/{id}?include_credential=webauthn` and check that `credentials.webauthn.config.credentials` isn't empty; a `totp` credential exists only while TOTP is set up. Don't request `include_credential=password` or `include_credential=totp`, which return the password hash and the TOTP secret.
+- **Password policy**: pull the project configuration with the workspace API key; Vanta validates it against the configured minimum complexity rules.
 
 ## Status
 

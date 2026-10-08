@@ -10,7 +10,7 @@
 ## How it works
 
 **Outbound: Ory → Recurly**
-1. Ory Action on `registration.after` (async) calls handler.
+1. An async Ory Action (`response.ignore: true`) in the registration method lists, for example `selfservice.flows.registration.after.password.hooks`, calls the handler. It runs after the identity is saved, so the identity ID is set. Don't use `response.parse` for it: in that mode the identity isn't saved yet and its ID is `00000000-0000-0000-0000-000000000000`.
 2. Handler verifies the Ory webhook secret.
 3. Handler calls Recurly's API to create an Account record keyed by the Ory identity id.
 4. Handler PATCHes `metadata_public.recurly = { account_code, subscription_state: "none" }` on the Ory identity.
@@ -23,8 +23,8 @@
 ## Setup outline
 
 1. In Recurly → **Integrations** → **Webhooks**, configure a webhook target pointing at your handler with a signing secret.
-2. Build a webhook handler with both endpoints — sync inbound from Ory + async from Recurly.
-3. Configure an Ory Action on `registration.after` (async) pointing at the handler.
+2. Build a webhook handler with both endpoints — one for the Ory Action and one for Recurly webhooks.
+3. Configure an async Ory Action (`response.ignore: true`) pointing at the handler. Attach the action to `selfservice.flows.registration.after.<method>.hooks` for each sign-up method you enable, such as `password` and `oidc`, not to the flow-level `after.hooks` list. On Ory Network, the `password` list contains `session`; keep it last. See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
 
 ## Notable
 

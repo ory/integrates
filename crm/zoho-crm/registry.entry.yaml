@@ -15,7 +15,7 @@ useCase: >-
   An Ory Network customer running their CRM on Zoho wants newly registered users to land in Zoho as Contact
   records automatically — no separate sync job, no manual exports.
 coreFunctionality: |-
-  - One async endpoint POST /zoho/sync-contact called from registration.after and settings.after with response.ignore: true so Zoho availability never blocks user flows.
+  - One async endpoint POST /zoho-crm/sync-user called from the registration method lists (for example registration.after.password.hooks) and settings.after.profile.hooks with response.ignore: true so Zoho availability never blocks user flows.
   - OAuth flow: long-lived ZOHO_REFRESH_TOKEN exchanged for short-lived access tokens (1-hour TTL); handler caches and refreshes automatically.
   - Refresh tokens are rate-limited (15 per 7 minutes per org) — must reuse the env-provided refresh token, never generate fresh per request.
   - Multi-region: regional API base hosts (zohoapis.com US / .in IN / .eu EU / .com.au AU / .jp JP / .ca CA / .com.cn CN) and matching accounts URLs.

@@ -15,12 +15,12 @@ Ory Action  →  Hookdeck (Source)  →  Hookdeck queue / retry  →  Hookdeck (
 
 1. In Hookdeck, create a **Source** (HTTP endpoint Hookdeck exposes) and a **Destination** (your handler URL).
 2. Connect them with a **Connection** that defines retry policy, filtering, and transformations.
-3. Point your Ory Action's webhook URL at the Hookdeck Source URL.
+3. Point your Ory Action's webhook URL at the Hookdeck Source URL, and set `response.ignore: true`. Attach the action to the method-specific hook lists, for example `selfservice.flows.registration.after.password.hooks`, and attach it explicitly to each registration method you enable. See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
 4. Hookdeck buffers events, retries with backoff, and surfaces failures in their dashboard for replay.
 
 ## Why route through Hookdeck
 
-- **Handler downtime resilience** — Ory Actions retry per their own policy, but Hookdeck adds a more aggressive retry layer with persistent storage.
+- **Handler downtime resilience** — Ory retries a failed delivery for up to three attempts in total, within a few seconds. Hookdeck stores each event and retries according to the Connection's retry policy.
 - **Event replay** — replay any historical Ory event into your handler from the Hookdeck dashboard, useful during incident recovery.
 - **Filtering** — drop events that don't matter (e.g. drop `login.after` for service-account identities) before they reach your handler.
 - **Transformations** — reshape the Ory payload to match your handler's expected schema without touching either side.
@@ -36,6 +36,7 @@ Ory Action  →  Hookdeck (Source)  →  Hookdeck queue / retry  →  Hookdeck (
 ## Notable
 
 - Hookdeck is **infrastructure**, not an Ory event consumer — your handler still does the work; Hookdeck just makes delivery reliable.
+- Use Hookdeck only for actions that don't need a response. Hookdeck answers Ory itself, so your handler's response never reaches Ory and can't change the identity or block the flow.
 - For very-high-volume products, Hookdeck has connection-rate limits; check the plan limits before adopting.
 - Compare with [`webhook-infrastructure/svix`](../svix/) — similar product, different positioning (Svix focuses on outbound webhooks from your product to your customers; Hookdeck focuses on inbound reliability).
 

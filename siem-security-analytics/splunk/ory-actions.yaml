@@ -1,45 +1,70 @@
-# Splunk SIEM forwarding hooks.
+# Splunk SIEM forwarding actions.
 #
-# All four hooks are fire-and-forget (response.ignore: true, can_interrupt:
-# false). The handler returns 200 to Ory immediately and posts the event to
-# Splunk HEC in the background; Splunk availability never blocks user flows.
+# The actions set response.ignore: true, so Ory doesn't wait for the
+# handler and Splunk availability never blocks user flows. Ory retries a
+# delivery that fails or receives 429 or a 5xx status other than 501, up to
+# three attempts in total.
+#
+# Encode the body template with `base64 < jsonnet/event.jsonnet | tr -d '\n'`.
+# Ory Network doesn't accept file:// URLs.
 
 selfservice:
   flows:
     registration:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/splunk/registration
-              method: POST
-              body: file://./jsonnet/event.jsonnet
-              can_interrupt: false
-              response:
-                ignore: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        # The password list is aliased into the oidc, code, passkey, and webauthn
+        # lists. Alias it into any other method you enable, such as saml.
+        password:
+          hooks: &registration_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/splunk/registration
+                method: POST
+                body: base64://<base64-encoded jsonnet/event.jsonnet>
+                response:
+                  ignore: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+            - hook: session
+        oidc:
+          hooks: *registration_after_hooks
+        code:
+          hooks: *registration_after_hooks
+        passkey:
+          hooks: *registration_after_hooks
+        webauthn:
+          hooks: *registration_after_hooks
     login:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/splunk/login
-              method: POST
-              body: file://./jsonnet/event.jsonnet
-              can_interrupt: false
-              response:
-                ignore: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        # The password list is aliased into the oidc, code, passkey, and webauthn
+        # lists. Alias it into any other method you enable, such as saml.
+        password:
+          hooks: &login_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/splunk/login
+                method: POST
+                body: base64://<base64-encoded jsonnet/event.jsonnet>
+                response:
+                  ignore: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+        oidc:
+          hooks: *login_after_hooks
+        code:
+          hooks: *login_after_hooks
+        passkey:
+          hooks: *login_after_hooks
+        webauthn:
+          hooks: *login_after_hooks
     recovery:
       after:
         hooks:
@@ -47,8 +72,7 @@ selfservice:
             config:
               url: https://your-deployed-handler.example.com/splunk/recovery
               method: POST
-              body: file://./jsonnet/event.jsonnet
-              can_interrupt: false
+              body: base64://<base64-encoded jsonnet/event.jsonnet>
               response:
                 ignore: true
               auth:
@@ -59,18 +83,18 @@ selfservice:
                   in: header
     settings:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/splunk/settings
-              method: POST
-              body: file://./jsonnet/event.jsonnet
-              can_interrupt: false
-              response:
-                ignore: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        profile:
+          hooks:
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/splunk/settings
+                method: POST
+                body: base64://<base64-encoded jsonnet/event.jsonnet>
+                response:
+                  ignore: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header

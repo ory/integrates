@@ -8,10 +8,10 @@
 // handler is preserved for legacy Clearbit contracts only. For new
 // deployments, use user-enrichment/fullcontact or user-enrichment/zoominfo.
 //
-// Behavior: async post-registration enrichment. The handler returns 200 to
-// Ory immediately so the user's registration completes, then enriches the
-// identity in the background by calling Clearbit's Combined API and writing
-// the result to metadata_admin via Ory's Admin API.
+// Behavior: async post-registration enrichment (response.ignore: true). The
+// action runs after the identity is saved, so identity.id is the real ID. The
+// handler answers 200, then calls Clearbit's Combined API and writes the
+// result to metadata_admin.clearbit with a JSON Patch through Ory's Admin API.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -38,8 +38,7 @@ if (!ORY_WEBHOOK_SECRET || !CLEARBIT_API_KEY || !ORY_SDK_URL || !ORY_ADMIN_API_K
 interface OryWebhookBody {
   identity: {
     id: string;
-    traits?: { email?: string };
-    metadata_admin?: Record<string, unknown>;
+    traits?: { email?: string | null };
   };
 }
 
@@ -80,11 +79,7 @@ interface ProjectedEnrichment {
 
 interface OryIdentity {
   id: string;
-  schema_id: string;
-  state: string;
-  traits: Record<string, unknown>;
-  metadata_admin?: Record<string, unknown>;
-  metadata_public?: Record<string, unknown>;
+  metadata_admin?: Record<string, unknown> | null;
 }
 
 const app = express();
@@ -133,23 +128,22 @@ async function writeMetadata(
   if (!getRes.ok) throw new Error(`Ory get identity ${getRes.status}`);
   const identity = (await getRes.json()) as OryIdentity;
 
-  const merged = { ...(identity.metadata_admin ?? {}), clearbit: enrichment };
+  // A JSON Patch can't add a key below a null metadata_admin, so initialize
+  // it in that case. Otherwise only the clearbit key changes.
+  const patch =
+    identity.metadata_admin && typeof identity.metadata_admin === "object"
+      ? [{ op: "add", path: "/metadata_admin/clearbit", value: enrichment }]
+      : [{ op: "add", path: "/metadata_admin", value: { clearbit: enrichment } }];
 
-  const putRes = await fetch(`${ORY_SDK_URL}/admin/identities/${identityId}`, {
-    method: "PUT",
+  const patchRes = await fetch(`${ORY_SDK_URL}/admin/identities/${identityId}`, {
+    method: "PATCH",
     headers,
-    body: JSON.stringify({
-      schema_id: identity.schema_id,
-      traits: identity.traits,
-      state: identity.state,
-      metadata_admin: merged,
-      metadata_public: identity.metadata_public,
-    }),
+    body: JSON.stringify(patch),
     signal: AbortSignal.timeout(5000),
   });
-  if (!putRes.ok) {
-    const detail = await putRes.text().catch(() => "");
-    throw new Error(`Ory put identity ${putRes.status}: ${detail}`);
+  if (!patchRes.ok) {
+    const detail = await patchRes.text().catch(() => "");
+    throw new Error(`Ory patch identity ${patchRes.status}: ${detail}`);
   }
 }
 
@@ -184,7 +178,6 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// Async post-registration: return 200 immediately, enrich in the background.
 app.post(
   "/clearbit/registration",
   verifyWebhookSecret,

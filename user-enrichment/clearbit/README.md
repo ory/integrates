@@ -16,10 +16,10 @@ A B2B SaaS wants firmographic and demographic context (company name, industry, h
 ## How it works
 
 1. A user registers with their work email through an Ory flow.
-2. Ory fires the async post-registration Action webhook to this handler. The hook is `response.ignore: true, can_interrupt: false`, so the user's registration completes immediately.
-3. The handler verifies the shared secret and returns `200` to Ory right away.
+2. Ory fires the asynchronous Action webhook (`response.ignore: true`) from the registration method lists to this handler. The action runs after the identity is saved, so the user's registration doesn't wait for it and the handler receives the real identity ID.
+3. The handler verifies the shared secret and returns `200`.
 4. In the background, the handler calls Clearbit's `/v2/combined/find` endpoint with the user's email.
-5. If Clearbit has data, the handler fetches the current identity through the Ory Admin API, merges the projected enrichment into `metadata_admin.clearbit`, and PUTs the identity back.
+5. If Clearbit has data, the handler fetches the current identity through the Ory Admin API and writes the projected enrichment to `metadata_admin.clearbit` with a JSON Patch (`PATCH /admin/identities/{id}`), leaving the rest of the identity unchanged.
 
 ## Prerequisites
 
@@ -44,8 +44,8 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Ory
 
-1. In the Ory Console, configure the async post-registration Action hook using [`ory-actions.yaml`](ory-actions.yaml).
-2. The body template is [`jsonnet/registration.jsonnet`](jsonnet/registration.jsonnet).
+1. Configure the Action hook using [`ory-actions.yaml`](ory-actions.yaml). Attach it to `selfservice.flows.registration.after.<method>.hooks` for each sign-up method you enable, such as `password` and `oidc`, not to the flow-level `after.hooks` list. On Ory Network, the `password` list contains `session`; keep it last. See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
+2. The body template is [`jsonnet/registration.jsonnet`](jsonnet/registration.jsonnet). Don't read `ctx.identity.metadata_admin` in it: the webhook context doesn't contain that field, so the template fails and Ory drops the request. Ory Network doesn't accept `file://` bodies, so set `body` to `base64://` followed by the Base64-encoded template.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 4. Provision an admin API key for the handler (Ory Console → API Keys) and set `ORY_ADMIN_API_KEY` and `ORY_SDK_URL` in `.env`.
 
@@ -55,7 +55,7 @@ Detailed setup, response shape, and migration guidance to FullContact or ZoomInf
 
 - **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` in `.env` doesn't match the `X-Webhook-Secret` value in the Ory hook config.
 - **`Clearbit 401`** in logs — the `CLEARBIT_API_KEY` is invalid or the key's contract has lapsed (most likely cause in 2026).
-- **No `metadata_admin.clearbit` appearing on identities** — check handler logs for `Clearbit: no data for <email>` (free email providers like `@gmail.com` have no data) or `Ory put identity ...` failures (admin key scope insufficient).
+- **No `metadata_admin.clearbit` appearing on identities** — check handler logs for `Clearbit: no data for <email>` (free email providers like `@gmail.com` have no data) or `Ory patch identity ...` failures (admin key scope insufficient).
 - **`Ory get identity 404`** — the handler is calling the wrong `ORY_SDK_URL` for the project the webhook is configured in.
 
 ## License
