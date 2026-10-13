@@ -13,6 +13,8 @@ Configure an Ory Action on each lifecycle hook (async, `response.ignore: true`) 
 
 No webhook handler required — Amplitude's HTTP V2 API accepts authenticated POSTs directly.
 
+Attach each action to the method-specific lists, such as `selfservice.flows.registration.after.password.hooks` and `selfservice.flows.login.after.password.hooks`, and repeat it for every method you enable, such as `oidc` or `code`. On Ory Network, the registration `password` list contains `session`; keep it last. Verification has only the flow-level `selfservice.flows.verification.after.hooks` list. See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
+
 ## Setup outline
 
 1. In Amplitude → **Settings** → **Projects** → select project → copy the **API Key** (server-side).
@@ -21,6 +23,7 @@ No webhook handler required — Amplitude's HTTP V2 API accepts authenticated PO
    - Method: POST.
    - Body Jsonnet: `{ "api_key": "<KEY>", "events": [{ "user_id": ctx.identity.id, "event_type": "ory_registration", "user_properties": { ... } }] }`.
    - `response.ignore: true`.
+   - Read optional traits with `std.get`, because Jsonnet fails on a missing field and Ory then drops the request.
 3. For EU data residency, use `https://api.eu.amplitude.com/2/httpapi`.
 
 ## Notable

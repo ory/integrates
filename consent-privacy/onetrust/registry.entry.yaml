@@ -9,7 +9,7 @@ type: webhook
 maintainedBy: Community contributors
 description: >-
   OneTrust is a privacy, security, and governance platform for managing consent, fulfilling Data Subject Requests, and
-  maintaining compliance with GDPR, CCPA, LGPD, and PIPA. This integration writes a consent receipt to OneTrust on every
+  maintaining compliance with GDPR, CCPA, LGPD, and PIPA. This integration stores consent choices on the Ory identity and writes a consent receipt keyed by the Ory identity ID to OneTrust on every
   registration and exposes a DSR callback endpoint that lets OneTrust's Privacy Rights Automation workflow delete,
   export, or rectify identities in Ory.
 useCase: >-
@@ -17,11 +17,12 @@ useCase: >-
   signup, plus a single button in the OneTrust UI that fulfills a deletion or export request across all downstream
   systems including the identity store.
 coreFunctionality: |-
-  - Captures consent choices from transient_payload.consent on the sync post-registration webhook, returns them in metadata_public.consent immediately so Ory records the user's choices even if OneTrust is unreachable.
-  - Exchanges OAuth2 client credentials for a OneTrust access token (cached in memory until 30 s before expiry) and POSTs a consent receipt to the Consent Manager API mapping each category to a configured Purpose ID.
-  - Exposes a separate /onetrust/dsr endpoint gated by ONETRUST_DSR_SECRET that fulfills DELETE/ERASURE, EXPORT/ACCESS, and RECTIFICATION DSRs against Ory's Admin API.
-  - Distinct shared secrets for the two surfaces so a leak of one credential can't be used to call the other.
-  - Skips unmapped consent categories silently so partial Purpose ID configuration doesn't break registration.
+  - A response.parse post-registration webhook returns the consent choices from transient_payload.consent in metadata_public.consent, merged with the existing metadata, so Ory stores them on the new identity. It fails open and never blocks registration.
+  - A response.ignore post-registration webhook runs after the identity is saved and POSTs a OneTrust consent receipt keyed by the Ory identity ID, mapping each category to a configured Purpose ID.
+  - Exchanges OAuth2 client credentials for a OneTrust access token (cached in memory until 30 s before expiry).
+  - Exposes a separate /onetrust/dsr endpoint gated by ONETRUST_DSR_SECRET that fulfills DELETE/ERASURE, EXPORT/ACCESS, and RECTIFICATION DSRs for the stored Ory identity ID against Ory's Admin API.
+  - Distinct shared secrets for the Ory and OneTrust surfaces.
+  - Skips unmapped consent categories so partial Purpose ID configuration doesn't break registration.
 oryMechanism:
   - actions
 protocol:

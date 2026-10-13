@@ -25,6 +25,7 @@ if (!ORY_WEBHOOK_SECRET) {
 // Minimal shape of the body the Ory Action POSTs. Define a tighter type per
 // integration once you know which jsonnet fields you actually need.
 interface OryWebhookBody {
+  client_ip?: string | null;
   identity?: {
     id?: string;
     traits?: {
@@ -83,7 +84,8 @@ app.post(
       if (!vendorRes.ok) {
         const detail = await vendorRes.text();
         console.error(`Vendor API ${vendorRes.status}: ${detail}`);
-        // 5xx tells Ory to retry per the action's retry policy; 4xx would be terminal.
+        // Ory retries 429 and 5xx responses other than 501, up to three attempts
+        // in total within a few seconds. Other 4xx responses aren't retried.
         res.status(502).json({ error: "sync_failed" });
         return;
       }

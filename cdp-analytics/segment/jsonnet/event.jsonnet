@@ -1,17 +1,15 @@
-// Body for the async Segment Ory Action hooks (registration, login,
-// settings). The handler distinguishes events by endpoint path; this single
-// body shape is used for all three.
+// Body for the Segment Ory Actions (registration, login, settings). The
+// handler selects the Segment call by endpoint path.
 function(ctx) {
   identity: {
     id: ctx.identity.id,
     traits: ctx.identity.traits,
-    metadata_public: ctx.identity.metadata_public,
-    created_at: ctx.identity.created_at,
+    created_at: std.get(ctx.identity, 'created_at', null),
   },
   flow: {
     id: ctx.flow.id,
     type: ctx.flow.type,
   },
-  request_headers: ctx.request_headers,
-  request_url: ctx.request_url,
+  client_ip: std.get(ctx.request_headers, 'True-Client-Ip', [null])[0],
+  user_agent: std.get(ctx.request_headers, 'User-Agent', [null])[0],
 }

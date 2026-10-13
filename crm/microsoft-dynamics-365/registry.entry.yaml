@@ -16,7 +16,7 @@ useCase: >-
   in Dataverse — automatically, with stable cross-system identifiers — so sales, marketing, and service teams
   see Ory users in their existing pipeline without separate exports.
 coreFunctionality: |-
-  - Ory Action webhook on registration.after / settings.after upserts a Contact in Dynamics 365 via the Dataverse Web API (OData v4).
+  - Async Ory Action webhook in the registration method lists (for example registration.after.password.hooks) and settings.after.profile.hooks upserts a Contact in Dynamics 365 via the Dataverse Web API (OData v4).
   - Upsert keyed by an `ory_identity_id` alternate key on the Contact entity — must be created in Dataverse before first run.
   - Dataverse auth via Microsoft Entra ID OAuth2 client credentials (Server-to-Server app registration with delegated/application permission for the Dataverse environment).
   - Region-aware: the Dataverse endpoint is per-environment (https://<env>.crm.dynamics.com/api/data/v9.2).

@@ -1,42 +1,55 @@
 # Zendesk user-sync hooks.
 #
-# Both hooks are fire-and-forget (response.ignore: true, can_interrupt: false)
-# so user flows are never blocked by Zendesk availability. The handler returns
-# 200 to Ory immediately and upserts the Zendesk user in the background.
+# Both hooks set response.ignore: true, so Ory sends them in the background and
+# Zendesk availability never blocks user flows.
+#
+# Ory Network doesn't accept file:// bodies. Encode the template with
+# `base64 < jsonnet/identity.jsonnet | tr -d '\n'` and paste it after base64://.
 
 selfservice:
   flows:
     registration:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/zendesk/registration
-              method: POST
-              body: file://./jsonnet/identity.jsonnet
-              can_interrupt: false
-              response:
-                ignore: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &registration_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/zendesk/registration
+                method: POST
+                body: base64://<base64-encoded jsonnet/identity.jsonnet>
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+                response:
+                  ignore: true
+            - hook: session
+        oidc:
+          hooks: *registration_after_hooks
+        code:
+          hooks: *registration_after_hooks
+        passkey:
+          hooks: *registration_after_hooks
+        webauthn:
+          hooks: *registration_after_hooks
+        # The password list is aliased into the oidc, code, passkey, and webauthn
+        # lists. Alias it into any other method you enable, such as saml.
     settings:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/zendesk/settings
-              method: POST
-              body: file://./jsonnet/identity.jsonnet
-              can_interrupt: false
-              response:
-                ignore: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        profile:
+          hooks:
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/zendesk/settings
+                method: POST
+                body: base64://<base64-encoded jsonnet/identity.jsonnet>
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+                response:
+                  ignore: true

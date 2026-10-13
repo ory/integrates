@@ -9,18 +9,19 @@
 
 ## How it works
 
-1. User completes registration / profile update.
-2. Ory fires an Action on `registration.after` / `settings.after` (async).
-3. The Action's Jsonnet body calls Intercom's REST API to upsert the contact: `POST https://api.intercom.io/contacts` with `role: "user"` and the user's email / name / custom attributes.
-4. The handler stores Intercom's returned `id` on the Ory identity's `metadata_public.intercom_id` (optional but useful for downstream calls).
+1. User completes registration.
+2. Ory fires an asynchronous Action (`response.ignore: true`) from the registration method lists, for example `selfservice.flows.registration.after.password.hooks`.
+3. The Action calls Intercom's REST API directly to create the contact: `POST https://api.intercom.io/contacts` with `role: "user"` and the user's email / name / custom attributes.
+
+The webhook URL is static and Ory ignores the response, so a direct call can only create contacts. To sync profile changes, or to store Intercom's contact `id` on the identity, point an action in `selfservice.flows.settings.after.profile.hooks` at your own handler, which finds the existing contact, updates it, and writes the ID with the Ory Admin API.
 
 ## Setup outline
 
 1. In Intercom → **Settings** → **Workspace** → **Apps & integrations** → **Developer Hub** → create an internal app; copy the **Access Token**.
-2. Configure an Ory Action on `registration.after` (and/or `settings.after`):
+2. Configure an Ory Action in the registration method lists, such as `selfservice.flows.registration.after.password.hooks` and `selfservice.flows.registration.after.oidc.hooks`. Attach the action explicitly to each registration method you enable; on Ory Network, keep `session` last in the `password` list. See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
    - URL: `https://api.intercom.io/contacts`.
-   - Auth: header `Authorization: Bearer <ACCESS_TOKEN>`, plus `Intercom-Version: 2.11` (or current stable).
-   - Body Jsonnet maps `identity.traits.email` → `email`, `identity.traits.name` → `name`, plus any custom traits.
+   - Auth: `api_key` with `name: Authorization`, `value: Bearer <ACCESS_TOKEN>`, and `in: header`. Ory Network ignores the webhook `headers` setting, so the action can't send an `Intercom-Version` header; Intercom then applies the API version set for your app in the Developer Hub.
+   - Body Jsonnet maps `identity.traits.email` → `email` and the name traits → `name`, plus any custom traits. Read optional traits with `std.get`, because Jsonnet fails on a missing field and Ory then drops the request.
    - `response.ignore: true` so Intercom availability never blocks user flows.
 
 ## Notable

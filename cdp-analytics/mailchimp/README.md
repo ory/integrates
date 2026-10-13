@@ -12,9 +12,9 @@ Sync newly registered Ory Network users into a Mailchimp **audience** (subscribe
 ## How it works
 
 1. User completes the registration self-service flow.
-2. Ory triggers an `after` action registered on `flows.registration.after.hooks`.
+2. Ory triggers the `after` action from the list of the sign-up method the user chose, for example `selfservice.flows.registration.after.password.hooks`.
 3. The action evaluates a Jsonnet template that maps Ory identity traits to Mailchimp merge fields and tags.
-4. Ory POSTs to the Mailchimp Marketing API to add or update the subscriber in the configured audience.
+4. Ory POSTs to the Mailchimp Marketing API to add the subscriber to the configured audience. The webhook URL is static, so this action can only add new members. To update an existing member when the user changes their profile, point a settings action at your own handler, which finds the member and updates it.
 
 ## Setup
 
@@ -22,7 +22,7 @@ The full walkthrough lives in the [Ory docs page above](https://www.ory.com/docs
 
 1. Create a Mailchimp **Marketing API key** (distinct from the Mandrill key used for transactional email).
 2. Identify the target audience (list) ID from the Mailchimp dashboard.
-3. Create an Ory Action of type `web_hook` on `flows.registration.after.hooks` pointing at `https://{dc}.api.mailchimp.com/3.0/lists/{list_id}/members`, with HTTP basic auth (`anystring:{api_key}`) and a Jsonnet body template that maps `identity.traits.email` and `identity.traits.name` into Mailchimp merge fields.
+3. Create an Ory Action of type `web_hook` with `response.ignore: true` pointing at `https://{dc}.api.mailchimp.com/3.0/lists/{list_id}/members`, with `basic_auth` (`anystring:{api_key}`) and a Jsonnet body template that maps `identity.traits.email` and the name traits into Mailchimp merge fields. Read optional traits with `std.get`, because Jsonnet fails on a missing field and Ory then drops the request. Attach the action to `selfservice.flows.registration.after.<method>.hooks` for each sign-up method you enable, such as `password` and `oidc`, not to the flow-level `after.hooks` list. On Ory Network, the `password` list contains `session`; keep it last. See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
 
 ## License
 

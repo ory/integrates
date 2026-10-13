@@ -1,6 +1,6 @@
 # Segment Integration for Ory Network
 
-Send `identify` and `track` calls to Segment when users register or log in via Ory. Uses Ory Actions webhooks to call Segment's HTTP Tracking API.
+Send `identify` and `track` calls to Segment when users register, log in, or update their profile via Ory. Uses Ory Actions webhooks to call Segment's HTTP Tracking API.
 
 **Platform:** Ory Network (managed cloud)
 **Docs page:** [ory.com/docs/integrates-with/cdp-analytics/segment](https://www.ory.com/docs/integrates-with/cdp-analytics/segment) — full guide: [ory.com/docs/actions/integrations/segment](https://www.ory.com/docs/actions/integrations/segment)
@@ -9,13 +9,18 @@ Send `identify` and `track` calls to Segment when users register or log in via O
 
 ## Overview
 
-This integration uses Ory Actions **post-registration** and **post-login** webhooks to send events to Segment's HTTP Tracking API. Registration triggers an `identify` call (to create/update the user profile in Segment) and a `track` call (to record the "User Registered" event). Login triggers a `track` call for "User Logged In".
+This integration uses Ory Actions **post-registration**, **post-login**, and **post-settings** webhooks to send events to Segment's HTTP Tracking API. Registration triggers an `identify` call (to create or update the user profile in Segment) and a `track` call ("User Registered"). Login triggers a `track` call ("User Logged In"). Profile changes trigger an `identify` call.
+
+You can run it two ways:
+
+- **With the reference handler** in [`webhook/`](webhook/) (recommended). The actions in [`ory-actions.yaml`](ory-actions.yaml) send [`jsonnet/event.jsonnet`](jsonnet/event.jsonnet) to the handler, which calls Segment.
+- **Directly**, with one action per Segment call and the Jsonnet templates below. No handler to run.
 
 **Flow:**
 
-1. User registers or logs in via Ory.
-2. Ory Actions fires the appropriate webhook.
-3. The Jsonnet template maps the identity to a Segment API payload.
+1. User registers, signs in, or changes their profile via Ory.
+2. Ory Actions fires the matching webhook in the background (`response.ignore: true`), so the flow doesn't wait for Segment.
+3. The Jsonnet template maps the identity to the request body.
 4. Segment receives and routes the event to connected destinations.
 
 ---
@@ -29,108 +34,122 @@ This integration uses Ory Actions **post-registration** and **post-login** webho
 | **Auth** | HTTP Basic Auth (Write Key as username, empty password) |
 | **Content-Type** | `application/json` |
 
-The Write Key is base64-encoded as `WRITE_KEY:` (note the trailing colon) and sent as `Basic <encoded>`.
-
 To get your Write Key: **Segment > Sources > Your Source > Settings > API Keys**.
 
 ---
 
-## Ory Actions Webhook Configuration
+## Option A: Reference handler
 
-### Post-Registration: Identify + Track
+```bash
+cd webhook/
+cp .env.example .env
+# Fill in ORY_WEBHOOK_SECRET and SEGMENT_WRITE_KEY.
+npm install
+npm start
+```
+
+The handler exposes `POST /segment/registration`, `POST /segment/login`, and `POST /segment/settings`, plus `GET /health`. Configure the actions from [`ory-actions.yaml`](ory-actions.yaml) and set `ORY_WEBHOOK_SECRET` to the `X-Webhook-Secret` value in the action's `auth` block. The handler takes the client IP address from the `True-Client-Ip` request header that Ory Network sets; Ory doesn't forward `X-Forwarded-For` to webhooks.
+
+## Option B: Call Segment directly
+
+Ory Actions authenticate with `basic_auth` or `api_key` only. Use `basic_auth` with the Write Key as `user` and an empty `password`. Ory Network ignores a webhook's `headers` setting, so don't put the `Authorization` header there.
+
+Encode each template with `base64 < <file>.jsonnet | tr -d '\n'` and set it as `body: base64://<encoded>`. Ory Network doesn't accept `file://` URLs.
+
+### Post-registration: identify + track
+
+Attach the actions to the list of each sign-up method you enable. Ory runs the flow-level `registration.after.hooks` list only for methods without their own list, and on Ory Network the password list already contains `session`. Keep `session` last:
 
 ```yaml
 selfservice:
   flows:
     registration:
       after:
-        password:
+        password: # Repeat for oidc, code, passkey, and other sign-up methods.
           hooks:
             - hook: web_hook
               config:
                 url: https://api.segment.io/v1/identify
                 method: POST
-                headers:
-                  Content-Type: application/json
-                  Authorization: "Basic YOUR_BASE64_ENCODED_WRITE_KEY"
-                body: file:///etc/config/ory/segment_identify.jsonnet
-                can_interrupt: false
+                body: base64://<base64-encoded segment_identify.jsonnet>
+                auth:
+                  type: basic_auth
+                  config:
+                    user: <your-segment-write-key>
+                    password: ""
                 response:
                   ignore: true
             - hook: web_hook
               config:
                 url: https://api.segment.io/v1/track
                 method: POST
-                headers:
-                  Content-Type: application/json
-                  Authorization: "Basic YOUR_BASE64_ENCODED_WRITE_KEY"
-                body: file:///etc/config/ory/segment_track_registration.jsonnet
-                can_interrupt: false
+                body: base64://<base64-encoded segment_track_registration.jsonnet>
+                auth:
+                  type: basic_auth
+                  config:
+                    user: <your-segment-write-key>
+                    password: ""
                 response:
                   ignore: true
+            - hook: session
 ```
 
-### Post-Login: Track
+These actions run after Ory saves the identity, so `ctx.identity.id` is the real identity ID. Don't add `response.parse: true`: a parsing registration action runs before the identity is saved, when its ID is `00000000-0000-0000-0000-000000000000`.
+
+### Post-login: track
 
 ```yaml
 selfservice:
   flows:
     login:
       after:
-        password:
+        password: # Repeat for oidc, code, passkey, and other sign-in methods.
           hooks:
             - hook: web_hook
               config:
                 url: https://api.segment.io/v1/track
                 method: POST
-                headers:
-                  Content-Type: application/json
-                  Authorization: "Basic YOUR_BASE64_ENCODED_WRITE_KEY"
-                body: file:///etc/config/ory/segment_track_login.jsonnet
-                can_interrupt: false
+                body: base64://<base64-encoded segment_track_login.jsonnet>
+                auth:
+                  type: basic_auth
+                  config:
+                    user: <your-segment-write-key>
+                    password: ""
                 response:
                   ignore: true
-```
-
-### Generating the Basic Auth Header
-
-```bash
-# Replace YOUR_SEGMENT_WRITE_KEY with your actual write key
-echo -n 'YOUR_SEGMENT_WRITE_KEY:' | base64
 ```
 
 ---
 
 ## Jsonnet Templates
 
+Ory passes the context as the `ctx` argument of the template function. Jsonnet fails on a field that doesn't exist, and a failing template drops the request, so read optional traits and headers with `std.get`.
+
 ### Identify (Post-Registration)
 
 Save as `segment_identify.jsonnet`:
 
 ```jsonnet
-local ctx = std.extVar('ctx');
-
-local identity = ctx.identity;
-local traits = identity.traits;
-
-{
-  userId: identity.id,
-  traits: {
-    email: traits.email,
-    [if std.objectHas(traits, 'name') && std.objectHas(traits.name, 'first') then 'firstName']: traits.name.first,
-    [if std.objectHas(traits, 'name') && std.objectHas(traits.name, 'last') then 'lastName']: traits.name.last,
-    [if std.objectHas(traits, 'phone') then 'phone']: traits.phone,
-    createdAt: identity.created_at,
-    orySchemaId: identity.schema_id,
-  },
-  context: {
-    library: {
-      name: 'ory-actions',
-      version: '1.0.0',
+function(ctx)
+  local traits = ctx.identity.traits;
+  local name = std.get(traits, 'name', null);
+  local nameFields = if name == null then {} else name;
+  std.prune({
+    userId: ctx.identity.id,
+    traits: {
+      email: std.get(traits, 'email', null),
+      firstName: std.get(nameFields, 'first', null),
+      lastName: std.get(nameFields, 'last', null),
+      phone: std.get(traits, 'phone', null),
+      createdAt: ctx.identity.created_at,
+      orySchemaId: ctx.identity.schema_id,
     },
-  },
-  timestamp: identity.created_at,
-}
+    context: {
+      library: { name: 'ory-actions', version: '1.0.0' },
+      ip: std.get(ctx.request_headers, 'True-Client-Ip', [null])[0],
+    },
+    timestamp: ctx.identity.created_at,
+  })
 ```
 
 ### Track — User Registered (Post-Registration)
@@ -138,31 +157,21 @@ local traits = identity.traits;
 Save as `segment_track_registration.jsonnet`:
 
 ```jsonnet
-local ctx = std.extVar('ctx');
-
-local identity = ctx.identity;
-local traits = identity.traits;
-
-{
-  userId: identity.id,
-  event: 'User Registered',
-  properties: {
-    email: traits.email,
-    registrationMethod: 'password',
-    schemaId: identity.schema_id,
-    identityState: identity.state,
-  },
-  context: {
-    library: {
-      name: 'ory-actions',
-      version: '1.0.0',
+function(ctx)
+  std.prune({
+    userId: ctx.identity.id,
+    event: 'User Registered',
+    properties: {
+      schemaId: ctx.identity.schema_id,
+      identityState: ctx.identity.state,
+      flowId: ctx.flow.id,
     },
-    traits: {
-      email: traits.email,
+    context: {
+      library: { name: 'ory-actions', version: '1.0.0' },
+      ip: std.get(ctx.request_headers, 'True-Client-Ip', [null])[0],
     },
-  },
-  timestamp: identity.created_at,
-}
+    timestamp: ctx.identity.created_at,
+  })
 ```
 
 ### Track — User Logged In (Post-Login)
@@ -170,29 +179,19 @@ local traits = identity.traits;
 Save as `segment_track_login.jsonnet`:
 
 ```jsonnet
-local ctx = std.extVar('ctx');
-
-local identity = ctx.identity;
-local traits = identity.traits;
-
-{
-  userId: identity.id,
-  event: 'User Logged In',
-  properties: {
-    email: traits.email,
-    loginMethod: 'password',
-    schemaId: identity.schema_id,
-  },
-  context: {
-    library: {
-      name: 'ory-actions',
-      version: '1.0.0',
+function(ctx)
+  std.prune({
+    userId: ctx.identity.id,
+    event: 'User Logged In',
+    properties: {
+      loginMethods: [m.method for m in std.get(ctx.session, 'authentication_methods', [])],
+      flowId: ctx.flow.id,
     },
-    traits: {
-      email: traits.email,
+    context: {
+      library: { name: 'ory-actions', version: '1.0.0' },
+      ip: std.get(ctx.request_headers, 'True-Client-Ip', [null])[0],
     },
-  },
-}
+  })
 ```
 
 ---
@@ -245,7 +244,10 @@ Once events flow into Segment, you can route them to any connected destination:
 
 | Issue | Resolution |
 |---|---|
-| 401 Unauthorized | Verify the Base64-encoded Write Key is correct (include trailing colon before encoding). |
-| Events not appearing | Check Segment Source Debugger for incoming events. Verify webhook is under the correct flow. |
-| Missing traits | Ensure identity schema trait paths match what the Jsonnet template expects. |
-| Duplicate identify calls | This is generally fine; Segment de-duplicates by `userId`. |
+| 401 Unauthorized | Verify the Write Key in the `basic_auth` `user` field (direct path) or `SEGMENT_WRITE_KEY` (handler). |
+| Events not appearing | Check Segment Source Debugger for incoming events. Verify the action is in the method-specific list, for example `registration.after.password.hooks`, not only in the flow-level `after.hooks`. |
+| Missing traits or no request at all | A template that reads a missing field fails and Ory drops the request. Read optional traits with `std.get`. |
+| Brief Segment errors | Ory retries a delivery that fails or receives 429 or a 5xx status other than 501, up to three attempts within a few seconds. Longer outages drop the event. |
+| Duplicate identify calls | This is generally fine; Segment de-duplicates retries by their stable `messageId`. |
+
+The handler acknowledges successful vendor calls with `200` and returns `502` on failure so Ory can retry without delaying the user flow. Retries are bounded; use a durable queue for longer outages. Segment retries reuse message IDs; Pipedrive activity retries may produce duplicates after an ambiguous timeout.

@@ -18,7 +18,7 @@ useCase: >-
 coreFunctionality: |-
   - Didomi → webhook → Ory admin API pattern. No first-party connector; documented at ory.com/docs/integrates-with/consent-privacy/didomi.
   - Didomi webhook configured under Consent Notice → Webhooks; fires on consent events with HMAC-signed payloads.
-  - Handler verifies HMAC, resolves the Ory identity by Didomi user_id (matched to an identity trait or metadata_public.didomi_user_id), PATCHes metadata_public.consent.didomi with the consent record.
+  - Handler verifies HMAC, resolves the Ory identity from the Didomi user ID stored as the identity's external_id (GET /admin/identities/by/external/{externalID}), and JSON-Patches metadata_public.consent.didomi with the consent record, initializing missing parents and preserving other metadata.
   - DSAR fulfillment (GDPR Article 15 access / 17 erasure): GET /admin/identities/{id} for access; DELETE /admin/identities/{id} for erasure. 30-day statutory window — design for reliable processing.
   - Consent strings (TCF v2 + Didomi-specific) stored in metadata_public only — not credentials.
   - Status: community/proposed — implementation lives in the customer's webhook handler.

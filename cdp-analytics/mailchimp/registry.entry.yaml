@@ -17,7 +17,7 @@ useCase: >-
   the right Mailchimp audience, tagged with traits collected at registration, without writing a separate sync
   job or relying on manual exports.
 coreFunctionality: |-
-  - Implemented as an Ory Actions webhook on `flows.registration.after.hooks` that calls Mailchimp's Lists/Audiences API.
+  - Implemented as an async Ory Actions webhook (response.ignore: true) in the registration method lists, for example `selfservice.flows.registration.after.password.hooks`, that calls Mailchimp's Lists/Audiences API to add members.
   - Jsonnet template maps Ory identity traits (email, name, custom traits) into Mailchimp merge fields and audience tags.
   - Synchronous or asynchronous webhook execution depending on whether registration should block on the Mailchimp call.
   - Authentication via Mailchimp Marketing API key (separate from the Mandrill API key used by the transactional integration).

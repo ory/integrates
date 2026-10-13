@@ -13,7 +13,7 @@ useCase: >-
   Two to three sentences describing who this is for and why they would reach for this integration.
   Concrete enough that a reader can self-identify whether it applies to them.
 coreFunctionality: |-
-  - Endpoints exposed (sync vs async, can_interrupt, etc.) and what each one does.
+  - Endpoints exposed (async with response.ignore, or sync with response.parse) and what each one does.
   - Auth mechanism (X-Webhook-Secret, HMAC for vendor callbacks).
   - Identity-side state shape (metadata_public / metadata_admin keys).
   - Non-obvious operational facts (rate limits, idempotency, retry behavior).

@@ -14,10 +14,10 @@ An enterprise running Microsoft Dynamics 365 as its CRM wants every Ory-managed 
 ## How it works
 
 1. A user registers or updates their profile in an Ory flow.
-2. Ory fires the sync (or async) Action webhook to this handler. The handler verifies the shared secret.
+2. Ory fires the asynchronous Action webhook (`response.ignore: true`) to this handler. The handler verifies the shared secret.
 3. The handler exchanges its Entra ID client credentials for an OAuth2 access token (cached, refreshed 5 min before expiry) scoped to `${DYNAMICS_RESOURCE_URL}/.default`.
-4. The handler upserts the contact via `PATCH /api/data/v9.2/contacts(ory_identity_id='<id>')` with `If-Match: *`. Dataverse routes the request to the alternate key and creates the row if missing.
-5. The handler returns `200` to Ory.
+4. The handler upserts the contact via `PATCH /api/data/v9.2/contacts(ory_identity_id='<id>')`. Dataverse routes the request to the alternate key and creates the row if missing. The request sends neither `If-Match` nor `If-None-Match`: `If-Match: *` would turn the upsert into an update-only call that fails for new users.
+5. The handler returns `200`. Ory doesn't wait for the response, but it retries a `429` or `5xx` response other than `501`, for up to three attempts in total.
 
 ## Prerequisites
 
@@ -45,8 +45,12 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Ory
 
-1. Configure the Action hook using the snippet in [`ory-actions.yaml`](ory-actions.yaml) — register on `after:registration` and `after:settings`.
-2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). The default destructures `name.first`, `name.last`, and `phone` from traits — adjust if your identity schema uses different keys.
+1. Configure the Action hooks using the snippet in [`ory-actions.yaml`](ory-actions.yaml). Attach them to the method-specific lists, not to the flow-level `after.hooks` lists:
+   - Registration: `selfservice.flows.registration.after.<method>.hooks` for each sign-up method you enable, such as `password` and `oidc`. On Ory Network, the `password` list contains `session`; keep it last.
+   - Profile updates: `selfservice.flows.settings.after.profile.hooks`.
+
+   See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
+2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet). It reads `name.first`, `name.last`, and `phone` from traits and sends `null` when they're missing — adjust if your identity schema uses different keys. Ory Network doesn't accept `file://` bodies, so set `body` to `base64://` followed by the Base64-encoded template.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value in the hook config.
 
 Entra app registration, Dynamics application-user setup, and alternate-key indexing: see the [docs page](https://ory.com/docs/integrates-with/crm/microsoft-dynamics-365).
@@ -56,7 +60,6 @@ Entra app registration, Dynamics application-user setup, and alternate-key index
 - **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` in `.env` doesn't match `X-Webhook-Secret` in the Ory hook config.
 - **`401` from Dataverse** — the Entra app isn't added as an Application User inside Dynamics, or the assigned security role lacks Contact write. App-permission alone isn't sufficient.
 - **`404` on PATCH** — the `ory_identity_id` alternate key isn't configured or hasn't finished indexing. The alternate-key route returns 404 until the index job completes.
-- **`412 Precondition Failed`** — `If-Match: *` header is required for upsert. Without it Dataverse rejects the PATCH on existing rows.
 - **`entra token 401 AADSTS7000215`** — `ENTRA_CLIENT_SECRET` is invalid or expired. Regenerate in Entra → app → Certificates & secrets.
 
 ## License

@@ -9,20 +9,21 @@
 
 ## Setup outline
 
-1. Create an **Ory API key** (Project-scoped) with read access to identities, OAuth2 clients, and configuration.
-2. In Drata → **Connections** → **Custom Connector**, configure an HTTP poller to query the Ory admin API on a schedule.
-3. Common evidence to pull:
-   - `GET /admin/identities` → user list, creation/deletion timestamps, MFA enrollment.
-   - `GET /admin/identities/{id}` → per-user roles, credentials, recovery method.
+1. Create a **project API key** for the Ory Admin API (identities and OAuth2 clients). Ory Network has no read-only API key: a project API key has full admin access to the project's data, and it can't read the project configuration. Store it as a secret in Drata.
+2. To collect configuration evidence, create a **workspace API key** and read the project with `GET https://api.console.ory.com/projects/<project-id>`. A workspace API key can also change the configuration of the projects in the workspace. See [API keys](https://www.ory.com/docs/concepts/personal-access-token#workspace-api-keys-vs-project-api-keys).
+3. In Drata → **Connections** → **Custom Connector**, configure an HTTP poller against these APIs on a schedule.
+4. Common evidence to pull:
+   - `GET /admin/identities` → user list, lifecycle timestamps, JML controls. Returns credentials only with `include_credential`.
+   - `GET /admin/identities/{id}` → per-user roles, credential types, recovery method.
    - `GET /admin/clients` → OAuth2 clients (treat as service accounts).
-   - Ory project config → password policy, session lifespan, MFA requirements.
-4. Map the returned fields to Drata's evidence types (Personnel, Access, MFA, Termination).
+   - `GET https://api.console.ory.com/projects/<project-id>` (workspace API key) → password policy, session lifespan, MFA requirements.
+5. Map the returned fields to Drata's evidence types (Personnel, Access, MFA, Termination).
 
 ## Notable evidence patterns
 
-- **Joiner / mover / leaver**: identity create / update / deactivate timestamps in Ory map to JML controls.
-- **Privileged access**: OAuth2 clients with admin scopes — Drata can flag any client whose scope grants admin API access.
-- **MFA enforcement**: pull each identity's credentials array and flag any without a TOTP / WebAuthn entry where policy requires it.
+- **Joiner / mover / leaver**: `created_at`, `updated_at`, `state`, and `state_changed_at` map directly to JML controls. A deactivated identity has `state: inactive`.
+- **Privileged access**: inventory OAuth2 clients and the scopes they're allowed to request.
+- **MFA enforcement**: credential types alone don't prove MFA enrollment: password identities can have an empty `webauthn` credential. Request `GET /admin/identities/{id}?include_credential=webauthn` and check that `credentials.webauthn.config.credentials` isn't empty; a `totp` credential exists only while TOTP is set up. Don't request `include_credential=password` or `include_credential=totp`, which return the password hash and the TOTP secret.
 
 ## Status
 

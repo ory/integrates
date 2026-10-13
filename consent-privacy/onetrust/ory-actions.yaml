@@ -1,31 +1,56 @@
-# OneTrust consent capture hook.
+# OneTrust consent capture hooks.
 #
-# Sync hook (response.parse: true, can_interrupt: false). The handler returns
-# updated identity.metadata_public.consent so Ory records the user's choices
-# immediately on the new identity. The OneTrust receipt call happens in the
-# background after the response is flushed; if OneTrust is unreachable, the
-# consent record in Ory is still preserved.
+# The first action (response.parse: true) runs before the identity is saved
+# and returns metadata_public.consent, so Ory stores the choices on the new
+# identity. The identity has no ID yet at that point. The second action
+# (response.ignore: true) runs after the identity is saved and records the
+# OneTrust consent receipt with the identity ID.
 #
-# The client must pass consent choices via transient_payload:
-#   { "transient_payload": { "consent": { "marketing": true, "analytics": false } } }
+# Encode the body template with `base64 < jsonnet/registration.jsonnet | tr -d '\n'`.
+# Ory Network doesn't accept file:// URLs.
+#
+# The password list is aliased into the oidc, code, passkey, and webauthn
+# lists, so every sign-up method runs both actions with `session` last. Alias
+# it into any other method you enable, such as saml, the same way.
 
 selfservice:
   flows:
     registration:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/onetrust/registration
-              method: POST
-              body: file://./jsonnet/registration.jsonnet
-              can_interrupt: false
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &registration_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/onetrust/registration
+                method: POST
+                body: base64://<base64-encoded-jsonnet/registration.jsonnet>
+                response:
+                  parse: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/onetrust/receipt
+                method: POST
+                body: base64://<base64-encoded-jsonnet/registration.jsonnet>
+                response:
+                  ignore: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+            - hook: session
+        oidc:
+          hooks: *registration_after_hooks
+        code:
+          hooks: *registration_after_hooks
+        passkey:
+          hooks: *registration_after_hooks
+        webauthn:
+          hooks: *registration_after_hooks

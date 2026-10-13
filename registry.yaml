@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-31T14:26:35Z
+  generated: 2026-10-13T22:39:36Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -254,7 +254,7 @@ integrations:
       right Mailchimp audience, tagged with traits collected at registration, without writing a separate sync job or
       relying on manual exports.
     coreFunctionality: |-
-      - Implemented as an Ory Actions webhook on `flows.registration.after.hooks` that calls Mailchimp's Lists/Audiences API.
+      - Implemented as an async Ory Actions webhook (response.ignore: true) in the registration method lists, for example `selfservice.flows.registration.after.password.hooks`, that calls Mailchimp's Lists/Audiences API to add members.
       - Jsonnet template maps Ory identity traits (email, name, custom traits) into Mailchimp merge fields and audience tags.
       - Synchronous or asynchronous webhook execution depending on whether registration should block on the Mailchimp call.
       - Authentication via Mailchimp Marketing API key (separate from the Mandrill API key used by the transactional integration).
@@ -273,13 +273,13 @@ integrations:
     status: active
     description: >-
       Send Ory authentication events into Mixpanel (product analytics) via the Ingestion API. Ory Action POSTs directly
-      to Mixpanel's /track endpoint — no webhook handler needed; Project Token (or Service Account) authenticates.
+      to Mixpanel's /track endpoint — no webhook handler needed; the Project Token in the payload authenticates.
     useCase: >-
       A consumer product wants identity events (registration / login / verification / MFA) in Mixpanel funnels and
       retention dashboards alongside in-product events — without standing up a webhook handler.
     coreFunctionality: |-
       - Pattern: Ory Action async POSTs directly to https://api.mixpanel.com/track?ip=0 (or api-eu.mixpanel.com for EU residency) — no handler in between.
-      - Authentication: Project Token in the event payload (properties.token), OR HTTP Basic with Service Account credentials (preferred for server-to-server).
+      - Authentication: Project Token in the event payload (properties.token). Service Account (HTTP Basic) authentication works with /import, not /track.
       - Stable distinct_id: use Ory's identity id, NOT email — Mixpanel identity merges break if distinct_id changes.
       - $insert_id for deduplication: set to Ory's flow id so retries don't double-count events.
       - ip=0 disables Mixpanel's IP geolocation when the request comes from your server, not the user.
@@ -333,11 +333,11 @@ integrations:
       the data warehouse) gets the same view of who registered, who logged in, and whose profile changed, without making
       Segment a critical-path dependency of authentication.
     coreFunctionality: |-
-      - Three async Ory Action endpoints (/segment/registration, /segment/login, /segment/settings); each returns 200 immediately so user flows are never blocked.
+      - Three Ory Action endpoints (/segment/registration, /segment/login, /segment/settings) behind actions with response.ignore: true, so Ory doesn't wait for them and user flows are never blocked.
       - Registration → identify (with traits) + track "User Registered" in parallel.
       - Login → track "User Logged In".
       - Settings → identify to refresh traits.
-      - HTTP Basic auth to Segment (write key as username, empty password); IP and User-Agent passed through Segment's context for server-side / client-side correlation.
+      - HTTP Basic auth to Segment (write key as username, empty password); client IP (from True-Client-Ip) and User-Agent passed through Segment's context for server-side / client-side correlation.
       - Fire-and-forget: Segment outages and 5xx responses are logged but never propagate to Ory.
     oryMechanism:
       - actions
@@ -438,11 +438,11 @@ integrations:
       An Ory Network customer pursuing or maintaining SOC 2 / ISO 27001 / similar compliance wants Drata to auto-collect
       IAM evidence from Ory rather than running manual evidence-gathering each audit cycle.
     coreFunctionality: |-
-      - Drata Generic Custom Connector polls the Ory admin API on a schedule using a Project-scoped API key with read access.
-      - Common evidence pulls: GET /admin/identities (user list + lifecycle timestamps + MFA enrollment), GET /admin/identities/{id} (per-user roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service accounts), Ory project config (password policy, session lifespan, MFA requirements).
-      - JML controls map to identity create / update / deactivate timestamps.
-      - Privileged access: OAuth2 clients with admin scopes can be flagged.
-      - MFA enforcement: flag identities without TOTP/WebAuthn credentials where policy requires it.
+      - Drata Generic Custom Connector polls the Ory admin API on a schedule with a project API key (full admin access; Ory Network has no read-only key) and reads the project configuration with a workspace API key.
+      - Common evidence pulls: GET /admin/identities (user list + lifecycle timestamps + MFA enrollment), GET /admin/identities/{id} (per-user roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service accounts), GET https://api.console.ory.com/projects/<project-id> (password policy, session lifespan, MFA requirements).
+      - JML controls map to created_at, updated_at, state, and state_changed_at.
+      - Privileged access: inventory OAuth2 clients and the scopes they're allowed to request.
+      - MFA enforcement: check credentials.webauthn.config.credentials with include_credential=webauthn, or the presence of a totp credential; credential types alone don't prove enrollment.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/compliance-audit/drata; implementation lives in Drata's custom-connector layer.
     oryMechanism:
       - standards
@@ -465,11 +465,11 @@ integrations:
       An Ory Network customer pursuing or maintaining SOC 2 / ISO 27001 / similar compliance wants Vanta to auto-collect
       IAM evidence from Ory rather than running manual evidence-gathering each audit cycle.
     coreFunctionality: |-
-      - Vanta Custom Integration polls the Ory admin API on a schedule using a Project-scoped API key with read access.
-      - Common evidence pulls: GET /admin/identities (user list + lifecycle + MFA enrollment), GET /admin/identities/{id} (roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service accounts), Ory project config (password policy, session lifespan, MFA).
-      - Access reviews: dormant-account detection via identity list + last-active timestamps.
-      - Termination controls: deactivation timestamps close the loop on offboarding evidence.
-      - MFA enforcement: flag identities without TOTP/WebAuthn where policy requires it.
+      - Vanta Custom Integration polls the Ory admin API on a schedule with a project API key (full admin access; Ory Network has no read-only key) and reads the project configuration with a workspace API key.
+      - Common evidence pulls: GET /admin/identities (user list + lifecycle + MFA enrollment), GET /admin/identities/{id} (roles / credentials / recovery), GET /admin/clients (OAuth2 clients as service accounts), GET https://api.console.ory.com/projects/<project-id> (password policy, session lifespan, MFA).
+      - Access reviews: dormant-account detection via the identity list and each identity's sessions.
+      - Termination controls: state: inactive and state_changed_at close the loop on offboarding evidence.
+      - MFA enforcement: check credentials.webauthn.config.credentials with include_credential=webauthn, or the presence of a totp credential; credential types alone don't prove enrollment.
       - Password policy: validate against Ory project config minimum-complexity rules.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/compliance-audit/vanta; implementation lives in Vanta's custom-integration layer.
     oryMechanism:
@@ -495,7 +495,7 @@ integrations:
     coreFunctionality: |-
       - Didomi → webhook → Ory admin API pattern. No first-party connector; documented at ory.com/docs/integrates-with/consent-privacy/didomi.
       - Didomi webhook configured under Consent Notice → Webhooks; fires on consent events with HMAC-signed payloads.
-      - Handler verifies HMAC, resolves the Ory identity by Didomi user_id (matched to an identity trait or metadata_public.didomi_user_id), PATCHes metadata_public.consent.didomi with the consent record.
+      - Handler verifies HMAC, resolves the Ory identity from the Didomi user ID stored as the identity's external_id (GET /admin/identities/by/external/{externalID}), and JSON-Patches metadata_public.consent.didomi with the consent record, initializing missing parents and preserving other metadata.
       - DSAR fulfillment (GDPR Article 15 access / 17 erasure): GET /admin/identities/{id} for access; DELETE /admin/identities/{id} for erasure. 30-day statutory window — design for reliable processing.
       - Consent strings (TCF v2 + Didomi-specific) stored in metadata_public only — not credentials.
       - Status: community/proposed — implementation lives in the customer's webhook handler.
@@ -514,19 +514,21 @@ integrations:
     status: active
     description: >-
       OneTrust is a privacy, security, and governance platform for managing consent, fulfilling Data Subject Requests,
-      and maintaining compliance with GDPR, CCPA, LGPD, and PIPA. This integration writes a consent receipt to OneTrust
-      on every registration and exposes a DSR callback endpoint that lets OneTrust's Privacy Rights Automation workflow
-      delete, export, or rectify identities in Ory.
+      and maintaining compliance with GDPR, CCPA, LGPD, and PIPA. This integration stores consent choices on the Ory
+      identity and writes a consent receipt keyed by the Ory identity ID to OneTrust on every registration and exposes a
+      DSR callback endpoint that lets OneTrust's Privacy Rights Automation workflow delete, export, or rectify
+      identities in Ory.
     useCase: >-
       A regulated B2C product needs a defensible audit trail of consent (marketing, analytics, personalization) for
       every signup, plus a single button in the OneTrust UI that fulfills a deletion or export request across all
       downstream systems including the identity store.
     coreFunctionality: |-
-      - Captures consent choices from transient_payload.consent on the sync post-registration webhook, returns them in metadata_public.consent immediately so Ory records the user's choices even if OneTrust is unreachable.
-      - Exchanges OAuth2 client credentials for a OneTrust access token (cached in memory until 30 s before expiry) and POSTs a consent receipt to the Consent Manager API mapping each category to a configured Purpose ID.
-      - Exposes a separate /onetrust/dsr endpoint gated by ONETRUST_DSR_SECRET that fulfills DELETE/ERASURE, EXPORT/ACCESS, and RECTIFICATION DSRs against Ory's Admin API.
-      - Distinct shared secrets for the two surfaces so a leak of one credential can't be used to call the other.
-      - Skips unmapped consent categories silently so partial Purpose ID configuration doesn't break registration.
+      - A response.parse post-registration webhook returns the consent choices from transient_payload.consent in metadata_public.consent, merged with the existing metadata, so Ory stores them on the new identity. It fails open and never blocks registration.
+      - A response.ignore post-registration webhook runs after the identity is saved and POSTs a OneTrust consent receipt keyed by the Ory identity ID, mapping each category to a configured Purpose ID.
+      - Exchanges OAuth2 client credentials for a OneTrust access token (cached in memory until 30 s before expiry).
+      - Exposes a separate /onetrust/dsr endpoint gated by ONETRUST_DSR_SECRET that fulfills DELETE/ERASURE, EXPORT/ACCESS, and RECTIFICATION DSRs for the stored Ory identity ID against Ory's Admin API.
+      - Distinct shared secrets for the Ory and OneTrust surfaces.
+      - Skips unmapped consent categories so partial Purpose ID configuration doesn't break registration.
     oryMechanism:
       - actions
     protocol:
@@ -551,7 +553,7 @@ integrations:
     coreFunctionality: |-
       - Osano → webhook → Ory admin API pattern. No first-party connector; documented at ory.com/docs/integrates-with/consent-privacy/osano.
       - Osano webhook configured under Subject Rights → Integrations; fires on consent and DSAR events with signed payloads.
-      - Handler verifies signature, resolves the Ory identity by Osano user_id (matched to an identity trait or metadata_public.osano_user_id), PATCHes metadata_public.consent.osano with the consent record (purposes, timestamp, jurisdiction).
+      - Handler verifies signature, resolves the Ory identity from the Osano user ID stored as the identity's external_id (GET /admin/identities/by/external/{externalID}), and JSON-Patches metadata_public.consent.osano with the consent record (purposes, timestamp, jurisdiction).
       - DSAR fulfillment: GET /admin/identities/{id} (Article 15 access), DELETE /admin/identities/{id} (Article 17 erasure), traits export (Article 20 portability).
       - Time-bounded responses — 30 days GDPR / 45 days CCPA; design for reliable processing.
       - Status: community/proposed — implementation lives in the customer's webhook handler.
@@ -625,7 +627,7 @@ integrations:
       with the Ory identity id stored on a custom property so any system can reverse-lookup. The integration upserts the
       contact via HubSpot's 409 Existing ID pattern so retries never duplicate.
     coreFunctionality: |-
-      - Sync Ory Action webhook (response.parse: true) on after:registration and (optionally) after:settings.
+      - Async Ory Action webhook (response.ignore: true) in the registration method lists (for example registration.after.password.hooks) and optionally settings.after.profile.hooks.
       - POST https://api.hubapi.com/crm/v3/objects/contacts with email, firstname, lastname, ory_identity_id.
       - On 409 Existing ID: parses the existing contact ID out of HubSpot's error message and PATCHes onto it for idempotent upsert.
       - 502 on HubSpot errors so the failure surfaces in Ory instead of being silently dropped.
@@ -651,7 +653,7 @@ integrations:
       Dataverse — automatically, with stable cross-system identifiers — so sales, marketing, and service teams see Ory
       users in their existing pipeline without separate exports.
     coreFunctionality: |-
-      - Ory Action webhook on registration.after / settings.after upserts a Contact in Dynamics 365 via the Dataverse Web API (OData v4).
+      - Async Ory Action webhook in the registration method lists (for example registration.after.password.hooks) and settings.after.profile.hooks upserts a Contact in Dynamics 365 via the Dataverse Web API (OData v4).
       - Upsert keyed by an `ory_identity_id` alternate key on the Contact entity — must be created in Dataverse before first run.
       - Dataverse auth via Microsoft Entra ID OAuth2 client credentials (Server-to-Server app registration with delegated/application permission for the Dataverse environment).
       - Region-aware: the Dataverse endpoint is per-environment (https://<env>.crm.dynamics.com/api/data/v9.2).
@@ -679,8 +681,8 @@ integrations:
       surfaced as an activity on the person's timeline so the sales team sees account engagement without asking
       engineering for data exports.
     coreFunctionality: |-
-      - Two async endpoints: POST /pipedrive/sync-user (registration.after / settings.after — creates or updates Pipedrive person, stores Ory identity id on a custom field); POST /pipedrive/track-login-activity (login.after — looks up Pipedrive person by email, logs a "User Login" activity with device + IP context).
-      - Both async (response.ignore: true) — handler returns 200 to Ory immediately; Pipedrive calls run in the background.
+      - Two async endpoints: POST /pipedrive/sync-user (registration method lists such as registration.after.password.hooks, and settings.after.profile.hooks — creates or updates Pipedrive person, stores Ory identity id on a custom field); POST /pipedrive/track-login-activity (login method lists such as login.after.password.hooks — looks up Pipedrive person by email, logs a "User Login" activity with device + IP context).
+      - Both async (response.ignore: true) — user flows do not wait; handler returns 200 after vendor acceptance or 502 on failure for Ory retries.
       - Authenticated via X-Webhook-Secret shared with the Ory hook config.
       - Pipedrive custom field stores the Ory identity id for stable cross-system linkage.
       - SDK: native fetch (no Pipedrive SDK); @ory/client not used (handler doesn't read back from Ory).
@@ -697,16 +699,17 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Sync Ory identities to Salesforce as Leads or Contacts via Ory Actions webhooks calling the Salesforce REST API
-      with OAuth2 service-to-service authentication. Distinct from social-sign-in/salesforce (the sign-in provider). No
-      first-party webhook handler ships here — wiring is Ory Action config + Jsonnet body.
+      Sync Ory identities to Salesforce as Leads or Contacts with Ory Actions webhooks and a handler you deploy, which
+      calls the Salesforce REST API with OAuth2 service-to-service authentication. Distinct from
+      social-sign-in/salesforce (the sign-in provider). No first-party webhook handler ships here — wiring is Ory Action
+      config + Jsonnet body.
     useCase: >-
       A B2B SaaS product running their sales pipeline on Salesforce wants newly registered users to land as Leads in
       Salesforce automatically — no separate sync job, no daily exports.
     coreFunctionality: |-
-      - Ory Action on registration.after (and/or settings.after) posts to Salesforce REST API: POST /services/data/vXX.0/sobjects/Lead/ or /Contact/.
+      - Async Ory Action in the registration method lists (for example registration.after.password.hooks) and optionally settings.after.profile.hooks sends the identity to your handler; the handler posts to the Salesforce REST API: POST /services/data/vXX.0/sobjects/Lead/ or /Contact/.
       - Salesforce Connected App with OAuth2 Client Credentials Flow + `api` scope; integration-user Permission Set grants object-create permission.
-      - Best practice: deploy a small token-broker service that handles OAuth2 token refresh and returns short-lived bearer tokens to Ory — pointing Ory directly at Salesforce's token endpoint works but is operationally fragile.
+      - The handler obtains and caches the Salesforce access token with the client credentials flow; Ory webhooks support only api_key and basic_auth, so Ory can't fetch the token itself.
       - Lead vs Contact: start with Lead; promote to Contact via Salesforce-side automation, not Ory.
       - Edition matters — Connected Apps + Permission Sets require Salesforce Enterprise edition or higher.
       - Daily API call limits vary by edition; high-volume signup flows may need batch creation rather than per-event calls.
@@ -732,7 +735,7 @@ integrations:
       An Ory Network customer running their CRM on Zoho wants newly registered users to land in Zoho as Contact records
       automatically — no separate sync job, no manual exports.
     coreFunctionality: |-
-      - One async endpoint POST /zoho/sync-contact called from registration.after and settings.after with response.ignore: true so Zoho availability never blocks user flows.
+      - One async endpoint POST /zoho-crm/sync-user called from the registration method lists (for example registration.after.password.hooks) and settings.after.profile.hooks with response.ignore: true so Zoho availability never blocks user flows.
       - OAuth flow: long-lived ZOHO_REFRESH_TOKEN exchanged for short-lived access tokens (1-hour TTL); handler caches and refreshes automatically.
       - Refresh tokens are rate-limited (15 per 7 minutes per org) — must reuse the env-provided refresh token, never generate fresh per request.
       - Multi-region: regional API base hosts (zohoapis.com US / .in IN / .eu EU / .com.au AU / .jp JP / .ca CA / .com.cn CN) and matching accounts URLs.
@@ -2582,13 +2585,14 @@ integrations:
     description: >-
       Bidirectional sync between Ory Network and Recurly — Ory → Recurly creates accounts at signup; Recurly → Ory
       surfaces subscription state on the identity so application code can gate features by subscription tier without a
-      separate lookup. Wired via Ory Action on registration.after + Recurly webhook to a customer-implemented handler.
+      separate lookup. Wired via an async Ory Action in the registration method lists + Recurly webhook to a
+      customer-implemented handler.
     useCase: >-
       A subscription SaaS running billing on Recurly wants new Ory signups to land as Recurly accounts automatically,
       and wants Recurly subscription state (active / churned / past due) visible on the Ory identity so the application
       can gate features without a separate Recurly call per request.
     coreFunctionality: |-
-      - Outbound: Ory Action on registration.after (async) → handler creates Recurly Account keyed by Ory identity id (set as account_code); PATCHes metadata_public.recurly on identity.
+      - Outbound: async Ory Action (response.ignore: true) in the registration method lists, for example registration.after.password.hooks, after the identity is saved → handler creates Recurly Account keyed by Ory identity id (set as account_code); PATCHes metadata_public.recurly on identity.
       - Inbound: Recurly webhook → handler verifies HMAC-SHA256 signature → resolves Ory identity by account_code → PATCHes metadata_public.recurly.subscription_state and .subscription_tier.
       - account_code is the binding between systems — set to Ory identity id during account creation.
       - Subscription gating belongs in APPLICATION CODE reading metadata_public.recurly, NOT in the auth flow — Ory shouldn't block sign-in for churned subscribers; app redirects to billing page.
@@ -2609,19 +2613,18 @@ integrations:
     status: active
     description: >-
       Stripe is a payment-processing and subscription-billing platform. This integration creates a Stripe Customer for
-      every Ory identity on registration and refreshes the identity's metadata_public.billing with the current
-      subscription status on every login, so the application can gate features by plan without an extra round trip to
-      Stripe.
+      every Ory identity on registration and keeps the identity's metadata_public.stripe in sync with Stripe
+      subscription webhooks, so the application can gate features by plan without an extra round trip to Stripe.
     useCase: >-
       A SaaS product wants its session to know "is this user on Free, Pro, or Enterprise?" without each protected route
       reading from Stripe directly. The integration links the Stripe Customer to the Ory identity at registration and
-      refreshes the cached billing state at every login so feature gates, billing pages, and admin tools can read
-      session.identity.metadata_public.billing instead of calling Stripe.
+      mirrors subscription changes onto the identity, so feature gates, billing pages, and admin tools can read
+      session.identity.metadata_public.stripe instead of calling Stripe.
     coreFunctionality: |-
-      - Sync post-registration hook: stripe.customers.create with an idempotency key derived from identity.id, then returns metadata_admin.stripe_customer_id and a "free / none" baseline in metadata_public.billing.
-      - Sync post-login hook: stripe.subscriptions.list for the linked customer, projects the latest subscription into metadata_public.billing (status, plan, current_period_end), returns it for Ory to apply.
-      - Idempotency key ory-customer-<identity.id> prevents duplicate Customer creation on webhook retry.
-      - Both hooks fail open: a Stripe outage returns 200 with no metadata changes so authentication never breaks.
+      - Asynchronous post-registration Ory Action (response.ignore: true) in the registration method lists: stripe.customers.create with metadata.ory_identity_id and the idempotency key ory-customer-<identity id>, then writes metadata_public.stripe.customer_id with a JSON Patch through the Ory Admin API.
+      - Stripe webhook endpoint verifies the Stripe-Signature header over the raw body and handles customer.subscription.created, updated, and deleted.
+      - Resolves the Ory identity from the Stripe Customer's metadata.ory_identity_id and writes subscription_state, plan, and current_period_end under metadata_public.stripe.
+      - Treats each event as a trigger and writes the subscription state retrieved from Stripe, serialized per identity, because Stripe delivers events at least once and out of order.
       - Stripe API version pinned via STRIPE_API_VERSION env; bumps are explicit decisions, not silent updates.
     oryMechanism:
       - actions
@@ -2645,8 +2648,8 @@ integrations:
       infrastructure — for correlation, detection rules (brute force, impossible travel, credential stuffing), and
       timeline analysis.
     coreFunctionality: |-
-      - Pattern: Ory Action async (response.ignore: true) on registration / login / logout / verification / MFA / recovery → handler verifies shared secret → handler transforms to ECS document → handler POSTs to Elasticsearch _bulk API.
-      - ECS mapping: event.action / event.category / event.outcome for the auth verb, user.id + user.email for the subject, source.ip + user_agent.original for context, authentication.factor for MFA.
+      - Pattern: Ory Action async (response.ignore: true) in the method-specific hook lists after registration / login / settings / recovery / verification → handler verifies shared secret → handler transforms to ECS document → handler POSTs to Elasticsearch _bulk API (create action for data streams).
+      - ECS mapping: event.action / event.category / event.outcome for the auth verb, user.id + user.email for the subject, source.ip (True-Client-Ip) + user_agent.original for context; authentication methods under a custom ory.* namespace, because ECS has no authentication-factor field.
       - Index pattern: logs-ory-* with an ILM policy for retention + tier transitions per compliance window.
       - Detection rules: pre-built Elastic Security Detection Engine rules (brute force, impossible travel, credential stuffing) target ECS-mapped events without custom rule authoring.
       - For Fleet-managed deployments, package as a custom Elastic Integration and ship via the Fleet UI.
@@ -2664,17 +2667,17 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Ingest Ory Network identity events into Microsoft Sentinel (cloud SIEM + SOAR on Azure) via the Azure Log
-      Analytics Data Collector API (or the newer Logs Ingestion API for new deployments). Wired via Ory Actions on
-      lifecycle hooks calling a customer-implemented handler that signs and posts events to Log Analytics.
+      Ingest Ory Network identity events into Microsoft Sentinel (cloud SIEM + SOAR on Azure) through the Logs Ingestion
+      API and a data collection rule (DCR). Wired via Ory Actions on lifecycle hooks calling a customer-implemented
+      handler that gets a Microsoft Entra token and posts events to the DCR stream.
     useCase: >-
       A security team running Microsoft Sentinel wants Ory identity events in Sentinel for KQL hunts, analytics rules,
       and Logic Apps playbook automation — correlating identity events with the rest of the Azure security surface.
     coreFunctionality: |-
-      - Pattern: Ory Action async on lifecycle hooks → handler verifies shared secret → handler signs request with Azure HMAC-SHA256 scheme using Log Analytics workspace Primary Key → POST to https://<workspace-id>.ods.opinsights.azure.com/api/logs?api-version=2016-04-01 under custom log type OryEvents_CL.
-      - Sentinel auto-creates the OryEvents_CL table on first ingest; the _CL suffix is added automatically by Log Analytics.
+      - Pattern: async Ory Action (response.ignore: true) in the method-specific hook lists → handler verifies shared secret → handler gets a Microsoft Entra token (client credentials) → POST to https://<dce-or-dcr-ingestion-endpoint>/dataCollectionRules/<dcr-immutable-id>/streams/<stream-name>?api-version=2023-01-01.
+      - The DCR routes events into a custom table such as OryEvents_CL.
       - KQL analytics rules in Sentinel query OryEvents_CL for detection logic; Logic Apps playbooks automate response.
-      - Data Collector API is being deprecated in favor of the Logs Ingestion API + DCRs (Data Collection Rules) — new deployments should target the newer API; watch the deprecation timeline.
+      - Microsoft ended support for the HTTP Data Collector API on September 14, 2026; use the Logs Ingestion API.
       - Alternative: use Logic Apps as the intermediary — single Logic App receives the Ory Action webhook and posts to Sentinel, removing the need for custom handler code.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/siem-security-analytics/microsoft-sentinel, no first-party handler.
     oryMechanism:
@@ -2698,11 +2701,11 @@ integrations:
       impossible-travel, MFA-disabled, and account-takeover detections can run against identity activity alongside the
       rest of their telemetry, without making Splunk a critical-path dependency of user flows.
     coreFunctionality: |-
-      - Four async Ory Action endpoints (/splunk/registration, /splunk/login, /splunk/recovery, /splunk/settings); each returns 200 immediately so user flows are never blocked.
+      - Four Ory Action endpoints (/splunk/registration, /splunk/login, /splunk/recovery, /splunk/settings) behind actions with response.ignore: true, so Ory doesn't wait for them and user flows are never blocked.
       - Builds a CIM Authentication event with action, app, src, src_user, user, authentication_method, signature, and signature_id fields.
       - POSTs to Splunk HEC at /services/collector/event with Authorization: Splunk <token>, configurable index/source/sourcetype/host.
       - Fire-and-forget: HEC errors and timeouts are logged but dropped so Splunk outages never affect Ory.
-      - Authentication method inference from flow.type (oidc / totp / webauthn / lookup_secret / fallback password).
+      - Authentication method taken from the session's authentication_methods on login and settings events; registration and recovery events report unknown.
     oryMechanism:
       - actions
     protocol:
@@ -3689,18 +3692,18 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Sync Ory identities into Freshdesk Contacts via Ory Actions on registration.after / settings.after so support
+      Sync Ory identities into Freshdesk Contacts via an async Ory Action in the registration method lists so support
       agents see Ory identity context (verification state, MFA enrollment, recent activity) when handling tickets.
       Wiring is Ory Action config + Jsonnet body calling Freshdesk's REST API — no first-party handler.
     useCase: >-
       A SaaS product running customer support on Freshdesk wants support agents to see the same identity record in
       Freshdesk that exists in Ory — including verification and MFA state — without separate exports.
     coreFunctionality: |-
-      - Ory Action on registration.after / settings.after calls Freshdesk POST /api/v2/contacts (or PUT for updates).
+      - Async Ory Action (response.ignore: true) in the registration method lists (for example registration.after.password.hooks) calls Freshdesk POST /api/v2/contacts. Updating existing contacts on settings.after.profile.hooks needs your own handler.
       - Auth: HTTP Basic with the API key as username and "X" as password (Freshdesk convention).
       - Optional: custom contact field ory_identity_id for stable cross-system lookup.
       - response.ignore: true — Freshdesk availability never blocks user flows.
-      - 409 Conflict from POST means the contact already exists by email — handler should treat as success.
+      - 409 Conflict from POST means the contact already exists by email; the action ignores the response, so Ory only logs it.
       - For Ory identity context shown inside Freshdesk tickets, consider a Freshdesk Marketplace App calling Ory's admin API — separate integration, not covered here.
       - Status: community/proposed — documented at ory.com/docs/integrates-with/support-helpdesk/freshdesk.
     oryMechanism:
@@ -3716,7 +3719,7 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Sync Ory identities into Intercom Contacts via Ory Actions on registration.after / settings.after so chat,
+      Sync Ory identities into Intercom Contacts via an async Ory Action in the registration method lists so chat,
       support, and lifecycle messaging are identity-aware. Wiring is Ory Action config + Jsonnet body calling Intercom's
       REST API — no first-party handler.
     useCase: >-
@@ -3724,9 +3727,9 @@ integrations:
       identities to appear as Intercom contacts automatically and wants the Intercom Messenger to recognize
       authenticated users via HMAC identity verification.
     coreFunctionality: |-
-      - Ory Action on registration.after / settings.after calls Intercom POST https://api.intercom.io/contacts with role: "user".
-      - Auth: header Authorization: Bearer <ACCESS_TOKEN> + Intercom-Version: 2.11 (or current stable).
-      - Optional: store Intercom's returned id on metadata_public.intercom_id for downstream calls.
+      - Async Ory Action (response.ignore: true) in the registration method lists (for example registration.after.password.hooks) calls Intercom POST https://api.intercom.io/contacts with role: "user". Updating existing contacts on settings.after.profile.hooks needs your own handler.
+      - Auth: api_key with Authorization: Bearer <ACCESS_TOKEN>. Ory Network ignores webhook headers, so Intercom applies the app's default API version.
+      - Optional: a handler can store Intercom's returned id on metadata_public.intercom_id through the Ory Admin API; the direct call can't, because Ory ignores the response.
       - response.ignore: true — Intercom availability never blocks user flows.
       - Intercom Messenger identity verification: HMAC `user_hash` shared secret prevents spoofing of authenticated chat sessions; configure in Intercom security settings.
       - Tracking events ("user verified email", etc.) uses Events API (POST /events), not contact updates.
@@ -3753,7 +3756,7 @@ integrations:
       — subscription plan, MFA status, active sessions, last login — and wants tickets correlated cleanly back to the
       Ory identity record for downstream reporting.
     coreFunctionality: |-
-      - Receives async post-registration and post-settings Ory Action webhooks, returns 200 immediately so user flows are never blocked.
+      - Receives async (response.ignore: true) Ory Action webhooks from the registration method lists and settings.after.profile.hooks, so user flows are never blocked by Zendesk.
       - Calls Zendesk POST /api/v2/users/create_or_update to upsert the corresponding Zendesk user, copying identity.id into external_id and selected metadata into Zendesk user_fields.
       - Exposes GET /zendesk/sidebar/identity?email=... for a Zendesk sidebar app, gated by a separate ZENDESK_SIDEBAR_SECRET so the Ory webhook secret can't be reused to enumerate identities.
       - Sidebar response includes state, MFA enrollment, active session count, last login, and metadata_public for inline agent-side rendering.
@@ -3780,10 +3783,10 @@ integrations:
       headcount, role, seniority) on every signup for lead routing, feature gating, and personalized onboarding, without
       expanding the registration form. New customers should use user-enrichment/fullcontact or user-enrichment/zoominfo.
     coreFunctionality: |-
-      - Receives the async post-registration Ory Action webhook, returns 200 immediately so registration is never blocked by enrichment.
+      - Receives the async (response.ignore: true) Ory Action webhook from the registration method lists after the identity is saved, so registration is never blocked by enrichment.
       - Calls Clearbit's /v2/combined/find endpoint with the user's email to retrieve person and company data.
       - Projects the response to a compact metadata shape (person.name/role/title/seniority, company.name/domain/industry/employees/raised/etc.).
-      - Fetches the identity via the Ory Admin API, merges the projection into metadata_admin.clearbit, and PUTs the identity back.
+      - Fetches the identity via the Ory Admin API and writes the projection to metadata_admin.clearbit with a JSON Patch.
       - Silently no-ops when Clearbit returns 404/422 (free email providers, missing data).
     oryMechanism:
       - actions
@@ -3799,14 +3802,14 @@ integrations:
     status: active
     description: >-
       Enrich Ory identities post-registration with demographic, firmographic, and social data from FullContact's
-      person/company resolution graph. Wired via an async Ory Action on registration.after calling a custom handler that
-      fetches FullContact enrichment and PATCHes metadata_public.fullcontact on the Ory identity.
+      person/company resolution graph. Wired via an async Ory Action in the registration method lists calling a custom
+      handler that fetches FullContact enrichment and PATCHes metadata_public.fullcontact on the Ory identity.
     useCase: >-
       A B2B SaaS product wants newly registered users enriched with name, employer, role, location, and social handles
       automatically — for lead qualification, personalization, and routing — without making the user fill out a longer
       signup form.
     coreFunctionality: |-
-      - Pattern: Ory Action registration.after (async, response.ignore: true) → handler verifies shared secret → handler calls POST https://api.fullcontact.com/v3/person.enrich → handler PATCHes metadata_public.fullcontact on the identity via @ory/client.
+      - Pattern: Ory Action in the registration method lists, for example registration.after.password.hooks (async, response.ignore: true) → handler verifies shared secret → handler calls POST https://api.fullcontact.com/v3/person.enrich → handler PATCHes metadata_public.fullcontact on the identity via @ory/client.
       - Best-effort enrichment — coverage varies by region and email type (personal vs business); handler should silently no-op on 404 misses.
       - Per-resolved-record billing — configure FullContact's multi-field resolution to avoid wasting credits.
       - DSAR / right-to-be-forgotten: FullContact API supports a delete call; wire to your DSAR flow.
@@ -3826,13 +3829,13 @@ integrations:
     status: active
     description: >-
       Enrich Ory identities post-registration with B2B contact + company data from ZoomInfo (job title, department,
-      company name / size / industry, location). Wired via an async Ory Action on registration.after calling a custom
-      handler that fetches ZoomInfo enrichment and PATCHes metadata_public.zoominfo on the Ory identity.
+      company name / size / industry, location). Wired via an async Ory Action in the registration method lists calling
+      a custom handler that fetches ZoomInfo enrichment and PATCHes metadata_public.zoominfo on the Ory identity.
     useCase: >-
       A B2B SaaS product running sales-led GTM wants newly registered users pre-qualified with firmographic data so
       sales can route accounts by company size / industry without asking those questions on the signup form.
     coreFunctionality: |-
-      - Pattern: Ory Action registration.after (async, response.ignore: true) → handler verifies shared secret → handler authenticates against ZoomInfo (OAuth2 client credentials) → handler calls POST https://api.zoominfo.com/enrich/contact → handler PATCHes metadata_public.zoominfo on the identity via @ory/client.
+      - Pattern: Ory Action in the registration method lists, for example registration.after.password.hooks (async, response.ignore: true) → handler verifies shared secret → handler authenticates against ZoomInfo (OAuth2 client credentials) → handler calls POST https://api.zoominfo.com/enrich/contact → handler PATCHes metadata_public.zoominfo on the identity via @ory/client.
       - ZoomInfo Enrich API is B2B-focused — personal emails (gmail, outlook) won't resolve; gate calls on a business-email check to avoid wasting credits.
       - Data quality is highest for US business contacts; EU coverage weaker and subject to GDPR-driven opt-outs.
       - Licensing is the long pole — Enrich API is a paid add-on requiring a sales conversation.
@@ -3894,10 +3897,10 @@ integrations:
       Actions fire on the events; this router relays them to Svix, which fans out to consumer endpoints with
       at-least-once delivery.
     coreFunctionality: |-
-      - Five async Ory Action endpoints (/svix/registration, /svix/login, /svix/settings, /svix/recovery, /svix/verification); each returns 200 immediately so user flows are never blocked.
+      - Five Ory Action endpoints (/svix/registration, /svix/login, /svix/settings, /svix/recovery, /svix/verification) behind actions with response.ignore: true, so Ory doesn't wait for them and user flows are never blocked.
       - Publishes to Svix's REST API (POST /api/v1/app/{appId}/msg/) with built-in fetch — no svix SDK dependency, consistent with the rest of the integration family.
       - Each message uses a deterministic eventId of ory-<eventType>-<flowId> so duplicates are deduped at the Svix layer.
-      - Standardized event type names (ory.identity.registered, .logged_in, .updated, .recovery_initiated, .verified) so consumer endpoints filter cleanly.
+      - Standardized event type names (ory.identity.registered, .logged_in, .updated, .recovered, .verified) so consumer endpoints filter cleanly.
       - Fire-and-forget: Svix outages and 5xx responses are logged but never propagate to Ory.
     oryMechanism:
       - actions

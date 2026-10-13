@@ -1,38 +1,52 @@
-# Zoho CRM Contact sync hook.
+# Zoho CRM contact sync hooks.
+#
+# Ory Network doesn't accept file:// bodies. Encode the template with
+# `base64 < jsonnet/sync-user.jsonnet | tr -d '\n'` and paste it after base64://.
 
 selfservice:
   flows:
     registration:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/zoho-crm/sync-user
-              method: POST
-              body: file://./jsonnet/sync-user.jsonnet
-              can_interrupt: false
-              response:
-                ignore: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &registration_after_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/zoho-crm/sync-user
+                method: POST
+                body: base64://<base64-encoded jsonnet/sync-user.jsonnet>
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+                response:
+                  ignore: true
+            - hook: session
+        oidc:
+          hooks: *registration_after_hooks
+        code:
+          hooks: *registration_after_hooks
+        passkey:
+          hooks: *registration_after_hooks
+        webauthn:
+          hooks: *registration_after_hooks
+        # The password list is aliased into the oidc, code, passkey, and webauthn
+        # lists. Alias it into any other method you enable, such as saml.
     settings:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/zoho-crm/sync-user
-              method: POST
-              body: file://./jsonnet/sync-user.jsonnet
-              can_interrupt: false
-              response:
-                ignore: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        profile:
+          hooks:
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/zoho-crm/sync-user
+                method: POST
+                body: base64://<base64-encoded jsonnet/sync-user.jsonnet>
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+                response:
+                  ignore: true

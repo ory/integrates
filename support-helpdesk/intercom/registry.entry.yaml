@@ -8,7 +8,7 @@ category: support-helpdesk
 type: config
 maintainedBy: Community contributors
 description: >-
-  Sync Ory identities into Intercom Contacts via Ory Actions on registration.after / settings.after so chat,
+  Sync Ory identities into Intercom Contacts via an async Ory Action in the registration method lists so chat,
   support, and lifecycle messaging are identity-aware. Wiring is Ory Action config + Jsonnet body calling
   Intercom's REST API — no first-party handler.
 useCase: >-
@@ -16,9 +16,9 @@ useCase: >-
   identities to appear as Intercom contacts automatically and wants the Intercom Messenger to recognize
   authenticated users via HMAC identity verification.
 coreFunctionality: |-
-  - Ory Action on registration.after / settings.after calls Intercom POST https://api.intercom.io/contacts with role: "user".
-  - Auth: header Authorization: Bearer <ACCESS_TOKEN> + Intercom-Version: 2.11 (or current stable).
-  - Optional: store Intercom's returned id on metadata_public.intercom_id for downstream calls.
+  - Async Ory Action (response.ignore: true) in the registration method lists (for example registration.after.password.hooks) calls Intercom POST https://api.intercom.io/contacts with role: "user". Updating existing contacts on settings.after.profile.hooks needs your own handler.
+  - Auth: api_key with Authorization: Bearer <ACCESS_TOKEN>. Ory Network ignores webhook headers, so Intercom applies the app's default API version.
+  - Optional: a handler can store Intercom's returned id on metadata_public.intercom_id through the Ory Admin API; the direct call can't, because Ory ignores the response.
   - response.ignore: true — Intercom availability never blocks user flows.
   - Intercom Messenger identity verification: HMAC `user_hash` shared secret prevents spoofing of authenticated chat sessions; configure in Intercom security settings.
   - Tracking events ("user verified email", etc.) uses Events API (POST /events), not contact updates.

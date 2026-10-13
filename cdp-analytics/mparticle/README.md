@@ -11,14 +11,16 @@
 
 Configure an Ory Action on each lifecycle hook (async, `response.ignore: true`) with a Jsonnet body that emits an mParticle Events API payload, POSTed directly to `https://s2s.mparticle.com/v2/events` with HTTP Basic auth (mParticle API Key + Secret).
 
+Attach each action to the method-specific lists, such as `selfservice.flows.registration.after.password.hooks` and `selfservice.flows.login.after.password.hooks`, and repeat it for every method you enable, such as `oidc` or `code`. On Ory Network, the registration `password` list contains `session`; keep it last. Verification has only the flow-level `selfservice.flows.verification.after.hooks` list. See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
+
 ## Setup outline
 
 1. In mParticle → **Setup** → **Inputs** → create a **Custom Feed** (Platform: Custom). Copy the **API Key** and **API Secret**.
 2. Configure Ory Actions for each event:
    - URL: `https://s2s.mparticle.com/v2/events`.
-   - Method: POST with `Content-Type: application/json`.
-   - Auth: HTTP Basic with `API Key:API Secret`.
-   - Body Jsonnet: `{ "events": [{ "event_type": "custom_event", "data": { "event_name": "ory_registration", "custom_event_type": "other" } }], "user_identities": { "customer_id": ctx.identity.id, "email": ctx.identity.traits.email }, "environment": "production" }`.
+   - Method: POST. Ory sends the body as `application/json`.
+   - Auth: `basic_auth` with `user` set to the API Key and `password` set to the API Secret.
+   - Body Jsonnet: `{ "events": [{ "event_type": "custom_event", "data": { "event_name": "ory_registration", "custom_event_type": "other" } }], "user_identities": { "customer_id": ctx.identity.id, "email": std.get(ctx.identity.traits, 'email', null) }, "environment": "production" }`.
    - `response.ignore: true`.
 3. Configure outputs in mParticle to route Ory events to whichever downstream destinations you use.
 

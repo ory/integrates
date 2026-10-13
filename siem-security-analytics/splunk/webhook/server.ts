@@ -3,11 +3,11 @@
 // Splunk <> Ory Actions webhook handler.
 //
 // Forwards Ory identity-flow events to Splunk's HTTP Event Collector (HEC).
-// All four hooks (registration, login, recovery, settings) are async
-// (fire-and-forget): the handler returns 200 to Ory immediately so user
-// flows are never blocked by Splunk availability, then sends the event to
-// HEC in the background. Events are shaped to the Splunk CIM Authentication
-// data model so search and dashboarding work without per-event extraction.
+// The four actions (registration, login, recovery, settings) set
+// response.ignore: true, so Ory doesn't wait for this handler and Splunk
+// availability never blocks user flows. Events are shaped to the Splunk CIM
+// Authentication data model so search and dashboarding work without
+// per-event extraction.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -37,13 +37,13 @@ interface OryWebhookBody {
   identity?: {
     id?: string;
     traits?: { email?: string };
-    metadata_public?: Record<string, unknown>;
   };
   flow?: {
     id?: string;
     type?: string;
   };
-  request_headers?: Record<string, string[]>;
+  authentication_methods?: string[];
+  client_ip?: string | null;
 }
 
 interface CimAuthEvent {
@@ -82,24 +82,10 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-function extractClientIp(headers: Record<string, string[]> | undefined): string {
-  const xff = headers?.["x-forwarded-for"]?.[0];
-  return xff ? (xff.split(",")[0]?.trim() ?? "unknown") : "unknown";
-}
-
-function authMethod(flow: OryWebhookBody["flow"]): string {
-  switch (flow?.type) {
-    case "oidc":
-      return "oidc";
-    case "totp":
-      return "totp";
-    case "webauthn":
-      return "webauthn";
-    case "lookup_secret":
-      return "lookup_secret";
-    default:
-      return "password";
-  }
+// Ory sends the session's authentication methods only for login and settings
+// actions; registration and recovery events report "unknown".
+function authMethod(methods: string[] | undefined): string {
+  return methods && methods.length > 0 ? methods.join("+") : "unknown";
 }
 
 function buildCimEvent(payload: OryWebhookBody, signature: string): HecEvent {
@@ -112,11 +98,11 @@ function buildCimEvent(payload: OryWebhookBody, signature: string): HecEvent {
     event: {
       action: "success",
       app: "ory_network",
-      src: extractClientIp(payload?.request_headers),
+      src: payload?.client_ip || "unknown",
       dest: SPLUNK_HOST,
       user: payload?.identity?.traits?.email ?? "unknown",
       src_user: payload?.identity?.id ?? "unknown",
-      authentication_method: authMethod(payload?.flow),
+      authentication_method: authMethod(payload?.authentication_methods),
       signature,
       signature_id: payload?.flow?.id ?? "",
       vendor_product: "Ory Network",
@@ -125,24 +111,19 @@ function buildCimEvent(payload: OryWebhookBody, signature: string): HecEvent {
 }
 
 async function sendToHec(event: HecEvent): Promise<void> {
-  try {
-    const res = await fetch(`${SPLUNK_HEC_URL}/services/collector/event`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Splunk ${SPLUNK_HEC_TOKEN}`,
-      },
-      body: JSON.stringify(event),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      console.warn(`Splunk HEC ${res.status}: ${detail}`);
-    }
-  } catch (err) {
-    // Fire-and-forget: a HEC outage shouldn't propagate to Ory.
-    console.warn(`Splunk HEC request failed: ${(err as Error).message}`);
-  }
+  const res = await fetch(`${SPLUNK_HEC_URL}/services/collector/event`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Splunk ${SPLUNK_HEC_TOKEN}`,
+    },
+    body: JSON.stringify(event),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) throw new Error(`Splunk HEC ${res.status}: ${await res.text()}`);
+  const result = (await res.json()) as { code?: number };
+  if (result.code !== 0)
+    throw new Error(`Splunk HEC rejected event: code ${result.code}`);
 }
 
 app.get("/health", (_req, res) => {
@@ -154,17 +135,33 @@ function asyncHook(signature: string) {
     req: Request<unknown, unknown, OryWebhookBody>,
     res: Response,
   ) => {
-    res.status(200).json({});
-    const event = buildCimEvent(req.body, signature);
-    await sendToHec(event);
-    console.log(`Splunk: sent ${signature} for ${req.body?.identity?.id}`);
+    try {
+      await sendToHec(buildCimEvent(req.body, signature));
+      console.log(`Splunk: sent ${signature} for ${req.body?.identity?.id}`);
+      res.status(200).json({});
+    } catch (error) {
+      console.warn(`Splunk HEC request failed: ${(error as Error).message}`);
+      res.status(502).json({ error: "delivery_failed" });
+    }
   };
 }
 
-app.post("/splunk/registration", verifyWebhookSecret, asyncHook("registration.success"));
+app.post(
+  "/splunk/registration",
+  verifyWebhookSecret,
+  asyncHook("registration.success"),
+);
 app.post("/splunk/login", verifyWebhookSecret, asyncHook("login.success"));
-app.post("/splunk/recovery", verifyWebhookSecret, asyncHook("recovery.initiated"));
-app.post("/splunk/settings", verifyWebhookSecret, asyncHook("settings.updated"));
+app.post(
+  "/splunk/recovery",
+  verifyWebhookSecret,
+  asyncHook("recovery.success"),
+);
+app.post(
+  "/splunk/settings",
+  verifyWebhookSecret,
+  asyncHook("settings.updated"),
+);
 
 app.listen(PORT, () => {
   console.log(`Splunk webhook listening on port ${PORT}`);

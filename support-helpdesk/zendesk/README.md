@@ -14,8 +14,8 @@ A B2B SaaS support team wants the Zendesk agent view to surface "who is this cus
 ## How it works
 
 1. A user registers or updates their profile through an Ory flow.
-2. Ory fires an async post-flow Action webhook to this handler (one for `registration`, one for `settings`).
-3. The handler returns `200` to Ory immediately. In the background, it calls Zendesk `POST /api/v2/users/create_or_update` to create or merge the corresponding Zendesk user, copying the Ory `identity.id` into `external_id` and a few selected fields (subscription plan, risk score) into Zendesk `user_fields`.
+2. Ory fires an asynchronous Action webhook (`response.ignore: true`) to this handler: one from the registration method lists, one from the settings `profile` list.
+3. The handler returns `200` and then calls Zendesk `POST /api/v2/users/create_or_update` to create or merge the corresponding Zendesk user, copying the Ory `identity.id` into `external_id` and a few selected fields (subscription plan, risk score) into Zendesk `user_fields`.
 4. When an agent opens a ticket in Zendesk, a Zendesk sidebar app calls `GET /zendesk/sidebar/identity?email=…` on this handler. The handler authenticates the sidebar with a separate shared secret, queries Ory's Admin API for the identity and its active sessions, and returns a compact payload the sidebar renders inline.
 
 ## Prerequisites
@@ -45,8 +45,12 @@ The server listens on the port specified in `.env` (default 3000) and exposes:
 
 ## Configure Ory
 
-1. In the Ory Console, configure the two Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml) (post-registration and post-settings).
-2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet) — shared by both hooks.
+1. Configure the two Action hooks using the snippets in [`ory-actions.yaml`](ory-actions.yaml). Attach them to the method-specific lists, not to the flow-level `after.hooks` lists:
+   - Registration: `selfservice.flows.registration.after.<method>.hooks` for each sign-up method you enable, such as `password` and `oidc`. On Ory Network, the `password` list contains `session`; keep it last.
+   - Profile updates: `selfservice.flows.settings.after.profile.hooks`.
+
+   See [Attach `after` actions to authentication methods](https://www.ory.com/docs/kratos/hooks/configure-hooks#attach-after-actions-to-authentication-methods).
+2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet) — shared by both hooks. Ory Network doesn't accept `file://` bodies, so set `body` to `base64://` followed by the Base64-encoded template.
 3. Set `ORY_WEBHOOK_SECRET` in the handler's `.env` to match the `X-Webhook-Secret` value declared in the hook config.
 4. Set `ZENDESK_SIDEBAR_SECRET` to a separate long random value and configure your Zendesk sidebar app to send it as the `X-Zendesk-Secret` header.
 
@@ -57,6 +61,7 @@ Sidebar app manifest, `iframe.html` source, agent-side rendering, and Zendesk ap
 - **`401 invalid webhook secret`** — `ORY_WEBHOOK_SECRET` in `.env` doesn't match `X-Webhook-Secret` in the Ory hook config.
 - **`401 invalid sidebar secret`** — the Zendesk sidebar app is sending the wrong (or no) `X-Zendesk-Secret` header.
 - **Zendesk users not appearing** — the API token is invalid, the admin email is wrong, or the user lacks the Admin role. Check handler logs for `Zendesk 401/403`.
+- **Email change doesn't replace the Zendesk primary email** — Create Or Update User adds the new address as a secondary email. To make it primary, also call Zendesk's [Make Identity Primary endpoint](https://developer.zendesk.com/api-reference/ticketing/users/user_identities/#make-identity-primary).
 - **Sidebar always says "not found"** — Zendesk ticket requester email doesn't match the Ory credential identifier. Confirm both sides are using the same email casing.
 - **`502 ory_lookup_failed`** — `ORY_SDK_URL` is wrong or `ORY_ADMIN_API_KEY` lacks identity-read scope.
 
