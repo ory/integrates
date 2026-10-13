@@ -29,6 +29,12 @@ provider "ory" {}
 
 # --- Variables ---
 
+variable "auth_methods" {
+  description = "Authentication methods whose registration/login actions are managed"
+  type        = set(string)
+  default     = ["password", "oidc", "code", "passkey", "webauthn"]
+}
+
 variable "app_url" {
   description = "Your application's base URL"
   type        = string
@@ -138,14 +144,16 @@ resource "ory_oauth2_client" "app" {
 
 # Stripe integration — create customer on registration
 resource "ory_action" "stripe_registration" {
-  flow           = "registration"
-  timing         = "after"
-  auth_method    = "password"
-  url            = "${var.webhook_base_url}/webhooks/stripe/registration"
-  method         = "POST"
-  body           = file("${path.module}/jsonnet/registration.jsonnet")
-  response_parse = true
-  can_interrupt  = false
+  for_each = var.auth_methods
+
+  flow            = "registration"
+  timing          = "after"
+  auth_method     = each.value
+  url             = "${var.webhook_base_url}/stripe/registration"
+  method          = "POST"
+  body            = file("${path.module}/jsonnet/registration.jsonnet")
+  response_ignore = true
+  can_interrupt   = false
 
   webhook_auth_type          = "api_key"
   webhook_auth_api_key_name  = "X-Webhook-Secret"
@@ -155,10 +163,12 @@ resource "ory_action" "stripe_registration" {
 
 # Segment integration — track login events
 resource "ory_action" "segment_login" {
+  for_each = var.auth_methods
+
   flow            = "login"
   timing          = "after"
-  auth_method     = "password"
-  url             = "${var.webhook_base_url}/webhooks/segment/login"
+  auth_method     = each.value
+  url             = "${var.webhook_base_url}/segment/login"
   method          = "POST"
   body            = file("${path.module}/jsonnet/login.jsonnet")
   response_ignore = true

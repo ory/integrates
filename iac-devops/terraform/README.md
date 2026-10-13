@@ -41,7 +41,7 @@ The provider arguments are `workspace_api_key`, `project_api_key`, `project_id`,
 
 Examples in `examples/` alongside this README:
 
-- [`examples/basic`](examples/basic/) — `ory_project_config`, `ory_identity_schema`, `ory_oauth2_client`, and two `ory_action` webhooks with their Jsonnet request bodies.
+- [`examples/basic`](examples/basic/) — `ory_project_config`, `ory_identity_schema`, `ory_oauth2_client`, and per-method `ory_action` webhooks with their Jsonnet request bodies.
 - [`examples/multi-environment`](examples/multi-environment/) — one configuration applied to separate staging and production projects with per-environment `.tfvars` files.
 
 The [provider repository's `examples/` directory](https://github.com/ory/terraform-provider-ory/tree/main/examples) has an example for every resource.
@@ -57,3 +57,5 @@ The [provider repository's `examples/` directory](https://github.com/ory/terrafo
 ## License
 
 Apache-2.0. (Configuration / IaC — no source code in this directory.)
+
+The examples manage actions for each method in `auth_methods`; include only methods you enable and add `saml` when needed. Stripe registration runs with `response_ignore = true` after identity persistence. Segment and Splunk use separate body templates matching their companion handlers.

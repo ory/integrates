@@ -33,6 +33,12 @@ provider "ory" {
 
 # --- Variables ---
 
+variable "auth_methods" {
+  description = "Authentication methods whose registration/login actions are managed"
+  type        = set(string)
+  default     = ["password", "oidc", "code", "passkey", "webauthn"]
+}
+
 variable "environment" {
   description = "Environment name (staging, production)"
   type        = string
@@ -106,16 +112,16 @@ resource "ory_project_config" "main" {
 # --- Conditional Webhooks ---
 
 resource "ory_action" "stripe_registration" {
-  count = var.enable_stripe_webhook ? 1 : 0
+  for_each = var.enable_stripe_webhook ? var.auth_methods : toset([])
 
-  flow           = "registration"
-  timing         = "after"
-  auth_method    = "password"
-  url            = "${var.webhook_base_url}/webhooks/stripe/registration"
-  method         = "POST"
-  body           = file("${path.module}/jsonnet/registration.jsonnet")
-  response_parse = true
-  can_interrupt  = false
+  flow            = "registration"
+  timing          = "after"
+  auth_method     = each.value
+  url             = "${var.webhook_base_url}/stripe/registration"
+  method          = "POST"
+  body            = file("${path.module}/jsonnet/registration.jsonnet")
+  response_ignore = true
+  can_interrupt   = false
 
   webhook_auth_type          = "api_key"
   webhook_auth_api_key_name  = "X-Webhook-Secret"
@@ -124,12 +130,12 @@ resource "ory_action" "stripe_registration" {
 }
 
 resource "ory_action" "segment_login" {
-  count = var.enable_segment_webhook ? 1 : 0
+  for_each = var.enable_segment_webhook ? var.auth_methods : toset([])
 
   flow            = "login"
   timing          = "after"
-  auth_method     = "password"
-  url             = "${var.webhook_base_url}/webhooks/segment/login"
+  auth_method     = each.value
+  url             = "${var.webhook_base_url}/segment/login"
   method          = "POST"
   body            = file("${path.module}/jsonnet/login.jsonnet")
   response_ignore = true
@@ -142,14 +148,14 @@ resource "ory_action" "segment_login" {
 }
 
 resource "ory_action" "splunk_login" {
-  count = var.enable_splunk_webhook ? 1 : 0
+  for_each = var.enable_splunk_webhook ? var.auth_methods : toset([])
 
   flow            = "login"
   timing          = "after"
-  auth_method     = "password"
-  url             = "${var.webhook_base_url}/webhooks/splunk/login"
+  auth_method     = each.value
+  url             = "${var.webhook_base_url}/splunk/login"
   method          = "POST"
-  body            = file("${path.module}/jsonnet/login.jsonnet")
+  body            = file("${path.module}/jsonnet/splunk-login.jsonnet")
   response_ignore = true
   can_interrupt   = false
 
