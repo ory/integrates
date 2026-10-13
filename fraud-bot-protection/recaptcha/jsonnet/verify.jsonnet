@@ -10,7 +10,7 @@ function(ctx) {
   flow: {
     id: ctx.flow.id,
     type: ctx.flow.type,
-    transient_payload: if std.objectHas(ctx.flow, "transient_payload") then ctx.flow.transient_payload else {},
+    transient_payload: if std.get(ctx.flow, "transient_payload", null) == null then {} else ctx.flow.transient_payload,
   },
   identity: if std.objectHas(ctx, "identity") then {
     id: ctx.identity.id,

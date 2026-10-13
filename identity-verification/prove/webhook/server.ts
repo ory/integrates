@@ -22,7 +22,12 @@ import express, {
   type Response,
 } from "express";
 import { Proveapi } from "@prove-identity/prove-api";
-import { Configuration, IdentityApi, type JsonPatch, JsonPatchOpEnum } from "@ory/client";
+import {
+  Configuration,
+  IdentityApi,
+  type JsonPatch,
+  JsonPatchOpEnum,
+} from "@ory/client";
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
@@ -30,7 +35,8 @@ const KRATOS_ADMIN_URL = process.env.KRATOS_ADMIN_URL;
 const ORY_API_KEY = process.env.ORY_API_KEY;
 const PROVE_CLIENT_ID = process.env.PROVE_CLIENT_ID;
 const PROVE_CLIENT_SECRET = process.env.PROVE_CLIENT_SECRET;
-const PROVE_SERVER_URL = process.env.PROVE_SERVER_URL ?? "https://platform.uat.proveapis.com";
+const PROVE_SERVER_URL =
+  process.env.PROVE_SERVER_URL ?? "https://platform.uat.proveapis.com";
 
 if (
   !ORY_WEBHOOK_SECRET ||
@@ -61,53 +67,80 @@ interface EnrollRequest {
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
-// Replaces the metadata objects as a whole, because a JSON Patch to a nested
-// path fails while the parent object is still null.
+// Patch only this integration's keys. When a metadata parent is null, the
+// updated_at test prevents replacing data written since the GET; a stale
+// snapshot is fetched again before retrying.
 async function mergeMetadata(
   id: string,
-  update: { metadata_public?: Record<string, unknown>; metadata_admin?: Record<string, unknown> },
+  update: {
+    metadata_public?: Record<string, unknown>;
+    metadata_admin?: Record<string, unknown>;
+  },
 ): Promise<void> {
-  const { data: identity } = await kratos.getIdentity({ id });
-  const jsonPatch: JsonPatch[] = [];
-  if (update.metadata_public) {
-    jsonPatch.push({
-      op: JsonPatchOpEnum.Add,
-      path: "/metadata_public",
-      value: { ...(identity.metadata_public ?? {}), ...update.metadata_public },
-    });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: identity } = await kratos.getIdentity({ id });
+    const jsonPatch: JsonPatch[] = [];
+    for (const field of ["metadata_public", "metadata_admin"] as const) {
+      const values = update[field];
+      if (!values) continue;
+      const entries = Object.entries(values).filter(
+        ([, value]) => value !== undefined,
+      );
+      if (entries.length === 0) continue;
+      if (identity[field] == null) {
+        if (!identity.updated_at)
+          throw new Error("Identity is missing updated_at");
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Test,
+          path: "/updated_at",
+          value: identity.updated_at,
+        });
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Add,
+          path: `/${field}`,
+          value: Object.fromEntries(entries),
+        });
+      } else {
+        for (const [key, value] of entries) {
+          const escaped = key.replace(/~/g, "~0").replace(/\//g, "~1");
+          jsonPatch.push({
+            op: JsonPatchOpEnum.Add,
+            path: `/${field}/${escaped}`,
+            value,
+          });
+        }
+      }
+    }
+    if (jsonPatch.length === 0) return;
+    try {
+      await kratos.patchIdentity({ id, jsonPatch });
+      return;
+    } catch (error) {
+      const response = (
+        error as { response?: { status?: number; data?: { reason?: string } } }
+      ).response;
+      if (
+        attempt === 2 ||
+        response?.status !== 400 ||
+        response.data?.reason !== "failed to apply JSON patch"
+      )
+        throw error;
+    }
   }
-  if (update.metadata_admin) {
-    jsonPatch.push({
-      op: JsonPatchOpEnum.Add,
-      path: "/metadata_admin",
-      value: { ...(identity.metadata_admin ?? {}), ...update.metadata_admin },
-    });
-  }
-  await kratos.patchIdentity({ id, jsonPatch });
 }
 
 // Ory Kratos Identities shows `text` to the user only for this response shape.
 function block(res: Response, text: string): void {
   res.status(403).json({
-    messages: [{ instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] }],
+    messages: [
+      { instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] },
+    ],
   });
 }
 
 interface ValidateRequest {
   phone_number?: string;
   prove_identity_id?: string;
-}
-
-// Prove's SDK uses generated types that vary by version; unwrap the response
-// envelope defensively. Each response has either {<methodName>Response: {...}}
-// or a direct payload depending on the SDK version.
-function unwrap<T>(resp: unknown, key: string): T | undefined {
-  if (resp && typeof resp === "object") {
-    const direct = (resp as Record<string, unknown>)[key];
-    if (direct && typeof direct === "object") return direct as T;
-    return resp as T;
-  }
-  return undefined;
 }
 
 const app = express();
@@ -136,8 +169,16 @@ app.post(
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, EnrollRequest>, res: Response) => {
     const { kratos_identity_id, phone_number } = req.body;
-    if (!kratos_identity_id || kratos_identity_id === NIL_UUID || !phone_number) {
-      res.status(400).json({ error: "a saved kratos_identity_id and phone_number are required" });
+    if (
+      !kratos_identity_id ||
+      kratos_identity_id === NIL_UUID ||
+      !phone_number
+    ) {
+      res
+        .status(400)
+        .json({
+          error: "a saved kratos_identity_id and phone_number are required",
+        });
       return;
     }
 
@@ -146,24 +187,22 @@ app.post(
         phoneNumber: phone_number,
         clientCustomerId: kratos_identity_id,
       });
-      const enrollData =
-        unwrap<Record<string, unknown>>(enrollResp, "v3EnrollIdentityResponse") ??
-        (enrollResp as Record<string, unknown>);
+      const enrollData = enrollResp.v3EnrollIdentityResponse;
 
       if (!enrollData || enrollData.success !== true) {
-        throw new Error(`Enrollment failed: ${enrollData?.verificationResult ?? "unknown error"}`);
+        throw new Error(
+          `Enrollment failed: Prove did not return a successful enrollment`,
+        );
       }
 
       await mergeMetadata(kratos_identity_id, {
         metadata_public: {
           prove_identity_enrolled: true,
           prove_identity_id: enrollData.identityId,
-          prove_verification_result: enrollData.verificationResult,
           prove_enrollment_timestamp: new Date().toISOString(),
         },
         metadata_admin: {
-          prove_correlation_id: enrollData.correlationId,
-          prove_client_customer_id: enrollData.clientCustomerId,
+          prove_client_customer_id: kratos_identity_id,
         },
       });
 
@@ -178,7 +217,10 @@ app.post(
           },
         });
       } catch (e) {
-        console.error("Failed to record enrollment error:", (e as Error).message);
+        console.error(
+          "Failed to record enrollment error:",
+          (e as Error).message,
+        );
       }
       res.json({ success: false, error: (err as Error).message });
     }
@@ -200,20 +242,24 @@ app.post(
     }
 
     try {
-      const identityResp = await prove.identity.v3GetIdentity(prove_identity_id);
-      const data =
-        unwrap<Record<string, unknown>>(identityResp, "v3GetIdentityResponse") ??
-        (identityResp as Record<string, unknown>);
+      const identityResp =
+        await prove.identity.v3GetIdentity(prove_identity_id);
+      const data = identityResp.v3GetIdentityResponse;
 
-      if (!data || data.success !== true) {
-        console.warn(`Prove identity ${prove_identity_id} could not be retrieved`);
+      if (!data) {
+        console.warn(
+          `Prove identity ${prove_identity_id} could not be retrieved`,
+        );
         res.json({});
         return;
       }
 
-      const provePhone = data.phoneNumber as string | undefined;
+      const provePhone = data.phoneNumber;
       if (phone_number && provePhone && provePhone !== phone_number) {
-        block(res, "We couldn't confirm your phone number. Please contact support.");
+        block(
+          res,
+          "We couldn't confirm your phone number. Please contact support.",
+        );
         return;
       }
       res.json({});

@@ -28,7 +28,9 @@ const SOCURE_MODULES = (process.env.SOCURE_MODULES || "kyc,fraud")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const SOCURE_FRAUD_THRESHOLD = parseFloat(process.env.SOCURE_FRAUD_THRESHOLD || "0.9");
+const SOCURE_FRAUD_THRESHOLD = parseFloat(
+  process.env.SOCURE_FRAUD_THRESHOLD || "0.9",
+);
 const SOCURE_CALLBACK_SECRET = process.env.SOCURE_CALLBACK_SECRET;
 const ORY_SDK_URL = process.env.ORY_SDK_URL;
 const ORY_ADMIN_API_KEY = process.env.ORY_ADMIN_API_KEY;
@@ -122,37 +124,44 @@ app.post(
     } = req.body;
 
     if (!email || !first_name || !last_name) {
-      rejectFlow(res, 9000301, "Please provide your first name, last name, and email address.");
+      rejectFlow(
+        res,
+        9000301,
+        "Please provide your first name, last name, and email address.",
+      );
       return;
     }
 
     const reference = crypto.randomUUID();
 
     try {
-      const socureRes = await fetch(`${SOCURE_API_BASE}/api/3.0/EmailAuthScore`, {
-        method: "POST",
-        headers: {
-          // Socure's header name is camelCase per its API spec, not a typo.
-          SocureApiKey: SOCURE_API_KEY as string,
-          "content-type": "application/json",
+      const socureRes = await fetch(
+        `${SOCURE_API_BASE}/api/3.0/EmailAuthScore`,
+        {
+          method: "POST",
+          headers: {
+            // Socure's header name is camelCase per its API spec, not a typo.
+            SocureApiKey: SOCURE_API_KEY as string,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            modules: SOCURE_MODULES,
+            firstName: first_name,
+            surName: last_name,
+            email,
+            dob: date_of_birth,
+            nationalId: ssn,
+            physicalAddress: address?.street1,
+            city: address?.city,
+            state: address?.state,
+            zip: address?.zip,
+            country: address?.country ?? "US",
+            deviceSessionId: device_session_id,
+            customerUserId: reference,
+          }),
+          signal: AbortSignal.timeout(15000),
         },
-        body: JSON.stringify({
-          modules: SOCURE_MODULES,
-          firstName: first_name,
-          surName: last_name,
-          email,
-          dob: date_of_birth,
-          nationalId: ssn,
-          physicalAddress: address?.street1,
-          city: address?.city,
-          state: address?.state,
-          zip: address?.zip,
-          country: address?.country ?? "US",
-          deviceSessionId: device_session_id,
-          customerUserId: reference,
-        }),
-        signal: AbortSignal.timeout(15000),
-      });
+      );
 
       if (!socureRes.ok) {
         console.error(`Socure ${socureRes.status}: ${await socureRes.text()}`);
@@ -163,7 +172,10 @@ app.post(
       const result = (await socureRes.json()) as SocureIdPlusResponse;
       const decision = result.decision?.value?.toLowerCase() ?? null;
       const fraudScore = result.fraud?.scores?.[0]?.score ?? null;
-      if (decision === "reject" || (fraudScore !== null && fraudScore >= SOCURE_FRAUD_THRESHOLD)) {
+      if (
+        decision === "reject" ||
+        (fraudScore !== null && fraudScore >= SOCURE_FRAUD_THRESHOLD)
+      ) {
         console.log(
           `Socure rejected registration: ref=${result.referenceId} decision=${decision} fraud_score=${fraudScore}`,
         );
@@ -174,7 +186,9 @@ app.post(
       res.json({
         identity: {
           external_id: reference,
-          metadata_public: { socure_verification_status: decision ?? "pending" },
+          metadata_public: {
+            socure_verification_status: decision ?? "pending",
+          },
           metadata_admin: {
             socure_reference_id: result.referenceId ?? null,
             socure_fraud_score: fraudScore,
@@ -188,9 +202,10 @@ app.post(
   },
 );
 
-class IdentityNotFoundError extends Error {}
-
-async function writeIdentityMetadata(reference: string, decision: unknown): Promise<void> {
+async function writeIdentityMetadata(
+  reference: string,
+  decision: unknown,
+): Promise<void> {
   const lookup = await fetch(
     `${ORY_SDK_URL}/admin/identities/by/external/${encodeURIComponent(reference)}`,
     {
@@ -199,7 +214,7 @@ async function writeIdentityMetadata(reference: string, decision: unknown): Prom
     },
   );
   if (lookup.status === 404) {
-    throw new IdentityNotFoundError(`no identity with external_id ${reference}`);
+    throw new Error(`Identity with external_id ${reference} is not saved yet`);
   }
   if (!lookup.ok) {
     const detail = await lookup.text().catch(() => "");
@@ -239,7 +254,10 @@ app.post(
       return;
     }
     const sig = req.header("x-socure-signature") ?? "";
-    const expected = crypto.createHmac("sha256", SOCURE_CALLBACK_SECRET).update(rawBody).digest("hex");
+    const expected = crypto
+      .createHmac("sha256", SOCURE_CALLBACK_SECRET)
+      .update(rawBody)
+      .digest("hex");
     const a = Buffer.from(sig);
     const b = Buffer.from(expected);
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
@@ -250,7 +268,9 @@ app.post(
     const reference = req.body.customerUserId;
     const decision = req.body.decision;
 
-    console.log(`Socure async result: ref=${req.body.referenceId} customerUserId=${reference}`);
+    console.log(
+      `Socure async result: ref=${req.body.referenceId} customerUserId=${reference}`,
+    );
 
     if (!reference) {
       res.json({ ok: true, ignored: true });
@@ -263,11 +283,9 @@ app.post(
       await writeIdentityMetadata(reference, decision);
       res.json({ ok: true });
     } catch (err) {
-      console.error(`Socure callback write-back failed: ${(err as Error).message}`);
-      if (err instanceof IdentityNotFoundError) {
-        res.json({ ok: true, ignored: true });
-        return;
-      }
+      console.error(
+        `Socure callback write-back failed: ${(err as Error).message}`,
+      );
       res.status(500).json({ error: "processing_failed" });
     }
   },

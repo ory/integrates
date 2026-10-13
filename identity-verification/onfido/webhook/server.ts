@@ -21,7 +21,12 @@ import express, {
   type Request,
   type Response,
 } from "express";
-import { Configuration, IdentityApi, type JsonPatch, JsonPatchOpEnum } from "@ory/client";
+import {
+  Configuration,
+  IdentityApi,
+  type JsonPatch,
+  JsonPatchOpEnum,
+} from "@ory/client";
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
@@ -58,35 +63,74 @@ const kratos = new IdentityApi(
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
-// Replaces the metadata objects as a whole, because a JSON Patch to a nested
-// path fails while the parent object is still null.
+// Patch only this integration's keys. When a metadata parent is null, the
+// updated_at test prevents replacing data written since the GET; a stale
+// snapshot is fetched again before retrying.
 async function mergeMetadata(
   id: string,
-  update: { metadata_public?: Record<string, unknown>; metadata_admin?: Record<string, unknown> },
+  update: {
+    metadata_public?: Record<string, unknown>;
+    metadata_admin?: Record<string, unknown>;
+  },
 ): Promise<void> {
-  const { data: identity } = await kratos.getIdentity({ id });
-  const jsonPatch: JsonPatch[] = [];
-  if (update.metadata_public) {
-    jsonPatch.push({
-      op: JsonPatchOpEnum.Add,
-      path: "/metadata_public",
-      value: { ...(identity.metadata_public ?? {}), ...update.metadata_public },
-    });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: identity } = await kratos.getIdentity({ id });
+    const jsonPatch: JsonPatch[] = [];
+    for (const field of ["metadata_public", "metadata_admin"] as const) {
+      const values = update[field];
+      if (!values) continue;
+      const entries = Object.entries(values).filter(
+        ([, value]) => value !== undefined,
+      );
+      if (entries.length === 0) continue;
+      if (identity[field] == null) {
+        if (!identity.updated_at)
+          throw new Error("Identity is missing updated_at");
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Test,
+          path: "/updated_at",
+          value: identity.updated_at,
+        });
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Add,
+          path: `/${field}`,
+          value: Object.fromEntries(entries),
+        });
+      } else {
+        for (const [key, value] of entries) {
+          const escaped = key.replace(/~/g, "~0").replace(/\//g, "~1");
+          jsonPatch.push({
+            op: JsonPatchOpEnum.Add,
+            path: `/${field}/${escaped}`,
+            value,
+          });
+        }
+      }
+    }
+    if (jsonPatch.length === 0) return;
+    try {
+      await kratos.patchIdentity({ id, jsonPatch });
+      return;
+    } catch (error) {
+      const response = (
+        error as { response?: { status?: number; data?: { reason?: string } } }
+      ).response;
+      if (
+        attempt === 2 ||
+        response?.status !== 400 ||
+        response.data?.reason !== "failed to apply JSON patch"
+      )
+        throw error;
+    }
   }
-  if (update.metadata_admin) {
-    jsonPatch.push({
-      op: JsonPatchOpEnum.Add,
-      path: "/metadata_admin",
-      value: { ...(identity.metadata_admin ?? {}), ...update.metadata_admin },
-    });
-  }
-  await kratos.patchIdentity({ id, jsonPatch });
 }
 
 // Ory Kratos Identities shows `text` to the user only for this response shape.
 function block(res: Response, text: string): void {
   res.status(403).json({
-    messages: [{ instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] }],
+    messages: [
+      { instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] },
+    ],
   });
 }
 
@@ -183,25 +227,44 @@ app.post(
   "/onfido/initiate",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, InitiateRequest>, res: Response) => {
-    const { kratos_identity_id, first_name, last_name, email, date_of_birth } = req.body;
-    if (!kratos_identity_id || kratos_identity_id === NIL_UUID || !first_name || !last_name) {
-      res.status(400).json({ error: "a saved kratos_identity_id, first_name, and last_name are required" });
+    const { kratos_identity_id, first_name, last_name, email, date_of_birth } =
+      req.body;
+    if (
+      !kratos_identity_id ||
+      kratos_identity_id === NIL_UUID ||
+      !first_name ||
+      !last_name
+    ) {
+      res
+        .status(400)
+        .json({
+          error:
+            "a saved kratos_identity_id, first_name, and last_name are required",
+        });
       return;
     }
 
     try {
-      const applicant = await onfidoFetch<OnfidoApplicant>("POST", "/applicants", {
-        first_name,
-        last_name,
-        ...(email && { email }),
-        ...(date_of_birth && { dob: date_of_birth }),
-      });
+      const applicant = await onfidoFetch<OnfidoApplicant>(
+        "POST",
+        "/applicants",
+        {
+          first_name,
+          last_name,
+          ...(email && { email }),
+          ...(date_of_birth && { dob: date_of_birth }),
+        },
+      );
 
-      const workflowRun = await onfidoFetch<OnfidoWorkflowRun>("POST", "/workflow_runs", {
-        workflow_id: ONFIDO_WORKFLOW_ID,
-        applicant_id: applicant.id,
-        custom_data: { kratos_identity_id },
-      });
+      const workflowRun = await onfidoFetch<OnfidoWorkflowRun>(
+        "POST",
+        "/workflow_runs",
+        {
+          workflow_id: ONFIDO_WORKFLOW_ID,
+          applicant_id: applicant.id,
+          custom_data: { kratos_identity_id },
+        },
+      );
 
       await mergeMetadata(kratos_identity_id, {
         metadata_public: {
@@ -215,7 +278,10 @@ app.post(
         }),
       });
 
-      res.json({ sdk_token: workflowRun.sdk_token, workflow_run_id: workflowRun.id });
+      res.json({
+        sdk_token: workflowRun.sdk_token,
+        workflow_run_id: workflowRun.id,
+      });
     } catch (err) {
       console.error("Onfido initiate error:", (err as Error).message);
       res.status(502).json({ error: "onfido_initiate_failed" });
@@ -252,31 +318,46 @@ app.post(
     }
 
     const { resource_type, action, object } = req.body.payload ?? {};
-    if (resource_type !== "workflow_run" || action !== "workflow_run.completed" || !object?.id) {
+    if (
+      resource_type !== "workflow_run" ||
+      action !== "workflow_run.completed" ||
+      !object?.id
+    ) {
       res.json({ received: true, ignored: true });
       return;
     }
     const workflowRunId = object.id;
 
     try {
-      const wr = await onfidoFetch<OnfidoWorkflowRun>("GET", `/workflow_runs/${workflowRunId}`);
+      const wr = await onfidoFetch<OnfidoWorkflowRun>(
+        "GET",
+        `/workflow_runs/${workflowRunId}`,
+      );
       const kratosIdentityId = wr.custom_data?.kratos_identity_id;
       if (!kratosIdentityId) {
-        console.error(`Onfido workflow_run ${workflowRunId} missing custom_data.kratos_identity_id`);
+        console.error(
+          `Onfido workflow_run ${workflowRunId} missing custom_data.kratos_identity_id`,
+        );
         res.json({ received: true, ignored: true });
         return;
       }
       await mergeMetadata(kratosIdentityId, {
         metadata_public: {
           onfido_verification_status: wr.status ?? "unknown",
-          onfido_completed_at: object.completed_at_iso8601 ?? new Date().toISOString(),
+          onfido_completed_at:
+            object.completed_at_iso8601 ?? new Date().toISOString(),
         },
         metadata_admin: { onfido_output: JSON.stringify(wr.output ?? null) },
       });
-      console.log(`Onfido callback: kratos=${kratosIdentityId} status=${wr.status}`);
+      console.log(
+        `Onfido callback: kratos=${kratosIdentityId} status=${wr.status}`,
+      );
       res.json({ received: true });
     } catch (err) {
-      console.error("Onfido callback processing failed:", (err as Error).message);
+      console.error(
+        "Onfido callback processing failed:",
+        (err as Error).message,
+      );
       res.status(500).json({ error: "processing_failed" });
     }
   },

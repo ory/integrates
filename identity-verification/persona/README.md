@@ -26,7 +26,7 @@ ORY_API_KEY               Ory admin API token (identities:write)
 PERSONA_API_KEY           Persona API key
 PERSONA_TEMPLATE_ID       Persona template (configures which checks run)
 PERSONA_WEBHOOK_SECRET    HMAC secret for /persona/callback
-PERSONA_INQUIRY_TYPE      default: hosted-embedded
+PERSONA_HOSTED_URL        default: https://inquiry.withpersona.com/verify
 PERSONA_API_BASE          default: https://api.withpersona.com/api/v1
 PORT                      default: 3000
 ```

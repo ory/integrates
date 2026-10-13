@@ -22,7 +22,12 @@ import express, {
   type Request,
   type Response,
 } from "express";
-import { Configuration, IdentityApi, type JsonPatch, JsonPatchOpEnum } from "@ory/client";
+import {
+  Configuration,
+  IdentityApi,
+  type JsonPatch,
+  JsonPatchOpEnum,
+} from "@ory/client";
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
@@ -56,35 +61,74 @@ const kratos = new IdentityApi(
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
-// Replaces the metadata objects as a whole, because a JSON Patch to a nested
-// path fails while the parent object is still null.
+// Patch only this integration's keys. When a metadata parent is null, the
+// updated_at test prevents replacing data written since the GET; a stale
+// snapshot is fetched again before retrying.
 async function mergeMetadata(
   id: string,
-  update: { metadata_public?: Record<string, unknown>; metadata_admin?: Record<string, unknown> },
+  update: {
+    metadata_public?: Record<string, unknown>;
+    metadata_admin?: Record<string, unknown>;
+  },
 ): Promise<void> {
-  const { data: identity } = await kratos.getIdentity({ id });
-  const jsonPatch: JsonPatch[] = [];
-  if (update.metadata_public) {
-    jsonPatch.push({
-      op: JsonPatchOpEnum.Add,
-      path: "/metadata_public",
-      value: { ...(identity.metadata_public ?? {}), ...update.metadata_public },
-    });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: identity } = await kratos.getIdentity({ id });
+    const jsonPatch: JsonPatch[] = [];
+    for (const field of ["metadata_public", "metadata_admin"] as const) {
+      const values = update[field];
+      if (!values) continue;
+      const entries = Object.entries(values).filter(
+        ([, value]) => value !== undefined,
+      );
+      if (entries.length === 0) continue;
+      if (identity[field] == null) {
+        if (!identity.updated_at)
+          throw new Error("Identity is missing updated_at");
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Test,
+          path: "/updated_at",
+          value: identity.updated_at,
+        });
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Add,
+          path: `/${field}`,
+          value: Object.fromEntries(entries),
+        });
+      } else {
+        for (const [key, value] of entries) {
+          const escaped = key.replace(/~/g, "~0").replace(/\//g, "~1");
+          jsonPatch.push({
+            op: JsonPatchOpEnum.Add,
+            path: `/${field}/${escaped}`,
+            value,
+          });
+        }
+      }
+    }
+    if (jsonPatch.length === 0) return;
+    try {
+      await kratos.patchIdentity({ id, jsonPatch });
+      return;
+    } catch (error) {
+      const response = (
+        error as { response?: { status?: number; data?: { reason?: string } } }
+      ).response;
+      if (
+        attempt === 2 ||
+        response?.status !== 400 ||
+        response.data?.reason !== "failed to apply JSON patch"
+      )
+        throw error;
+    }
   }
-  if (update.metadata_admin) {
-    jsonPatch.push({
-      op: JsonPatchOpEnum.Add,
-      path: "/metadata_admin",
-      value: { ...(identity.metadata_admin ?? {}), ...update.metadata_admin },
-    });
-  }
-  await kratos.patchIdentity({ id, jsonPatch });
 }
 
 // Ory Kratos Identities shows `text` to the user only for this response shape.
 function block(res: Response, text: string): void {
   res.status(403).json({
-    messages: [{ instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] }],
+    messages: [
+      { instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] },
+    ],
   });
 }
 
@@ -154,7 +198,9 @@ async function getJumioToken(): Promise<string> {
   if (cachedJumioToken && Date.now() < cachedJumioToken.expiresAt - 60_000) {
     return cachedJumioToken.token;
   }
-  const basic = Buffer.from(`${JUMIO_CLIENT_ID}:${JUMIO_CLIENT_SECRET}`).toString("base64");
+  const basic = Buffer.from(
+    `${JUMIO_CLIENT_ID}:${JUMIO_CLIENT_SECRET}`,
+  ).toString("base64");
   const res = await fetch(JUMIO_AUTH_URL as string, {
     method: "POST",
     headers: {
@@ -190,7 +236,9 @@ app.post(
   async (req: Request<unknown, unknown, InitiateRequest>, res: Response) => {
     const { kratos_identity_id, email } = req.body;
     if (!kratos_identity_id || kratos_identity_id === NIL_UUID || !email) {
-      res.status(400).json({ error: "a saved kratos_identity_id and email are required" });
+      res
+        .status(400)
+        .json({ error: "a saved kratos_identity_id and email are required" });
       return;
     }
 
@@ -232,7 +280,10 @@ app.post(
           metadata_admin: { jumio_initiation_error: (err as Error).message },
         });
       } catch (e) {
-        console.error("Failed to record initiation error:", (e as Error).message);
+        console.error(
+          "Failed to record initiation error:",
+          (e as Error).message,
+        );
       }
       res.status(200).json({ success: false, error: (err as Error).message });
     }
@@ -272,7 +323,12 @@ app.post(
     // customerInternalReference is what we set to kratos_identity_id on initiate.
     const kratosIdentityId = req.body.account?.customerInternalReference;
 
-    if (workflowStatus !== "PROCESSED" || !workflowId || !accountId || !kratosIdentityId) {
+    if (
+      workflowStatus !== "PROCESSED" ||
+      !workflowId ||
+      !accountId ||
+      !kratosIdentityId
+    ) {
       console.log(
         `Jumio callback skipped: workflow=${workflowId} status=${workflowStatus} kratos=${kratosIdentityId}`,
       );
@@ -307,7 +363,8 @@ app.post(
         metadata_public: {
           jumio_verification_status: verified ? "verified" : "rejected",
           jumio_verification_decision: decisionType,
-          jumio_verified_at: req.body.callbackSentAt ?? new Date().toISOString(),
+          jumio_verified_at:
+            req.body.callbackSentAt ?? new Date().toISOString(),
         },
         metadata_admin: { jumio_workflow_id: workflowId },
       });
@@ -317,7 +374,10 @@ app.post(
       );
       res.json({ received: true });
     } catch (err) {
-      console.error("Jumio callback processing failed:", (err as Error).message);
+      console.error(
+        "Jumio callback processing failed:",
+        (err as Error).message,
+      );
       res.status(500).json({ error: "processing_failed" });
     }
   },

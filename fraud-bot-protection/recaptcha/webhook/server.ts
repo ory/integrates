@@ -33,7 +33,9 @@ const RECAPTCHA_EXPECTED_ACTION = process.env.RECAPTCHA_EXPECTED_ACTION || "";
 const SITEVERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
 
 if (!ORY_WEBHOOK_SECRET || !RECAPTCHA_SECRET_KEY) {
-  console.error("ORY_WEBHOOK_SECRET and RECAPTCHA_SECRET_KEY must be set in .env");
+  console.error(
+    "ORY_WEBHOOK_SECRET and RECAPTCHA_SECRET_KEY must be set in .env",
+  );
   process.exit(1);
 }
 
@@ -71,13 +73,17 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
 
 function flowError(message: string) {
   return {
-    messages: [{ instance_ptr: "#/", message, type: "error" }],
+    messages: [
+      {
+        instance_ptr: "#/",
+        messages: [{ id: 9003001, text: message, type: "error" }],
+      },
+    ],
   };
 }
 
 function extractClientIp(body: OryWebhookBody): string | undefined {
-  const xff = body?.request_headers?.["x-forwarded-for"]?.[0];
-  return xff ? xff.split(",")[0]?.trim() : undefined;
+  return body?.request_headers?.["True-Client-Ip"]?.[0];
 }
 
 async function verifyToken(
@@ -106,7 +112,10 @@ async function verifyToken(
   if (RECAPTCHA_VERSION === "v2") {
     return data.success
       ? { ok: true }
-      : { ok: false, reason: `verification failed: ${(data["error-codes"] ?? []).join(",")}` };
+      : {
+          ok: false,
+          reason: `verification failed: ${(data["error-codes"] ?? []).join(",")}`,
+        };
   }
 
   // v3 checks
@@ -153,7 +162,11 @@ app.post(
     if (!token || typeof token !== "string") {
       res
         .status(400)
-        .json(flowError("Please complete the CAPTCHA verification before submitting."));
+        .json(
+          flowError(
+            "Please complete the CAPTCHA verification before submitting.",
+          ),
+        );
       return;
     }
 
@@ -175,7 +188,11 @@ app.post(
       // Fail closed: a verify outage shouldn't quietly let bots through.
       res
         .status(400)
-        .json(flowError("CAPTCHA verification is temporarily unavailable. Please try again."));
+        .json(
+          flowError(
+            "CAPTCHA verification is temporarily unavailable. Please try again.",
+          ),
+        );
     }
   },
 );
