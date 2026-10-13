@@ -15,9 +15,11 @@ A security team needs Ory authentication events in their existing Splunk SIEM so
 
 1. A user completes a registration, login, recovery, or settings flow in Ory.
 2. Ory fires the matching Action webhook to this handler (`/splunk/registration`, `/splunk/login`, `/splunk/recovery`, or `/splunk/settings`) in the background (`response.ignore: true`), so the flow doesn't wait. The handler verifies the shared secret.
-3. The handler answers Ory and constructs a CIM-Authentication-compliant event. The client IP address comes from the `True-Client-Ip` request header that Ory Network sets; Ory doesn't forward `X-Forwarded-For` to webhooks. The authentication method comes from the session, which Ory includes only for login and settings events.
+3. The handler constructs a CIM-Authentication-compliant event. The client IP address comes from the `True-Client-Ip` request header that Ory Network sets; Ory doesn't forward `X-Forwarded-For` to webhooks. The authentication method comes from the session, which Ory includes only for login and settings events.
 4. The handler POSTs the event to Splunk HEC at `${SPLUNK_HEC_URL}/services/collector/event` with `Authorization: Splunk <token>`. HEC errors are logged and dropped; they never reach Ory.
 5. Splunk indexes the event under the configured index/source/sourcetype; CIM-aligned fields (`action`, `app`, `src`, `user`, `authentication_method`, `signature`) make it searchable with stock SPL.
+
+The handler responds with `200` only after the vendor accepts the event. It returns `502` on delivery failure so Ory can retry; the user flow still does not wait because the action uses `response.ignore: true`. Ory's retries are bounded. Use a durable queue if events must survive longer outages.
 
 ## Prerequisites
 

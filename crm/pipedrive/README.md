@@ -65,3 +65,5 @@ A sample of the webhook response Pipedrive returns lives at [`assets/sample_webh
 ## License
 
 Apache-2.0. SPDX header at the top of each source file.
+
+The handler acknowledges successful vendor calls with `200` and returns `502` on failure so Ory can retry without delaying the user flow. Retries are bounded; use a durable queue for longer outages. Segment retries reuse message IDs; Pipedrive activity retries may produce duplicates after an ambiguous timeout.

@@ -11,8 +11,8 @@
 //                                          activity with device + IP context.
 //
 // Both actions set response.ignore: true, so Ory doesn't wait for these
-// responses. The handler still answers 200 before calling Pipedrive, because
-// Ory retries 5xx responses.
+// responses. The handler answers 200 after Pipedrive accepts the work, or
+// 502 on failure so Ory retries the delivery.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -25,10 +25,13 @@ import express, {
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
 const PIPEDRIVE_API_TOKEN = process.env.PIPEDRIVE_API_TOKEN;
-const PIPEDRIVE_API_BASE = process.env.PIPEDRIVE_API_BASE ?? "https://api.pipedrive.com/v1";
+const PIPEDRIVE_API_BASE =
+  process.env.PIPEDRIVE_API_BASE ?? "https://api.pipedrive.com/v1";
 
 if (!ORY_WEBHOOK_SECRET || !PIPEDRIVE_API_TOKEN) {
-  console.error("ORY_WEBHOOK_SECRET and PIPEDRIVE_API_TOKEN must be set in .env");
+  console.error(
+    "ORY_WEBHOOK_SECRET and PIPEDRIVE_API_TOKEN must be set in .env",
+  );
   process.exit(1);
 }
 
@@ -43,7 +46,10 @@ interface SyncUserRequest {
 
 interface TrackLoginRequest {
   id?: string;
-  traits?: { email?: string; name?: { first?: string; last?: string } | string };
+  traits?: {
+    email?: string;
+    name?: { first?: string; last?: string } | string;
+  };
   login_time?: string;
   ip_address?: string;
   user_agent?: string;
@@ -75,8 +81,14 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-function pipedriveUrl(path: string, query: Record<string, string> = {}): string {
-  const params = new URLSearchParams({ api_token: PIPEDRIVE_API_TOKEN as string, ...query });
+function pipedriveUrl(
+  path: string,
+  query: Record<string, string> = {},
+): string {
+  const params = new URLSearchParams({
+    api_token: PIPEDRIVE_API_TOKEN as string,
+    ...query,
+  });
   return `${PIPEDRIVE_API_BASE}${path}?${params.toString()}`;
 }
 
@@ -84,7 +96,9 @@ function deriveName(traits: SyncUserRequest["traits"]): string {
   const name = traits?.name;
   if (typeof name === "string") return name;
   if (name && typeof name === "object") {
-    const parts = [name.first, name.last].filter((s): s is string => Boolean(s));
+    const parts = [name.first, name.last].filter((s): s is string =>
+      Boolean(s),
+    );
     if (parts.length > 0) return parts.join(" ");
   }
   return traits?.email ?? "Unknown";
@@ -99,13 +113,17 @@ function parseUserAgent(ua: string | undefined): string {
   return "Unknown Device";
 }
 
-async function findPersonByEmail(email: string): Promise<PipedrivePerson | null> {
-  const res = await fetch(pipedriveUrl("/persons/search", { term: email, fields: "email" }), {
-    signal: AbortSignal.timeout(5000),
-  });
+async function findPersonByEmail(
+  email: string,
+): Promise<PipedrivePerson | null> {
+  const res = await fetch(
+    pipedriveUrl("/persons/search", { term: email, fields: "email" }),
+    {
+      signal: AbortSignal.timeout(5000),
+    },
+  );
   if (!res.ok) {
-    console.warn(`Pipedrive search ${res.status}`);
-    return null;
+    throw new Error(`Pipedrive search ${res.status}`);
   }
   const data = (await res.json()) as PipedriveSearchResponse;
   return data.data?.items?.[0]?.item ?? null;
@@ -130,7 +148,7 @@ async function upsertPerson(req: SyncUserRequest): Promise<void> {
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) {
-      console.warn(`Pipedrive update ${res.status}: ${await res.text().catch(() => "")}`);
+      throw new Error(`Pipedrive update ${res.status}: ${await res.text()}`);
     }
     return;
   }
@@ -142,14 +160,20 @@ async function upsertPerson(req: SyncUserRequest): Promise<void> {
     signal: AbortSignal.timeout(5000),
   });
   if (!res.ok) {
-    console.warn(`Pipedrive create ${res.status}: ${await res.text().catch(() => "")}`);
+    throw new Error(`Pipedrive create ${res.status}: ${await res.text()}`);
   }
 }
 
-async function createLoginActivity(person: PipedrivePerson, body: TrackLoginRequest): Promise<void> {
+async function createLoginActivity(
+  person: PipedrivePerson,
+  body: TrackLoginRequest,
+): Promise<void> {
   const traits = body.traits;
-  const name = typeof traits?.name === "string" ? traits.name : traits?.email ?? "user";
-  const sessionPreview = body.session_id ? `${body.session_id.slice(0, 8)}…` : "n/a";
+  const name =
+    typeof traits?.name === "string" ? traits.name : traits?.email ?? "user";
+  const sessionPreview = body.session_id
+    ? `${body.session_id.slice(0, 8)}…`
+    : "n/a";
   const note = [
     "Login details:",
     `- Time: ${body.login_time ?? "n/a"}`,
@@ -173,7 +197,7 @@ async function createLoginActivity(person: PipedrivePerson, body: TrackLoginRequ
     signal: AbortSignal.timeout(5000),
   });
   if (!res.ok) {
-    console.warn(`Pipedrive activity ${res.status}: ${await res.text().catch(() => "")}`);
+    throw new Error(`Pipedrive activity ${res.status}: ${await res.text()}`);
   }
 }
 
@@ -185,12 +209,17 @@ app.post(
   "/pipedrive/sync-user",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, SyncUserRequest>, res: Response) => {
-    res.status(200).json({ success: true });
     try {
       await upsertPerson(req.body);
-      console.log(`Pipedrive: synced ${req.body.id} (${req.body.traits?.email})`);
+      console.log(
+        `Pipedrive: synced ${req.body.id} (${req.body.traits?.email})`,
+      );
+      res.status(200).json({ success: true });
     } catch (err) {
-      console.warn(`Pipedrive sync failed for ${req.body.id}: ${(err as Error).message}`);
+      console.warn(
+        `Pipedrive sync failed for ${req.body.id}: ${(err as Error).message}`,
+      );
+      res.status(502).json({ error: "sync_failed" });
     }
   },
 );
@@ -199,19 +228,28 @@ app.post(
   "/pipedrive/track-login-activity",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, TrackLoginRequest>, res: Response) => {
-    res.status(200).json({ success: true });
     const email = req.body.traits?.email;
-    if (!email) return;
+    if (!email) {
+      res.status(200).json({ success: true });
+      return;
+    }
     try {
       const person = await findPersonByEmail(email);
       if (!person) {
-        console.log(`Pipedrive: no person for ${email}, skipping login activity`);
+        console.log(
+          `Pipedrive: no person for ${email}, skipping login activity`,
+        );
+        res.status(200).json({ success: true });
         return;
       }
       await createLoginActivity(person, req.body);
       console.log(`Pipedrive: logged login for ${email}`);
+      res.status(200).json({ success: true });
     } catch (err) {
-      console.warn(`Pipedrive login-activity failed: ${(err as Error).message}`);
+      console.warn(
+        `Pipedrive login-activity failed: ${(err as Error).message}`,
+      );
+      res.status(502).json({ error: "activity_failed" });
     }
   },
 );

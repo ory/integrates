@@ -27,7 +27,9 @@ const SVIX_API_KEY = process.env.SVIX_API_KEY;
 const SVIX_APP_ID = process.env.SVIX_APP_ID;
 
 if (!ORY_WEBHOOK_SECRET || !SVIX_API_KEY || !SVIX_APP_ID) {
-  console.error("ORY_WEBHOOK_SECRET, SVIX_API_KEY, and SVIX_APP_ID must be set in .env");
+  console.error(
+    "ORY_WEBHOOK_SECRET, SVIX_API_KEY, and SVIX_APP_ID must be set in .env",
+  );
   process.exit(1);
 }
 
@@ -97,28 +99,22 @@ async function publish(eventType: string, body: OryWebhookBody): Promise<void> {
     payload: buildPayload(body),
     eventId: `ory-${eventType}-${flowId}`,
   };
-  try {
-    const res = await fetch(
-      `${SVIX_API_BASE}/api/v1/app/${encodeURIComponent(SVIX_APP_ID as string)}/msg/`,
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${SVIX_API_KEY}`,
-        },
-        body: JSON.stringify(message),
-        signal: AbortSignal.timeout(5000),
+  const res = await fetch(
+    `${SVIX_API_BASE}/api/v1/app/${encodeURIComponent(SVIX_APP_ID as string)}/msg/`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${SVIX_API_KEY}`,
       },
-    );
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      console.warn(`Svix ${res.status}: ${detail}`);
-      return;
-    }
-    console.log(`Svix: published ${eventType} for ${body?.identity?.id} (flow ${flowId})`);
-  } catch (err) {
-    console.warn(`Svix publish failed: ${(err as Error).message}`);
-  }
+      body: JSON.stringify(message),
+      signal: AbortSignal.timeout(5000),
+    },
+  );
+  if (!res.ok) throw new Error(`Svix ${res.status}: ${await res.text()}`);
+  console.log(
+    `Svix: published ${eventType} for ${body?.identity?.id} (flow ${flowId})`,
+  );
 }
 
 app.get("/health", (_req, res) => {
@@ -130,16 +126,41 @@ function asyncHook(eventType: string) {
     req: Request<unknown, unknown, OryWebhookBody>,
     res: Response,
   ) => {
-    res.status(200).json({});
-    await publish(eventType, req.body);
+    try {
+      await publish(eventType, req.body);
+      res.status(200).json({});
+    } catch (error) {
+      console.warn(`Svix publish failed: ${(error as Error).message}`);
+      res.status(502).json({ error: "publish_failed" });
+    }
   };
 }
 
-app.post("/svix/registration", verifyWebhookSecret, asyncHook("ory.identity.registered"));
-app.post("/svix/login", verifyWebhookSecret, asyncHook("ory.identity.logged_in"));
-app.post("/svix/settings", verifyWebhookSecret, asyncHook("ory.identity.updated"));
-app.post("/svix/recovery", verifyWebhookSecret, asyncHook("ory.identity.recovered"));
-app.post("/svix/verification", verifyWebhookSecret, asyncHook("ory.identity.verified"));
+app.post(
+  "/svix/registration",
+  verifyWebhookSecret,
+  asyncHook("ory.identity.registered"),
+);
+app.post(
+  "/svix/login",
+  verifyWebhookSecret,
+  asyncHook("ory.identity.logged_in"),
+);
+app.post(
+  "/svix/settings",
+  verifyWebhookSecret,
+  asyncHook("ory.identity.updated"),
+);
+app.post(
+  "/svix/recovery",
+  verifyWebhookSecret,
+  asyncHook("ory.identity.recovered"),
+);
+app.post(
+  "/svix/verification",
+  verifyWebhookSecret,
+  asyncHook("ory.identity.verified"),
+);
 
 app.listen(PORT, () => {
   console.log(`Svix router listening on port ${PORT}`);

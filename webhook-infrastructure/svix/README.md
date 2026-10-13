@@ -15,9 +15,11 @@ A platform product wants to expose identity-lifecycle events (registered, logged
 
 1. A user completes a registration, login, settings, recovery, or verification flow in Ory.
 2. Ory fires the post-flow Action webhook to this handler (`/svix/registration`, `/svix/login`, etc.) in the background (`response.ignore: true`), so the flow doesn't wait. The handler verifies the shared secret.
-3. The handler answers Ory and builds a Svix message payload. The client IP address comes from the `True-Client-Ip` request header that Ory Network sets; Ory doesn't forward `X-Forwarded-For` to webhooks.
+3. The handler builds a Svix message payload. The client IP address comes from the `True-Client-Ip` request header that Ory Network sets; Ory doesn't forward `X-Forwarded-For` to webhooks.
 4. The handler POSTs to `${SVIX_API_BASE}/api/v1/app/${SVIX_APP_ID}/msg/` with `Authorization: Bearer ${SVIX_API_KEY}`. The message carries an `eventType` (e.g. `ory.identity.registered`) and a deterministic `eventId` of `ory-<eventType>-<flowId>` so retries are idempotent at the Svix layer.
 5. Svix fans the event out to every consumer endpoint subscribed to that event type, retries failures on its standard exponential schedule, signs each delivery with the endpoint's secret, and surfaces delivery health in the dashboard.
+
+The handler responds with `200` only after the vendor accepts the event. It returns `502` on delivery failure so Ory can retry; the user flow still does not wait because the action uses `response.ignore: true`. Ory's retries are bounded. Use a durable queue if events must survive longer outages.
 
 ## Prerequisites
 

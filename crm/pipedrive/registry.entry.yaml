@@ -17,7 +17,7 @@ useCase: >-
   asking engineering for data exports.
 coreFunctionality: |-
   - Two async endpoints: POST /pipedrive/sync-user (registration method lists such as registration.after.password.hooks, and settings.after.profile.hooks — creates or updates Pipedrive person, stores Ory identity id on a custom field); POST /pipedrive/track-login-activity (login method lists such as login.after.password.hooks — looks up Pipedrive person by email, logs a "User Login" activity with device + IP context).
-  - Both async (response.ignore: true) — handler returns 200 to Ory immediately; Pipedrive calls run in the background.
+  - Both async (response.ignore: true) — user flows do not wait; handler returns 200 after vendor acceptance or 502 on failure for Ory retries.
   - Authenticated via X-Webhook-Secret shared with the Ory hook config.
   - Pipedrive custom field stores the Ory identity id for stable cross-system linkage.
   - SDK: native fetch (no Pipedrive SDK); @ory/client not used (handler doesn't read back from Ory).

@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Test webhook integrations
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install handler dependencies
+        run: |
+          npm ci --ignore-scripts --prefix cdp-analytics/segment/webhook
+          npm ci --ignore-scripts --prefix siem-security-analytics/splunk/webhook
+          npm ci --ignore-scripts --prefix webhook-infrastructure/svix/webhook
+          npm ci --ignore-scripts --prefix user-enrichment/clearbit/webhook
+          npm ci --ignore-scripts --prefix crm/pipedrive/webhook
+      - name: Run isolated regressions
+        run: node --test scripts/test-webhook-integrations.cjs

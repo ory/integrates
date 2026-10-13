@@ -17,7 +17,7 @@ A B2B SaaS wants firmographic and demographic context (company name, industry, h
 
 1. A user registers with their work email through an Ory flow.
 2. Ory fires the asynchronous Action webhook (`response.ignore: true`) from the registration method lists to this handler. The action runs after the identity is saved, so the user's registration doesn't wait for it and the handler receives the real identity ID.
-3. The handler verifies the shared secret and returns `200`.
+3. The handler verifies the shared secret. It returns `200` after enrichment is written (or no result is found), and `502` on failure so Ory can retry. The ignored response does not delay registration.
 4. In the background, the handler calls Clearbit's `/v2/combined/find` endpoint with the user's email.
 5. If Clearbit has data, the handler fetches the current identity through the Ory Admin API and writes the projected enrichment to `metadata_admin.clearbit` with a JSON Patch (`PATCH /admin/identities/{id}`), leaving the rest of the identity unchanged.
 

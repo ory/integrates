@@ -248,4 +248,6 @@ Once events flow into Segment, you can route them to any connected destination:
 | Events not appearing | Check Segment Source Debugger for incoming events. Verify the action is in the method-specific list, for example `registration.after.password.hooks`, not only in the flow-level `after.hooks`. |
 | Missing traits or no request at all | A template that reads a missing field fails and Ory drops the request. Read optional traits with `std.get`. |
 | Brief Segment errors | Ory retries a delivery that fails or receives 429 or a 5xx status other than 501, up to three attempts within a few seconds. Longer outages drop the event. |
-| Duplicate identify calls | This is generally fine; Segment de-duplicates by `userId`. |
+| Duplicate identify calls | This is generally fine; Segment de-duplicates retries by their stable `messageId`. |
+
+The handler acknowledges successful vendor calls with `200` and returns `502` on failure so Ory can retry without delaying the user flow. Retries are bounded; use a durable queue for longer outages. Segment retries reuse message IDs; Pipedrive activity retries may produce duplicates after an ambiguous timeout.

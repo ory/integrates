@@ -111,23 +111,19 @@ function buildCimEvent(payload: OryWebhookBody, signature: string): HecEvent {
 }
 
 async function sendToHec(event: HecEvent): Promise<void> {
-  try {
-    const res = await fetch(`${SPLUNK_HEC_URL}/services/collector/event`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Splunk ${SPLUNK_HEC_TOKEN}`,
-      },
-      body: JSON.stringify(event),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      console.warn(`Splunk HEC ${res.status}: ${detail}`);
-    }
-  } catch (err) {
-    console.warn(`Splunk HEC request failed: ${(err as Error).message}`);
-  }
+  const res = await fetch(`${SPLUNK_HEC_URL}/services/collector/event`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Splunk ${SPLUNK_HEC_TOKEN}`,
+    },
+    body: JSON.stringify(event),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) throw new Error(`Splunk HEC ${res.status}: ${await res.text()}`);
+  const result = (await res.json()) as { code?: number };
+  if (result.code !== 0)
+    throw new Error(`Splunk HEC rejected event: code ${result.code}`);
 }
 
 app.get("/health", (_req, res) => {
@@ -139,17 +135,33 @@ function asyncHook(signature: string) {
     req: Request<unknown, unknown, OryWebhookBody>,
     res: Response,
   ) => {
-    res.status(200).json({});
-    const event = buildCimEvent(req.body, signature);
-    await sendToHec(event);
-    console.log(`Splunk: sent ${signature} for ${req.body?.identity?.id}`);
+    try {
+      await sendToHec(buildCimEvent(req.body, signature));
+      console.log(`Splunk: sent ${signature} for ${req.body?.identity?.id}`);
+      res.status(200).json({});
+    } catch (error) {
+      console.warn(`Splunk HEC request failed: ${(error as Error).message}`);
+      res.status(502).json({ error: "delivery_failed" });
+    }
   };
 }
 
-app.post("/splunk/registration", verifyWebhookSecret, asyncHook("registration.success"));
+app.post(
+  "/splunk/registration",
+  verifyWebhookSecret,
+  asyncHook("registration.success"),
+);
 app.post("/splunk/login", verifyWebhookSecret, asyncHook("login.success"));
-app.post("/splunk/recovery", verifyWebhookSecret, asyncHook("recovery.success"));
-app.post("/splunk/settings", verifyWebhookSecret, asyncHook("settings.updated"));
+app.post(
+  "/splunk/recovery",
+  verifyWebhookSecret,
+  asyncHook("recovery.success"),
+);
+app.post(
+  "/splunk/settings",
+  verifyWebhookSecret,
+  asyncHook("settings.updated"),
+);
 
 app.listen(PORT, () => {
   console.log(`Splunk webhook listening on port ${PORT}`);

@@ -10,8 +10,9 @@
 //
 // Behavior: async post-registration enrichment (response.ignore: true). The
 // action runs after the identity is saved, so identity.id is the real ID. The
-// handler answers 200, then calls Clearbit's Combined API and writes the
-// result to metadata_admin.clearbit with a JSON Patch through Ory's Admin API.
+// handler calls Clearbit's Combined API and writes the
+// result to metadata_admin.clearbit with a JSON Patch through Ory's Admin API,
+// then answers 200. Failures return 502 so Ory can retry.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -24,11 +25,17 @@ import express, {
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
 const CLEARBIT_API_KEY = process.env.CLEARBIT_API_KEY;
-const CLEARBIT_API_BASE = process.env.CLEARBIT_API_BASE || "https://person-stream.clearbit.com";
+const CLEARBIT_API_BASE =
+  process.env.CLEARBIT_API_BASE || "https://person-stream.clearbit.com";
 const ORY_SDK_URL = process.env.ORY_SDK_URL;
 const ORY_ADMIN_API_KEY = process.env.ORY_ADMIN_API_KEY;
 
-if (!ORY_WEBHOOK_SECRET || !CLEARBIT_API_KEY || !ORY_SDK_URL || !ORY_ADMIN_API_KEY) {
+if (
+  !ORY_WEBHOOK_SECRET ||
+  !CLEARBIT_API_KEY ||
+  !ORY_SDK_URL ||
+  !ORY_ADMIN_API_KEY
+) {
   console.error(
     "ORY_WEBHOOK_SECRET, CLEARBIT_API_KEY, ORY_SDK_URL, and ORY_ADMIN_API_KEY must be set in .env",
   );
@@ -45,7 +52,12 @@ interface OryWebhookBody {
 interface ClearbitCombinedResponse {
   person?: {
     name?: { fullName?: string };
-    employment?: { name?: string; title?: string; role?: string; seniority?: string };
+    employment?: {
+      name?: string;
+      title?: string;
+      role?: string;
+      seniority?: string;
+    };
   } | null;
   company?: {
     name?: string;
@@ -96,7 +108,9 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-async function enrichByEmail(email: string): Promise<ClearbitCombinedResponse | null> {
+async function enrichByEmail(
+  email: string,
+): Promise<ClearbitCombinedResponse | null> {
   const url = `${CLEARBIT_API_BASE}/v2/combined/find?email=${encodeURIComponent(email)}`;
   const res = await fetch(url, {
     headers: { authorization: `Bearer ${CLEARBIT_API_KEY}` },
@@ -133,14 +147,23 @@ async function writeMetadata(
   const patch =
     identity.metadata_admin && typeof identity.metadata_admin === "object"
       ? [{ op: "add", path: "/metadata_admin/clearbit", value: enrichment }]
-      : [{ op: "add", path: "/metadata_admin", value: { clearbit: enrichment } }];
+      : [
+          {
+            op: "add",
+            path: "/metadata_admin",
+            value: { clearbit: enrichment },
+          },
+        ];
 
-  const patchRes = await fetch(`${ORY_SDK_URL}/admin/identities/${identityId}`, {
-    method: "PATCH",
-    headers,
-    body: JSON.stringify(patch),
-    signal: AbortSignal.timeout(5000),
-  });
+  const patchRes = await fetch(
+    `${ORY_SDK_URL}/admin/identities/${identityId}`,
+    {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(patch),
+      signal: AbortSignal.timeout(5000),
+    },
+  );
   if (!patchRes.ok) {
     const detail = await patchRes.text().catch(() => "");
     throw new Error(`Ory patch identity ${patchRes.status}: ${detail}`);
@@ -182,22 +205,30 @@ app.post(
   "/clearbit/registration",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, OryWebhookBody>, res: Response) => {
-    res.status(200).json({});
-
     const identity = req.body?.identity;
     const email = identity?.traits?.email;
-    if (!identity?.id || !email) return;
+    if (!identity?.id || !email) {
+      res.status(200).json({});
+      return;
+    }
 
     try {
       const raw = await enrichByEmail(email);
       if (!raw) {
         console.log(`Clearbit: no data for ${email}`);
+        res.status(200).json({});
         return;
       }
       await writeMetadata(identity.id, projectEnrichment(raw));
-      console.log(`Clearbit: enriched ${identity.id} (${raw.company?.name ?? "no company"})`);
+      console.log(
+        `Clearbit: enriched ${identity.id} (${raw.company?.name ?? "no company"})`,
+      );
+      res.status(200).json({});
     } catch (err) {
-      console.warn(`Clearbit enrichment failed for ${identity.id}: ${(err as Error).message}`);
+      console.warn(
+        `Clearbit enrichment failed for ${identity.id}: ${(err as Error).message}`,
+      );
+      res.status(502).json({ error: "enrichment_failed" });
     }
   },
 );

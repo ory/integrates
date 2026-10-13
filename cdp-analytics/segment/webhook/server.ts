@@ -21,7 +21,8 @@ import express, {
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
 const SEGMENT_WRITE_KEY = process.env.SEGMENT_WRITE_KEY;
-const SEGMENT_API_BASE = process.env.SEGMENT_API_BASE || "https://api.segment.io/v1";
+const SEGMENT_API_BASE =
+  process.env.SEGMENT_API_BASE || "https://api.segment.io/v1";
 const LIBRARY_NAME = "ory-integrates/segment";
 const LIBRARY_VERSION = "1.0.0";
 
@@ -69,10 +70,6 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-function messageId(): string {
-  return `ory-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 function clientContext(body: OryWebhookBody): SegmentContext {
   const ip = body?.client_ip;
   const userAgent = body?.user_agent;
@@ -95,33 +92,31 @@ function traitsFromIdentity(
 }
 
 async function callSegment(path: string, body: unknown): Promise<void> {
-  try {
-    const res = await fetch(`${SEGMENT_API_BASE}${path}`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: SEGMENT_AUTH },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      console.warn(`Segment ${path} ${res.status}: ${detail}`);
-    }
-  } catch (err) {
-    console.warn(`Segment ${path} request failed: ${(err as Error).message}`);
-  }
+  const res = await fetch(`${SEGMENT_API_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: SEGMENT_AUTH,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok)
+    throw new Error(`Segment ${path} ${res.status}: ${await res.text()}`);
 }
 
 async function identify(
   userId: string,
   traits: Record<string, unknown>,
   context: SegmentContext,
+  messageId: string,
 ): Promise<void> {
   await callSegment("/identify", {
     type: "identify",
     userId,
     traits,
     timestamp: new Date().toISOString(),
-    messageId: messageId(),
+    messageId,
     context,
   });
 }
@@ -131,6 +126,7 @@ async function track(
   event: string,
   properties: Record<string, unknown>,
   context: SegmentContext,
+  messageId: string,
 ): Promise<void> {
   await callSegment("/track", {
     type: "track",
@@ -138,7 +134,7 @@ async function track(
     event,
     properties,
     timestamp: new Date().toISOString(),
-    messageId: messageId(),
+    messageId,
     context,
   });
 }
@@ -147,60 +143,57 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-// Registration: identify with traits + track "User Registered" in parallel.
+// Each Ory retry has the same trigger ID. Segment uses messageId to deduplicate
+// successful calls if another call in the same delivery fails.
+function lifecycleHandler(kind: "registration" | "login" | "settings") {
+  return async (
+    req: Request<unknown, unknown, OryWebhookBody>,
+    res: Response,
+  ) => {
+    const identity = req.body?.identity;
+    if (!identity?.id) {
+      res.status(400).json({ error: "identity.id is required" });
+      return;
+    }
+    const triggerId =
+      req.header("ory-webhook-trigger-id") ?? crypto.randomUUID();
+    const context = clientContext(req.body);
+    try {
+      if (kind !== "login") {
+        await identify(
+          identity.id,
+          traitsFromIdentity(identity),
+          context,
+          `${triggerId}-identify`,
+        );
+      }
+      if (kind !== "settings") {
+        await track(
+          identity.id,
+          kind === "registration" ? "User Registered" : "User Logged In",
+          { flow_type: req.body?.flow?.type, flow_id: req.body?.flow?.id },
+          context,
+          `${triggerId}-track`,
+        );
+      }
+      res.status(200).json({});
+    } catch (error) {
+      console.warn(`Segment delivery failed: ${(error as Error).message}`);
+      res.status(502).json({ error: "delivery_failed" });
+    }
+  };
+}
+
 app.post(
   "/segment/registration",
   verifyWebhookSecret,
-  async (req: Request<unknown, unknown, OryWebhookBody>, res: Response) => {
-    res.status(200).json({});
-    const identity = req.body?.identity;
-    if (!identity?.id) return;
-
-    const ctx = clientContext(req.body);
-    await Promise.all([
-      identify(identity.id, traitsFromIdentity(identity), ctx),
-      track(
-        identity.id,
-        "User Registered",
-        { flow_type: req.body?.flow?.type, flow_id: req.body?.flow?.id },
-        ctx,
-      ),
-    ]);
-    console.log(`Segment: registered ${identity.id}`);
-  },
+  lifecycleHandler("registration"),
 );
-
-// Login: track "User Logged In".
-app.post(
-  "/segment/login",
-  verifyWebhookSecret,
-  async (req: Request<unknown, unknown, OryWebhookBody>, res: Response) => {
-    res.status(200).json({});
-    const identity = req.body?.identity;
-    if (!identity?.id) return;
-
-    await track(
-      identity.id,
-      "User Logged In",
-      { flow_type: req.body?.flow?.type, flow_id: req.body?.flow?.id },
-      clientContext(req.body),
-    );
-    console.log(`Segment: tracked login for ${identity.id}`);
-  },
-);
-
-// Settings: refresh traits with identify.
+app.post("/segment/login", verifyWebhookSecret, lifecycleHandler("login"));
 app.post(
   "/segment/settings",
   verifyWebhookSecret,
-  async (req: Request<unknown, unknown, OryWebhookBody>, res: Response) => {
-    res.status(200).json({});
-    const identity = req.body?.identity;
-    if (!identity?.id) return;
-
-    await identify(identity.id, traitsFromIdentity(identity), clientContext(req.body));
-    console.log(`Segment: updated traits for ${identity.id}`);
-  },
+  lifecycleHandler("settings"),
 );
 
 app.listen(PORT, () => {
