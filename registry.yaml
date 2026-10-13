@@ -8,7 +8,7 @@ apiVersion: ory.com/integrations-v1
 kind: Registry
 metadata:
   name: ory-integrates
-  generated: 2026-08-31T14:26:35Z
+  generated: 2026-10-08T18:28:37Z
 integrations:
   - name: skyfire
     displayName: Skyfire
@@ -1116,8 +1116,8 @@ integrations:
       An Ory Network customer with EU data-residency or GDPR concerns wants a EU-headquartered email vendor for identity
       emails, in addition to or instead of US-based providers like SendGrid or Mailgun.
     coreFunctionality: |-
-      - SMTP relay (recommended): smtps://<smtp_login>:<smtp_key>@smtp-relay.brevo.com:587 (STARTTLS) or :465 (TLS).
-      - REST API alternative: POST https://api.brevo.com/v3/smtp/email with header `api-key: <brevo-api-key>` and a Jsonnet body wired via Kratos's HTTP courier.
+      - SMTP relay (recommended): smtp://<smtp_login>:<smtp_key>@smtp-relay.brevo.com:587 (STARTTLS) or smtps://…@smtp-relay.brevo.com:465 (implicit TLS).
+      - REST API alternative: POST https://api.brevo.com/v3/smtp/email with header `api-key: <brevo-api-key>` and a Jsonnet body wired via Kratos's HTTP email courier (courier.delivery_strategy: http).
       - Brevo SMTP keys are distinct from API keys — do not confuse them.
       - Free tier rate-limits SMTP; identity flows at scale should be on a paid plan.
       - DKIM and Return-Path must be aligned with the From domain for Gmail/Microsoft deliverability.
@@ -1249,8 +1249,8 @@ integrations:
       An Ory Network customer with high transactional email volume and stringent deliverability requirements wants
       enterprise-grade tooling and per-region (US vs EU) hosting for data-residency.
     coreFunctionality: |-
-      - SMTP relay (recommended): smtps://SMTP_Injection:<API_KEY>@smtp.sparkpostmail.com:587 (US) or smtp.eu.sparkpost.com (EU). The literal username "SMTP_Injection" is correct for all customers; password is the API key.
-      - REST Transmissions API alternative: POST https://api.sparkpost.com/api/v1/transmissions (US) or api.eu.sparkpost.com (EU) with `Authorization: <API_KEY>` and a Jsonnet body.
+      - SMTP relay (recommended): smtp://SMTP_Injection:<API_KEY>@smtp.sparkpostmail.com:587 (US, STARTTLS) or smtp.eu.sparkpostmail.com (EU). The literal username "SMTP_Injection" is correct for all customers; password is the API key.
+      - REST Transmissions API alternative: POST https://api.sparkpost.com/api/v1/transmissions (US) or api.eu.sparkpost.com (EU) with `Authorization: <API_KEY>` and a Jsonnet body, via Kratos's HTTP email courier (courier.delivery_strategy: http).
       - SparkPost separates US and EU accounts — pick data residency before integration; migrations are not trivial.
       - API key needs the "Send via SMTP" permission; minimum scope is sufficient.
       - Stored templates available via the API if SparkPost-side template management is preferred over Kratos-side rendering (not recommended — Ory renders templates by default).
@@ -1777,13 +1777,12 @@ integrations:
     useCase: >-
       A B2C product wants to keep credential-stuffing and account-takeover attempts out of its login flow without
       blocking legitimate users behind a CAPTCHA. Castle scores each login in real time; the integration applies an
-      allow / challenge / deny decision before the session is issued, with challenge events flagged for MFA step-up in
-      the client.
+      allow / challenge / deny decision before the session is issued, and requires a second factor for challenge events.
     coreFunctionality: |-
-      - Receives Ory post-login and post-registration Action webhooks.
-      - Forwards the identity, request context, and Castle device token to Castle's Risk API.
-      - Translates Castle's response into Ory flow control: 400 to block, 200 + requires_mfa_stepup=true to step up, 200 with risk score in metadata to allow.
-      - Records the risk assessment in identity metadata for downstream auditing and policy decisions.
+      - Receives a sync login action (response.parse: true) and a registration action that runs after the identity is saved.
+      - Forwards the identity ID, client IP (True-Client-Ip), request headers, and Castle request token to Castle's Risk API.
+      - At login: 403 with a messages body to block, 200 with required_aal aal2 to require a second factor (webhook_response_directives feature flag), 200 to allow.
+      - At registration: reports the event; on deny, optionally deactivates the identity through the Ory Admin API.
       - Fails open on Castle outages so authentication never breaks because of Castle availability.
     oryMechanism:
       - actions
@@ -1880,16 +1879,16 @@ integrations:
     status: active
     description: >-
       Digital trust & safety via Sift — real-time ML-based fraud and account-abuse scoring. Wired into Ory via two
-      Actions: a sync check on submission (registration.after / login.after with can_interrupt) reading the user's
-      current Sift abuse score and blocking when above threshold, plus an async post-event reporter emitting Sift events
-      that feed the model.
+      Actions: a sync check at sign-in (login.after with response.parse) reading the user's current Sift abuse score and
+      blocking with a 4xx when above threshold, plus a post-event reporter (response.ignore) emitting Sift events that
+      feed the model.
     useCase: >-
       A consumer product (marketplace, fintech, gaming) needs ML-driven account-abuse prevention beyond bot defense —
       repeat-fraudster detection, payment-fraud signals, network-effect risk — and is willing to feed Sift the event
       stream needed to build a useful longitudinal model.
     coreFunctionality: |-
-      - Two flows must run for Sift to be useful: pre-flow check (block on fail) AND post-event reporter (signal collection).
-      - Pre-flow: GET https://api.sift.com/v205/users/{user_id}/score; block if score > threshold (start permissive at 80, tighten with data).
+      - Two flows must run for Sift to be useful: sign-in check (block on fail) AND post-event reporter (signal collection).
+      - Sign-in check: GET https://api.sift.com/v205/users/{user_id}/score; block if score > threshold (scores are 0-1 in the API; start permissive at 0.8, tighten with data).
       - Post-event: POST https://api.sift.com/v205/events with reserved event names ($create_account, $login, $transaction) including IP, user agent, session, traits.
       - Both flows authenticated via a single server-side API Key.
       - User IDs must be stable across sessions — Sift's model is keyed on user_id.
@@ -2149,17 +2148,17 @@ integrations:
     description: >-
       Equifax provides credit-anchored identity verification through its Digital Identity Trust APIs. This integration
       calls Equifax from an Ory Action webhook during registration to verify identity attributes against credit-bureau
-      data and returns a decision plus trust score so Ory's post-flow Action can gate the flow.
+      data and rejects the registration unless Equifax returns a passing decision.
     useCase: >-
       A regulated B2C product (fintech, lending, insurance) needs credit-anchored identity proofing on every signup to
       satisfy KYC requirements. Equifax returns a deterministic decision and confidence score; the integration runs the
       lookup inline with Ory registration so high-confidence identities pass through and low-confidence ones can be
       blocked or routed to step-up verification.
     coreFunctionality: |-
-      - Sync post-registration Ory Action webhook (response.parse: true, can_interrupt: true).
+      - Registration action with response.parse: true in the method-specific hook lists, before the identity is saved.
       - Exchanges Equifax OAuth2 client credentials for an access token, cached and refreshed ~5 min before expiry.
       - Calls Equifax's identity-verification endpoint with first_name, last_name, date_of_birth, optional ssn_last_four, and address.
-      - Returns decision/outcome, trust_score, and reference_id to Ory so the post-flow Action can apply policy.
+      - Passing decisions (EQUIFAX_PASS_DECISIONS) return 200 with the result in metadata_admin and the handler's reference as external_id; any other decision returns 400 with a messages body to reject the registration.
       - 502 on Equifax errors / outages so the verdict is never silently a pass.
     oryMechanism:
       - actions
@@ -2176,16 +2175,16 @@ integrations:
     status: active
     description: >-
       Run GBG (which acquired Acuant) identity verification — document + biometric — from an Ory Actions webhook during
-      registration. Calls the GBG GO Journey API, returns the GBG decision (PASS / REFER / FAIL) so Ory can gate the
-      registration flow, and writes the verdict to identity metadata for downstream policy.
+      registration. Calls the GBG GO Journey API, lets PASS through with the verdict in identity metadata, and rejects
+      FAIL (and, by default, REFER) with a messages response.
     useCase: >-
       A regulated product wants document + biometric identity verification with GBG's deep international document
       coverage (long Acuant heritage), wired into a configurable GBG "journey" so the same Ory action can back several
       risk levels by swapping the journey id.
     coreFunctionality: |-
-      - One sync endpoint POST /gbg/verify-identity called from registration.after with response.parse: true so Ory consumes the GBG decision directly.
+      - One sync endpoint POST /gbg/verify-identity called from the method-specific registration.after hook lists with response.parse: true, before the identity is saved.
       - GBG-side flow defined as a "journey" (journey id is required); journey definition controls which evidence types are required (document, selfie, address, etc.).
-      - Decision values: PASS / REFER / FAIL — the action fails the registration on REFER/FAIL, or writes the verdict into identity.metadata for downstream policy.
+      - Decision values: PASS / REFER / FAIL — the handler returns 200 with the verdict on PASS and 400 with a messages body on FAIL; REFER is rejected unless GBG_REFER_ACTION=allow.
       - Authenticated via X-Webhook-Secret shared with the Ory hook config.
       - First-call cold-path latency can be 5-10s; handler caps at 15s.
     oryMechanism:
@@ -2229,17 +2228,17 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Run Jumio identity verification (Document + Selfie + Face Match) from Ory Actions during registration; consume
+      Run Jumio identity verification (Document + Selfie + Face Match) from an Ory Action after registration; consume
       Jumio's HMAC-signed callback when the workflow finishes and gate login on the stored verification status. Common
       in regulated industries (financial services, healthcare, gambling, crypto) for high-assurance KYC.
     useCase: >-
       A regulated B2C product (fintech, crypto, online gambling, regulated healthcare) needs document + biometric KYC at
       signup with a vendor that's already on most regulators' approved lists.
     coreFunctionality: |-
-      - Three endpoints: POST /jumio/initiate (sync registration.after; starts workflow with customerInternalReference = Kratos identity id); POST /jumio/callback (async from Jumio; HMAC-SHA256 verified; PATCHes verdict to identity metadata); POST /jumio/validate (sync login.after with can_interrupt: true; blocks rejected identities).
+      - Three endpoints: POST /jumio/initiate (registration.after without response.parse, after the identity is saved; starts workflow with customerInternalReference = Ory identity id); POST /jumio/callback (async from Jumio; HMAC-SHA256 verified; writes the decision to metadata_public); POST /jumio/validate (login.after with response.parse; blocks rejected identities with a 403 and a messages body).
       - customerInternalReference is the binding between Jumio workflow and Kratos identity — set on initiate, consumed on callback.
-      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
-      - Configured via Ory Actions on registration.after (sync) + login.after (sync, can_interrupt) — no Kratos schema changes required.
+      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.getIdentity + patchIdentity).
+      - Hooks go in the method-specific lists (after.password.hooks, after.oidc.hooks, ...) — no Kratos schema changes required.
       - SDK: @ory/client for Kratos admin API; native fetch for Jumio API.
     oryMechanism:
       - actions
@@ -2256,7 +2255,7 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Run LexisNexis Risk Solutions InstantID identity verification from Ory Actions during registration. Database-
+      Run LexisNexis Risk Solutions InstantID identity verification from an Ory Action during registration. Database-
       backed scoring (NAS / NAP / CVI) of name/address/phone/SSN/DOB matches — common in US financial services and
       insurance where document scans are too high-friction. Gates login on the stored verification status.
     useCase: >-
@@ -2264,11 +2263,11 @@ integrations:
       without document upload, scoring against authoritative US data — and wants the threshold per check configurable
       per product risk profile.
     coreFunctionality: |-
-      - Two endpoints: POST /lexisnexis/verify (sync registration.after with can_interrupt; calls InstantID, evaluates NAS/NAP/CVI vs thresholds, PATCHes verdict to identity); POST /lexisnexis/validate (sync login.after with can_interrupt; blocks identities with failed status).
-      - NAS / NAP / CVI scores returned per inquiry — defaults 50 (calibrated for low-risk consumer flows; tune up for higher risk).
-      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+      - Two endpoints: POST /lexisnexis/verify (registration.after with response.parse, before the identity is saved; calls InstantID, evaluates NAS/NAP/CVI vs thresholds, returns the verdict in the response or rejects the registration); POST /lexisnexis/validate (login.after with response.parse; blocks identities with failed status).
+      - NAS and NAP range from 0 to 12, CVI from 0 to 50; thresholds are required env vars agreed with LexisNexis.
+      - Identity-side state returned in the webhook response as metadata_public, saved by Ory with the new identity.
       - Synchronous-only — no async callback path (InstantID returns its decision in the API response).
-      - SDK: @ory/client for Kratos admin API; native fetch for LexisNexis API.
+      - Native fetch for the LexisNexis API; no Ory Admin API calls.
     oryMechanism:
       - actions
     protocol:
@@ -2283,17 +2282,17 @@ integrations:
     status: active
     description: >-
       Run Onfido identity verification (document, biometric, motion, database checks composed via configurable
-      workflows) from Ory Actions during registration; consume Onfido's HMAC-signed callback when the workflow finishes
-      and gate login on the stored verification status.
+      workflows) after registration; consume Onfido's HMAC-signed callback when the workflow finishes and gate login on
+      the stored verification status.
     useCase: >-
       A B2C product needs identity verification at signup with global coverage (especially EU + UK) and the flexibility
       to compose document, selfie, motion, and database checks per workflow without per-region code.
     coreFunctionality: |-
-      - Three endpoints: POST /onfido/initiate (sync registration.after; creates applicant + workflow run with custom_data.kratos_identity_id; returns SDK token); POST /onfido/callback (async from Onfido; X-SHA2-Signature HMAC-SHA256; PATCHes verdict to identity metadata); POST /onfido/validate (sync login.after with can_interrupt: true; blocks declined identities).
+      - Three endpoints: POST /onfido/initiate (called by the application backend after sign-up; creates applicant + workflow run with custom_data.kratos_identity_id; returns SDK token); POST /onfido/callback (async from Onfido; X-SHA2-Signature HMAC-SHA256; writes the status to metadata_public); POST /onfido/validate (login.after with response.parse; blocks declined identities with a 403 and a messages body).
       - custom_data.kratos_identity_id is the binding between Onfido workflow run and Kratos identity — set on initiate, consumed on callback.
       - Region-aware (ONFIDO_REGION = EU/US/CA) — selects the right API base host for data residency.
       - Onfido SDK token returned by initiate is short-lived; client must render the verification UI immediately.
-      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.getIdentity + patchIdentity).
     oryMechanism:
       - actions
     protocol:
@@ -2309,17 +2308,17 @@ integrations:
     status: active
     description: >-
       Run Persona identity verification (configurable templates — document capture, selfie + liveness, database checks,
-      watchlist screening) from Ory Actions during registration; consume Persona's HMAC-signed callback when the inquiry
-      completes and gate login on the stored verification status.
+      watchlist screening) after registration; consume Persona's HMAC-signed callback when the inquiry changes status
+      and gate login on the stored verification status.
     useCase: >-
       A regulated B2C product needs identity verification at signup tailored to product risk — Persona's templates let
       the same handler back KYC-light onboarding (document + selfie) and high-trust flows (with database verification +
       watchlist) without changing code.
     coreFunctionality: |-
-      - Three endpoints: POST /persona/initiate (sync registration.after; creates Inquiry with reference-id = Kratos identity id; returns hosted URL); POST /persona/callback (async from Persona; HMAC-SHA256 via X-Persona-Signature; PATCHes verdict to identity metadata); POST /persona/validate (sync login.after with can_interrupt: true; blocks login when status == declined).
-      - Identity-side state stored in metadata_admin via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+      - Three endpoints: POST /persona/initiate (called by the application backend after sign-up, or registration.after without response.parse; creates Inquiry with reference-id = Ory identity id; returns hosted URL); POST /persona/callback (async from Persona; Persona-Signature t=,v1= HMAC-SHA256 over "<t>.<raw body>"; writes the status to metadata_public); POST /persona/validate (login.after with response.parse; blocks login when status == declined).
+      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.getIdentity + patchIdentity), because the webhook payload has no metadata_admin.
       - Reference-id is the binding between Persona Inquiry and Kratos identity — set on initiate, consumed on callback.
-      - Configured via Ory Actions on registration.after (sync) + login.after (sync, can_interrupt) — no Kratos schema changes required.
+      - Hooks go in the method-specific lists (after.password.hooks, after.oidc.hooks, ...) — no Kratos schema changes required.
       - SDK: @ory/client for Kratos admin API; native fetch for Persona API.
     oryMechanism:
       - actions
@@ -2335,18 +2334,16 @@ integrations:
     maintainedBy: Ory Engineering
     status: active
     description: >-
-      Phone-anchored identity verification — telecom signals, SIM-swap detection, identity prefill, and continuous
-      phone-ownership verification — across three Ory Actions lifecycle points: pre-registration lookup (prefill),
-      post-registration enrollment, and per-login validation.
+      Phone-anchored identity verification — telecom signals and continuous phone-ownership verification — at two Ory
+      Actions lifecycle points: post-registration enrollment and per-login validation.
     useCase: >-
-      A US-focused product wants signup friction reduced (Prove prefill cuts forms by autofilling name/address from the
-      phone number) AND wants ongoing phone-ownership verification so a SIM-swapped phone can't be used to resume an
-      existing account.
+      A US-focused product wants ongoing phone-ownership verification so a changed or SIM-swapped phone can't be used to
+      resume an existing account.
     coreFunctionality: |-
-      - Three sync endpoints: POST /prove/lookup (registration.before with can_interrupt — prefill or block on SIM swap), POST /prove/enroll (registration.after — enroll phone with Prove Identity Manager, store prove_identity_id), POST /prove/validate (login.after with can_interrupt — confirm continuous phone ownership, block on a fail).
-      - All sync — Prove's APIs return decisions in the response, no async callbacks.
-      - Phone collection is a prerequisite — identity schema must capture E.164 phone number before /prove/lookup fires.
-      - Identity-side state stored in metadata_admin via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+      - Two endpoints: POST /prove/enroll (registration.after without response.parse, after the identity is saved — enroll phone with Prove Identity Manager, store prove_identity_id in metadata_public), POST /prove/validate (login.after with response.parse — confirm the phone on file still matches, block on a mismatch).
+      - Prove's APIs return decisions in the response, no async callbacks. Prefill isn't covered: a registration.before action has no phone number or traits.
+      - Phone collection is a prerequisite — identity schema must capture an E.164 phone number.
+      - Identity-side state stored in metadata_public via @ory/client (IdentityApi.getIdentity + patchIdentity), because the webhook payload has no metadata_admin.
       - Uses Prove's official SDK (@prove-identity/prove-api) for the API surface.
       - Defaults to UAT (platform.uat.proveapis.com); override PROVE_SERVER_URL for production.
     oryMechanism:
@@ -2372,8 +2369,8 @@ integrations:
       checks — device, email, network, phone risk — and wants a single deployment that handles both fast and slow Socure
       verdict paths.
     coreFunctionality: |-
-      - Sync path: POST /socure/verify-identity (Ory Action target on registration.after); calls Socure ID+ POST /api/3.0/EmailAuthScore with configured SOCURE_MODULES; returns reference_id / decision (kyc.fieldValidations) / fraud_score for the response-parse Jsonnet to apply policy.
-      - Async path: POST /socure/results-callback (FROM Socure when async checks complete); HMAC-SHA256 over raw body via X-Socure-Signature; when ORY_SDK_URL + ORY_ADMIN_API_KEY are set, PATCHes the final decision to metadata_public.socure_decision on the matching identity.
+      - Sync path: POST /socure/verify-identity (registration action with response.parse: true); calls Socure ID+ POST /api/3.0/EmailAuthScore with configured SOCURE_MODULES and the handler's own reference as customerUserId; rejects the registration with a messages response when the decision is reject or the fraud score reaches SOCURE_FRAUD_THRESHOLD, otherwise returns the reference as external_id.
+      - Async path: POST /socure/results-callback (FROM Socure when async checks complete); HMAC-SHA256 over raw body via X-Socure-Signature; when ORY_SDK_URL + ORY_ADMIN_API_KEY are set, finds the identity by external_id and writes the final decision to metadata_public.socure_decision.
       - SOCURE_MODULES configures which signals run (commonly kyc, fraud, phonerisk).
       - Single deployment, single binary handles both paths — async config is optional.
       - Authenticated via shared ORY_WEBHOOK_SECRET (sync) and SOCURE_CALLBACK_SECRET (async HMAC).
@@ -2391,19 +2388,17 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Duo Security (a Cisco company) is an enterprise MFA platform with strong push and passcode flows. This integration
-      sends a Duo push challenge from an Ory Action webhook on login, polls Duo for the user's response, and returns the
-      verdict so Ory can step up authentication or fail the flow.
+      Duo Security (a Cisco company) is an enterprise MFA platform with push and passcode flows. This integration
+      verifies a Duo passcode from an Ory Action webhook at sign-in and blocks the sign-in unless Duo allows it.
     useCase: >-
-      An enterprise has already standardized its workforce on Duo Mobile for MFA and wants to reuse that enrollment from
-      Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Duo's push challenge runs inline
-      with Ory login; the integration relays the verdict so Ory can issue the session or fail the flow.
+      An enterprise has already standardized its workforce on Duo for MFA and wants to reuse that enrollment from
+      Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn.
     coreFunctionality: |-
-      - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
+      - Sync post-login Ory Action webhook in the method-specific login hook lists (response.parse: true).
+      - Reads the Duo passcode from the flow's transient_payload and the client IP from True-Client-Ip.
       - Signs Duo Auth API requests with HMAC-SHA1 over a canonicalized request line per Duo's spec.
-      - POSTs /auth/v2/auth (factor=push, async=1) and long-polls /auth/v2/auth_status?txid=... until the user responds or DUO_POLL_DEADLINE_SECONDS elapses.
-      - Returns { result: allow | deny | waiting, mfa_passed } so the post-flow Action can gate the session.
-      - 502 on Duo errors so a Duo outage never silently grants MFA.
+      - POSTs /auth/v2/auth with factor=passcode; Duo answers immediately with allow or deny.
+      - Responds 200 on allow and 403 with Ory UI messages otherwise, so Duo errors never grant access and Ory never retries.
     oryMechanism:
       - actions
     protocol:
@@ -2417,20 +2412,17 @@ integrations:
     maintainedBy: Community contributors
     status: active
     description: >-
-      Okta Verify is Okta's first-party MFA app supporting push notifications and TOTP. This integration sends an Okta
-      Verify push from an Ory Action webhook on login, polls Okta for the user's response, and returns the verdict so
-      Ory can step up authentication or fail the flow.
+      Okta Verify is Okta's first-party MFA app supporting push notifications and one-time codes. This integration
+      verifies an Okta Verify code from an Ory Action webhook at sign-in and blocks the sign-in unless Okta accepts it.
     useCase: >-
-      An enterprise has already standardized its workforce on Okta Verify for MFA and wants to reuse that factor
-      enrollment from Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Okta Verify push
-      runs inline with Ory login and relays the verdict so Ory issues the session only on approval.
+      An enterprise has already standardized its workforce on Okta Verify and wants to reuse that enrollment from
+      Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn.
     coreFunctionality: |-
-      - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
-      - GET /api/v1/users/{user_id}/factors → finds the active push factor.
-      - POST /api/v1/users/{user_id}/factors/{factor_id}/verify → sends the push, gets a poll URL.
-      - Polls the poll URL every 2 s until factorResult ≠ WAITING or OKTA_POLL_DEADLINE_SECONDS elapses.
-      - Returns { result: SUCCESS / REJECTED / TIMEOUT / WAITING, mfa_passed } so the post-flow Action can gate the session.
-      - 502 on Okta errors (SSWS revoked, factor lookup 404) so Okta outages never silently grant MFA.
+      - Sync post-login Ory Action webhook in the method-specific login hook lists (response.parse: true).
+      - Reads the Okta user ID from metadata_public.okta_user_id and the code from the flow's transient_payload.
+      - GET /api/v1/users/{userId}/factors → finds the active Okta Verify code factor (token:software:totp).
+      - POST /api/v1/users/{userId}/factors/{factorId}/verify with passCode; Okta answers immediately.
+      - Responds 200 on SUCCESS and 403 with Ory UI messages otherwise; unenrolled users are blocked unless OKTA_ALLOW_UNENROLLED=true.
     oryMechanism:
       - actions
     protocol:
@@ -2454,7 +2446,7 @@ integrations:
       reference but the same mechanism backs TouchID / Windows Hello / Android biometrics.
     coreFunctionality: |-
       - Configured per Ory docs at /kratos/mfa/webauthn-fido-yubikey; Ory Console → Authentication → Multi-factor → enable WebAuthn.
-      - Relying Party (RP) config: id (eTLD+1 the credential is scoped to), origins (full URLs users sign in from), display_name (shown in enrollment prompt).
+      - Relying Party (RP) config: id (domain of the login page or a parent domain, no scheme or port), origins (exact origins of the pages that prompt for WebAuthn, each under id), display_name (shown in enrollment prompt).
       - Covers all FIDO2 authenticators (YubiKey, TouchID, Face ID, Windows Hello, Android biometrics) — "YubiKey" in the doc title is historical.
       - Phishing-resistant: WebAuthn binds credential to origin, blocking credential theft via look-alike domains.
       - AAL2 (NIST 800-63) compliance: WebAuthn satisfies AAL2 paired with a password-or-passkey first factor.
@@ -2827,8 +2819,8 @@ integrations:
     coreFunctionality: |-
       - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms (the example uses Twilio directly).
       - Endpoint POST https://api.twilio.com/2010-04-01/Accounts/<SID>/Messages.json with HTTP Basic auth (Account SID : Auth Token).
-      - Content-Type MUST be application/x-www-form-urlencoded (Twilio rejects JSON); body is URL-encoded To, From, Body.
-      - For production, prefer a Twilio Messaging Service (replace From=... with MessagingServiceSid=MGxxxx...) for sender pooling and per-country routing.
+      - Content-Type MUST be application/x-www-form-urlencoded (Twilio rejects JSON); the Jsonnet template returns an object of string fields To, From, Body, which the courier form-encodes.
+      - For production, prefer a Twilio Messaging Service (replace From with MessagingServiceSid) for sender pooling and per-country routing.
       - Twilio Test Credentials (separate SID/Token) simulate sends without delivery or charges — useful for CI.
     oryMechanism:
       - courier-spi
@@ -2851,9 +2843,9 @@ integrations:
       regions, in addition to or instead of US-centric Twilio.
     coreFunctionality: |-
       - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
-      - Endpoint POST https://rest.nexmo.com/sms/json. Authentication is API key + secret in the request BODY (not headers), so the Kratos courier `auth` block stays empty and credentials live in the Jsonnet template.
-      - JSON body: api_key, api_secret, from (alphanumeric ID up to 11 chars OR a Vonage virtual number — alphanumeric not allowed in US/Canada), to, text.
-      - Vonage accepts E.164 with or without leading "+"; strip in Jsonnet if a country rejects the + form.
+      - Endpoint POST https://rest.nexmo.com/sms/json with HTTP Basic auth (API key : API secret) through the courier's basic_auth block.
+      - Content-Type application/x-www-form-urlencoded; form fields from (alphanumeric ID up to 11 chars OR a Vonage virtual number — alphanumeric not allowed in US/Canada), to, text.
+      - The Jsonnet template strips the leading "+" from Ory's E.164 recipient.
       - Newer Messages API (api.nexmo.com/v1/messages) available with JWT/header auth; the REST SMS API above is simpler for SMS-only use.
     oryMechanism:
       - courier-spi
@@ -2879,7 +2871,7 @@ integrations:
       API as an authentication-template message.
     coreFunctionality: |-
       - Kratos courier-spi HTTP target (configured via kratos-courier.yaml, not ory-actions.yaml).
-      - Extracts the OTP from the rendered Kratos body via strict regex /\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i.
+      - Takes the OTP from template_data (login_code, registration_code, or verification_code) via the body template, falling back to extracting it from the rendered Kratos body via strict regex /\b(?:code|pin|otp)[^\d]{0,16}(\d{4,10})\b/i.
       - Normalizes recipient to E.164 (leading "+" then digits).
       - POSTs to graph.facebook.com/{version}/{phone_id}/messages with type: template, sending the OTP as both the body parameter and the copy-code button parameter.
       - 422 otp_extract_failed when the message body doesn't yield a digit run — explicit instead of silently sending an empty template.

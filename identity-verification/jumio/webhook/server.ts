@@ -3,16 +3,17 @@
 // Jumio <> Ory Actions webhook handler.
 //
 // Three endpoints:
-//   POST /jumio/initiate  — sync post-registration; starts a Jumio workflow
-//                            and writes the Jumio account ID to metadata_public.
+//   POST /jumio/initiate  — post-registration, after the identity is saved;
+//                            starts a Jumio workflow and writes the Jumio
+//                            account ID to metadata_public.
 //   POST /jumio/callback  — async callback FROM Jumio when the workflow
 //                            finishes; HMAC-SHA256 signature verified.
 //                            Resolves the Kratos identity via Jumio's
 //                            customerInternalReference (we set this to the
 //                            Kratos identity id during initiate) and patches
 //                            the verification verdict onto the identity.
-//   POST /jumio/validate  — sync post-login; blocks login when the stored
-//                            verification status is `rejected`.
+//   POST /jumio/validate  — sync post-login with response.parse; blocks login
+//                            when the stored verification status is `rejected`.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -21,7 +22,12 @@ import express, {
   type Request,
   type Response,
 } from "express";
-import { Configuration, IdentityApi, JsonPatchOpEnum } from "@ory/client";
+import {
+  Configuration,
+  IdentityApi,
+  type JsonPatch,
+  JsonPatchOpEnum,
+} from "@ory/client";
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
@@ -52,6 +58,79 @@ if (
 const kratos = new IdentityApi(
   new Configuration({ basePath: KRATOS_ADMIN_URL, accessToken: ORY_API_KEY }),
 );
+
+const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+
+// Patch only this integration's keys. When a metadata parent is null, the
+// updated_at test prevents replacing data written since the GET; a stale
+// snapshot is fetched again before retrying.
+async function mergeMetadata(
+  id: string,
+  update: {
+    metadata_public?: Record<string, unknown>;
+    metadata_admin?: Record<string, unknown>;
+  },
+): Promise<void> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: identity } = await kratos.getIdentity({ id });
+    const jsonPatch: JsonPatch[] = [];
+    for (const field of ["metadata_public", "metadata_admin"] as const) {
+      const values = update[field];
+      if (!values) continue;
+      const entries = Object.entries(values).filter(
+        ([, value]) => value !== undefined,
+      );
+      if (entries.length === 0) continue;
+      if (identity[field] == null) {
+        if (!identity.updated_at)
+          throw new Error("Identity is missing updated_at");
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Test,
+          path: "/updated_at",
+          value: identity.updated_at,
+        });
+        jsonPatch.push({
+          op: JsonPatchOpEnum.Add,
+          path: `/${field}`,
+          value: Object.fromEntries(entries),
+        });
+      } else {
+        for (const [key, value] of entries) {
+          const escaped = key.replace(/~/g, "~0").replace(/\//g, "~1");
+          jsonPatch.push({
+            op: JsonPatchOpEnum.Add,
+            path: `/${field}/${escaped}`,
+            value,
+          });
+        }
+      }
+    }
+    if (jsonPatch.length === 0) return;
+    try {
+      await kratos.patchIdentity({ id, jsonPatch });
+      return;
+    } catch (error) {
+      const response = (
+        error as { response?: { status?: number; data?: { reason?: string } } }
+      ).response;
+      if (
+        attempt === 2 ||
+        response?.status !== 400 ||
+        response.data?.reason !== "failed to apply JSON patch"
+      )
+        throw error;
+    }
+  }
+}
+
+// Ory Kratos Identities shows `text` to the user only for this response shape.
+function block(res: Response, text: string): void {
+  res.status(403).json({
+    messages: [
+      { instance_ptr: "#/", messages: [{ id: 9001001, text, type: "error" }] },
+    ],
+  });
+}
 
 interface InitiateRequest {
   kratos_identity_id?: string;
@@ -119,7 +198,9 @@ async function getJumioToken(): Promise<string> {
   if (cachedJumioToken && Date.now() < cachedJumioToken.expiresAt - 60_000) {
     return cachedJumioToken.token;
   }
-  const basic = Buffer.from(`${JUMIO_CLIENT_ID}:${JUMIO_CLIENT_SECRET}`).toString("base64");
+  const basic = Buffer.from(
+    `${JUMIO_CLIENT_ID}:${JUMIO_CLIENT_SECRET}`,
+  ).toString("base64");
   const res = await fetch(JUMIO_AUTH_URL as string, {
     method: "POST",
     headers: {
@@ -147,13 +228,17 @@ app.get("/health", (_req, res) => {
 });
 
 // Post-registration: create a Jumio account/workflow and record the IDs.
+// Configure this action without response.parse so it runs after the identity
+// is saved and receives the real identity ID.
 app.post(
   "/jumio/initiate",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, InitiateRequest>, res: Response) => {
     const { kratos_identity_id, email } = req.body;
-    if (!kratos_identity_id || !email) {
-      res.status(400).json({ error: "kratos_identity_id and email are required" });
+    if (!kratos_identity_id || kratos_identity_id === NIL_UUID || !email) {
+      res
+        .status(400)
+        .json({ error: "a saved kratos_identity_id and email are required" });
       return;
     }
 
@@ -178,45 +263,27 @@ app.post(
       const { id: accountId, token: transactionToken } =
         (await accountRes.json()) as JumioAccountCreateResponse;
 
-      await kratos.patchIdentity({
-        id: kratos_identity_id,
-        jsonPatch: [
-          { op: JsonPatchOpEnum.Replace, path: "/metadata_public/jumio_account_id", value: accountId },
-          {
-            op: JsonPatchOpEnum.Replace,
-            path: "/metadata_public/jumio_verification_status",
-            value: "initiated",
-          },
-          {
-            op: JsonPatchOpEnum.Replace,
-            path: "/metadata_public/jumio_initiated_at",
-            value: new Date().toISOString(),
-          },
-          {
-            op: JsonPatchOpEnum.Replace,
-            path: "/metadata_admin/jumio_transaction_token",
-            value: transactionToken,
-          },
-        ],
+      await mergeMetadata(kratos_identity_id, {
+        metadata_public: {
+          jumio_account_id: accountId,
+          jumio_verification_status: "initiated",
+          jumio_initiated_at: new Date().toISOString(),
+        },
+        metadata_admin: { jumio_transaction_token: transactionToken },
       });
 
       res.json({ success: true, jumio_account_id: accountId });
     } catch (err) {
       console.error("Jumio initiate error:", (err as Error).message);
-      // Best-effort: record the error on the identity so support can see it.
       try {
-        await kratos.patchIdentity({
-          id: kratos_identity_id,
-          jsonPatch: [
-            {
-              op: JsonPatchOpEnum.Replace,
-              path: "/metadata_admin/jumio_initiation_error",
-              value: (err as Error).message,
-            },
-          ],
+        await mergeMetadata(kratos_identity_id, {
+          metadata_admin: { jumio_initiation_error: (err as Error).message },
         });
       } catch (e) {
-        console.error("Failed to record initiation error:", (e as Error).message);
+        console.error(
+          "Failed to record initiation error:",
+          (e as Error).message,
+        );
       }
       res.status(200).json({ success: false, error: (err as Error).message });
     }
@@ -256,15 +323,22 @@ app.post(
     // customerInternalReference is what we set to kratos_identity_id on initiate.
     const kratosIdentityId = req.body.account?.customerInternalReference;
 
-    // Acknowledge immediately so Jumio doesn't retry while we work.
-    res.json({ received: true });
-
-    if (workflowStatus !== "PROCESSED" || !workflowId || !accountId || !kratosIdentityId) {
+    if (
+      workflowStatus !== "PROCESSED" ||
+      !workflowId ||
+      !accountId ||
+      !kratosIdentityId
+    ) {
       console.log(
         `Jumio callback skipped: workflow=${workflowId} status=${workflowStatus} kratos=${kratosIdentityId}`,
       );
+      res.json({ received: true, ignored: true });
       return;
     }
+
+    // The callback is acknowledged only after the identity is updated, so a
+    // failed update is retried by Jumio instead of being lost. If this work can
+    // outlast Jumio's callback timeout, put a durable queue in front of it.
 
     try {
       const accessToken = await getJumioToken();
@@ -281,88 +355,45 @@ app.post(
       }
       const details = (await detailsRes.json()) as JumioWorkflowResponse;
       const decisionType = details.decision?.type ?? "UNKNOWN";
+      // Every decision other than PASSED, including WARNING, blocks sign-in.
+      // Map WARNING to a review status here to route it to manual review instead.
       const verified = decisionType === "PASSED";
 
-      await kratos.patchIdentity({
-        id: kratosIdentityId,
-        jsonPatch: [
-          {
-            op: JsonPatchOpEnum.Replace,
-            path: "/metadata_public/jumio_verification_status",
-            value: verified ? "verified" : "rejected",
-          },
-          {
-            op: JsonPatchOpEnum.Replace,
-            path: "/metadata_public/jumio_verification_decision",
-            value: decisionType,
-          },
-          {
-            op: JsonPatchOpEnum.Replace,
-            path: "/metadata_public/jumio_verified_at",
-            value: req.body.callbackSentAt ?? new Date().toISOString(),
-          },
-          {
-            op: JsonPatchOpEnum.Replace,
-            path: "/metadata_admin/jumio_workflow_id",
-            value: workflowId,
-          },
-        ],
+      await mergeMetadata(kratosIdentityId, {
+        metadata_public: {
+          jumio_verification_status: verified ? "verified" : "rejected",
+          jumio_verification_decision: decisionType,
+          jumio_verified_at:
+            req.body.callbackSentAt ?? new Date().toISOString(),
+        },
+        metadata_admin: { jumio_workflow_id: workflowId },
       });
 
       console.log(
         `Jumio callback: kratos=${kratosIdentityId} decision=${decisionType} verified=${verified}`,
       );
+      res.json({ received: true });
     } catch (err) {
-      console.error("Jumio callback processing failed:", (err as Error).message);
+      console.error(
+        "Jumio callback processing failed:",
+        (err as Error).message,
+      );
+      res.status(500).json({ error: "processing_failed" });
     }
   },
 );
 
-// Post-login: block when verification is rejected; allow + warn when pending.
+// Post-login: block when verification is rejected. Ory Kratos Identities
+// ignores identity changes in a login.after response, so this only decides.
 app.post(
   "/jumio/validate",
   verifyWebhookSecret,
-  async (req: Request<unknown, unknown, ValidateRequest>, res: Response) => {
-    const { kratos_identity_id, jumio_account_id, jumio_verification_status } = req.body;
-    if (!kratos_identity_id || !jumio_account_id) {
-      res.json({ success: true }); // no verification on file → allow
+  (req: Request<unknown, unknown, ValidateRequest>, res: Response) => {
+    if (req.body.jumio_verification_status === "rejected") {
+      block(res, "Identity verification failed. Please contact support.");
       return;
     }
-
-    if (jumio_verification_status === "verified") {
-      try {
-        await kratos.patchIdentity({
-          id: kratos_identity_id,
-          jsonPatch: [
-            {
-              op: JsonPatchOpEnum.Replace,
-              path: "/metadata_public/jumio_last_validated_at",
-              value: new Date().toISOString(),
-            },
-          ],
-        });
-      } catch (err) {
-        console.warn("Could not update last_validated_at:", (err as Error).message);
-      }
-      res.json({ success: true });
-      return;
-    }
-
-    if (jumio_verification_status === "rejected") {
-      res.status(400).json({
-        messages: [
-          {
-            instance_ptr: "#/",
-            message: "Identity verification failed. Please contact support.",
-            type: "error",
-          },
-        ],
-      });
-      return;
-    }
-
-    // Pending — allow with a warning that the client can render.
-    res.json({ success: true, warning: "Please complete identity verification" });
+    res.json({});
   },
 );
 

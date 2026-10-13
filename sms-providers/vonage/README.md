@@ -13,30 +13,30 @@ The Ory docs page covers the SMS courier configuration in general. Vonage-specif
 | --- | --- |
 | URL | `https://rest.nexmo.com/sms/json` |
 | Method | `POST` |
-| Auth | API key + secret in the **request body** (not headers) |
-| Body | JSON with `api_key`, `api_secret`, `from`, `to`, `text` |
+| Content-Type | `application/x-www-form-urlencoded` |
+| Auth | HTTP Basic (`API key` : `API secret`) |
+| Body | Form fields `from`, `to` (no leading `+`), `text` |
 
-> Vonage's REST SMS API authenticates via credentials in the body, so the Kratos courier `auth` block stays empty — credentials live in the Jsonnet template instead.
+> Use the courier's `basic_auth` block with the API key as `user` and the API secret as `password`, both as plain strings. This keeps the credentials out of the Jsonnet template.
 
 ## Setup
 
 1. Sign up at [vonage.com](https://www.vonage.com); copy the **API key** and **API secret** from the dashboard.
 2. Pick a sender — a Vonage virtual number, or an alphanumeric ID (up to 11 chars; not allowed in US/Canada).
-3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) using the values in the table above.
+3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) using the values in the table above. With `application/x-www-form-urlencoded`, the courier turns the object the template returns into form fields, so every value must be a string. Encode the template and set it as `body: base64://<base64-encoded-jsonnet>`.
 
 ```jsonnet
 function(ctx) {
-  body: std.manifestJsonEx({
-    api_key: "YOUR_API_KEY",
-    api_secret: "YOUR_API_SECRET",
-    from: "YourApp",
-    to: ctx.recipient,
-    text: ctx.body,
-  }, "  "),
+  from: 'YourApp',
+  to:
+    if std.startsWith(ctx.recipient, '+')
+    then std.substr(ctx.recipient, 1, std.length(ctx.recipient) - 1)
+    else ctx.recipient,
+  text: ctx.body,
 }
 ```
 
-Vonage accepts E.164 with or without the leading `+`; if delivery fails on a country, strip the `+` in the Jsonnet template.
+Vonage expects the recipient in E.164 format without the leading `+`, so the template strips it.
 
 ## License
 

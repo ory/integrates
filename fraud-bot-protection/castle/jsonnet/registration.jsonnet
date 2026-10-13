@@ -1,17 +1,15 @@
-// Body for the post-registration Ory Action that calls the Castle webhook handler.
-// Same payload shape as login — Castle distinguishes events by handler endpoint.
-function(ctx) {
-  identity: {
-    id: ctx.identity.id,
-    traits: ctx.identity.traits,
-    metadata_admin: ctx.identity.metadata_admin,
-    created_at: ctx.identity.created_at,
-  },
-  flow: {
-    id: ctx.flow.id,
-    type: ctx.flow.type,
-    transient_payload: if std.objectHas(ctx.flow, "transient_payload") then ctx.flow.transient_payload else {},
-  },
-  request_headers: ctx.request_headers,
-  request_url: ctx.request_url,
-}
+// Body for the registration.after action that calls the Castle handler. The client IP
+// comes from the True-Client-Ip header, and the device token from the flow's
+// transient_payload.
+function(ctx)
+  local payload = std.get(ctx.flow, 'transient_payload', null);
+  {
+    request_token: if payload == null then null else std.get(payload, 'castle_request_token', null),
+    user: {
+      id: ctx.identity.id,
+      email: std.get(ctx.identity.traits, 'email', null),
+      registered_at: std.get(ctx.identity, 'created_at', null),
+    },
+    ip: std.get(ctx.request_headers, 'True-Client-Ip', [null])[0],
+    headers: ctx.request_headers,
+  }

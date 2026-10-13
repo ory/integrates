@@ -1,10 +1,9 @@
-// Body for the sync post-login Ory Action that validates the stored phone
-// against what Prove has on file.
-function(ctx) {
-  kratos_identity_id: ctx.identity.id,
-  phone_number: if std.objectHas(ctx.identity.traits, "phone_number") then ctx.identity.traits.phone_number else "",
-  prove_identity_id:
-    if ctx.identity.metadata_public != null && std.objectHas(ctx.identity.metadata_public, "prove_identity_id")
-    then ctx.identity.metadata_public.prove_identity_id
-    else null,
-}
+// Body for the post-login Ory Action that validates the stored phone
+// against what Prove has on file. The webhook payload has no metadata_admin,
+// so prove_identity_id lives in metadata_public.
+function(ctx)
+  local metadata = std.get(ctx.identity, 'metadata_public', null);
+  {
+    phone_number: std.get(std.get(ctx.identity, 'traits', {}), 'phone_number', ''),
+    prove_identity_id: if metadata == null then null else std.get(metadata, 'prove_identity_id', null),
+  }

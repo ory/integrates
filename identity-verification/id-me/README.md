@@ -11,10 +11,11 @@ ID.me also offers **verified group claims** (Military, First Responder, Student,
 
 ## Setup
 
-ID.me is OIDC-compliant; configure as a generic provider with explicit endpoints (no Kratos provider key for `id-me`):
+ID.me is OIDC-compliant; configure it as a `generic` provider with the issuer URL. Ory reads the endpoints from `https://api.id.me/oidc/.well-known/openid-configuration`:
 
 | Setting | Value |
 | --- | --- |
+| Issuer URL | `https://api.id.me/oidc` |
 | Authorization | `https://api.id.me/oauth/authorize` |
 | Token | `https://api.id.me/oauth/token` |
 | Userinfo | `https://api.id.me/api/public/v3/userinfo` |
@@ -26,7 +27,27 @@ ID.me is OIDC-compliant; configure as a generic provider with explicit endpoints
 1. Sign up at [developers.id.me](https://developers.id.me) for a developer account.
 2. Create an application and add the Ory redirect URI as an approved Redirect URI.
 3. Submit the application for ID.me review — required before scopes like `military`, `nurse`, `teacher` are released to the application.
-4. Configure as a generic OIDC provider via Ory CLI (Console wizard's discovery flow doesn't work cleanly because ID.me requires explicit endpoints).
+4. Configure ID.me as a generic OIDC provider in your identity configuration:
+
+   ```yaml
+   selfservice:
+     methods:
+       oidc:
+         enabled: true
+         config:
+           providers:
+             - id: id-me
+               provider: generic
+               label: ID.me
+               client_id: <your-client-id>
+               client_secret: <your-client-secret>
+               issuer_url: https://api.id.me/oidc
+               mapper_url: base64://<base64-encoded-jsonnet>
+               scope:
+                 - openid
+   ```
+
+   Add the group scopes that ID.me approved for your app to `scope`. The provider `id` must match the last path segment of the redirect URI.
 5. Map the OIDC claims (and any verified-group claims) to identity traits / metadata via Jsonnet.
 
 ## Status

@@ -8,20 +8,17 @@ category: mfa
 type: webhook
 maintainedBy: Community contributors
 description: >-
-  Okta Verify is Okta's first-party MFA app supporting push notifications and TOTP. This integration sends an Okta
-  Verify push from an Ory Action webhook on login, polls Okta for the user's response, and returns the verdict so Ory
-  can step up authentication or fail the flow.
+  Okta Verify is Okta's first-party MFA app supporting push notifications and one-time codes. This integration
+  verifies an Okta Verify code from an Ory Action webhook at sign-in and blocks the sign-in unless Okta accepts it.
 useCase: >-
-  An enterprise has already standardized its workforce on Okta Verify for MFA and wants to reuse that factor enrollment
-  from Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn. Okta Verify push runs inline
-  with Ory login and relays the verdict so Ory issues the session only on approval.
+  An enterprise has already standardized its workforce on Okta Verify and wants to reuse that enrollment from
+  Ory-hosted login flows without re-enrolling users in Ory's native TOTP/WebAuthn.
 coreFunctionality: |-
-  - Sync post-login Ory Action webhook (response.parse: true, can_interrupt: true).
-  - GET /api/v1/users/{user_id}/factors → finds the active push factor.
-  - POST /api/v1/users/{user_id}/factors/{factor_id}/verify → sends the push, gets a poll URL.
-  - Polls the poll URL every 2 s until factorResult ≠ WAITING or OKTA_POLL_DEADLINE_SECONDS elapses.
-  - Returns { result: SUCCESS / REJECTED / TIMEOUT / WAITING, mfa_passed } so the post-flow Action can gate the session.
-  - 502 on Okta errors (SSWS revoked, factor lookup 404) so Okta outages never silently grant MFA.
+  - Sync post-login Ory Action webhook in the method-specific login hook lists (response.parse: true).
+  - Reads the Okta user ID from metadata_public.okta_user_id and the code from the flow's transient_payload.
+  - GET /api/v1/users/{userId}/factors → finds the active Okta Verify code factor (token:software:totp).
+  - POST /api/v1/users/{userId}/factors/{factorId}/verify with passCode; Okta answers immediately.
+  - Responds 200 on SUCCESS and 403 with Ory UI messages otherwise; unenrolled users are blocked unless OKTA_ALLOW_UNENROLLED=true.
 oryMechanism:
   - actions
 protocol:

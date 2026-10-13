@@ -9,17 +9,17 @@ type: webhook
 maintainedBy: Ory Engineering
 description: >-
   Run Onfido identity verification (document, biometric, motion, database checks composed via configurable
-  workflows) from Ory Actions during registration; consume Onfido's HMAC-signed callback when the workflow
+  workflows) after registration; consume Onfido's HMAC-signed callback when the workflow
   finishes and gate login on the stored verification status.
 useCase: >-
   A B2C product needs identity verification at signup with global coverage (especially EU + UK) and the
   flexibility to compose document, selfie, motion, and database checks per workflow without per-region code.
 coreFunctionality: |-
-  - Three endpoints: POST /onfido/initiate (sync registration.after; creates applicant + workflow run with custom_data.kratos_identity_id; returns SDK token); POST /onfido/callback (async from Onfido; X-SHA2-Signature HMAC-SHA256; PATCHes verdict to identity metadata); POST /onfido/validate (sync login.after with can_interrupt: true; blocks declined identities).
+  - Three endpoints: POST /onfido/initiate (called by the application backend after sign-up; creates applicant + workflow run with custom_data.kratos_identity_id; returns SDK token); POST /onfido/callback (async from Onfido; X-SHA2-Signature HMAC-SHA256; writes the status to metadata_public); POST /onfido/validate (login.after with response.parse; blocks declined identities with a 403 and a messages body).
   - custom_data.kratos_identity_id is the binding between Onfido workflow run and Kratos identity — set on initiate, consumed on callback.
   - Region-aware (ONFIDO_REGION = EU/US/CA) — selects the right API base host for data residency.
   - Onfido SDK token returned by initiate is short-lived; client must render the verification UI immediately.
-  - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+  - Identity-side state stored in metadata_public via @ory/client (IdentityApi.getIdentity + patchIdentity).
 oryMechanism:
   - actions
 protocol:

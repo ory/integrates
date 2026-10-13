@@ -3,8 +3,8 @@
 // Reference webhook handler for the Ory <> Equifax integration.
 // Receives an Ory Action webhook, exchanges client credentials for an OAuth 2.0
 // access token (cached, refreshed ~5 min before expiry), and calls the Equifax
-// Digital Identity Trust API. Returns the decision and trust score so Ory's
-// post-flow Action can apply policy (e.g., gate a registration).
+// Digital Identity Trust API. A passing decision returns 200 with the result
+// stored on the new identity; any other decision rejects the registration.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -20,6 +20,12 @@ const EQUIFAX_API_BASE = process.env.EQUIFAX_API_BASE || "https://api.sandbox.eq
 const EQUIFAX_CLIENT_ID = process.env.EQUIFAX_CLIENT_ID;
 const EQUIFAX_CLIENT_SECRET = process.env.EQUIFAX_CLIENT_SECRET;
 const EQUIFAX_SCOPE = process.env.EQUIFAX_SCOPE;
+// Decision values vary by Equifax product. Only these values let the
+// registration through; set them to the passing values of your product.
+const EQUIFAX_PASS_DECISIONS = (process.env.EQUIFAX_PASS_DECISIONS || "APPROVE,PASS,ACCEPT")
+  .split(",")
+  .map((s) => s.trim().toUpperCase())
+  .filter(Boolean);
 
 if (!ORY_WEBHOOK_SECRET || !EQUIFAX_CLIENT_ID || !EQUIFAX_CLIENT_SECRET || !EQUIFAX_SCOPE) {
   console.error(
@@ -29,7 +35,6 @@ if (!ORY_WEBHOOK_SECRET || !EQUIFAX_CLIENT_ID || !EQUIFAX_CLIENT_SECRET || !EQUI
 }
 
 interface OryWebhookBody {
-  identity_id?: string;
   email?: string;
   first_name?: string;
   last_name?: string;
@@ -92,6 +97,14 @@ async function getToken(): Promise<string> {
   return cachedToken;
 }
 
+// Ory Kratos Identities rejects the flow and shows `text` to the user only for
+// a 4xx response in this shape.
+function rejectFlow(res: Response, id: number, text: string) {
+  res.status(400).json({
+    messages: [{ instance_ptr: "#/", messages: [{ id, text, type: "error" }] }],
+  });
+}
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
@@ -100,13 +113,16 @@ app.post(
   "/equifax/verify-identity",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, OryWebhookBody>, res: Response) => {
-    const { identity_id, email, first_name, last_name, date_of_birth, ssn_last_four, address } =
-      req.body;
+    const { email, first_name, last_name, date_of_birth, ssn_last_four, address } = req.body;
 
     if (!email || !first_name || !last_name) {
-      res.status(400).json({ error: "email, first_name, last_name are required" });
+      rejectFlow(res, 9000101, "Please provide your first name, last name, and email address.");
       return;
     }
+
+    // The identity is not saved yet, so the handler creates its own reference
+    // and stores it as the identity's external_id.
+    const reference = crypto.randomUUID();
 
     try {
       const token = await getToken();
@@ -118,7 +134,7 @@ app.post(
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          externalReferenceId: identity_id,
+          externalReferenceId: reference,
           consumer: {
             name: { firstName: first_name, lastName: last_name },
             dateOfBirth: date_of_birth,
@@ -137,11 +153,23 @@ app.post(
       }
 
       const result = (await verifyRes.json()) as EquifaxVerifyResponse;
+      const decision = (result.decision ?? result.outcome ?? "").toUpperCase();
+      if (!EQUIFAX_PASS_DECISIONS.includes(decision)) {
+        console.log(`Equifax rejected registration: ref=${reference} decision=${decision || "none"}`);
+        rejectFlow(res, 9000102, "We couldn't verify your identity.");
+        return;
+      }
+
       res.json({
-        ok: true,
-        decision: result.decision ?? result.outcome,
-        trust_score: result.trustScore ?? null,
-        reference_id: result.referenceId ?? null,
+        identity: {
+          external_id: reference,
+          metadata_admin: {
+            equifax_verification_status: "verified",
+            equifax_decision: decision,
+            equifax_trust_score: result.trustScore ?? null,
+            equifax_reference_id: result.referenceId ?? null,
+          },
+        },
       });
     } catch (err) {
       console.error("Verify error:", (err as Error).message);

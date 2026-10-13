@@ -21,17 +21,17 @@ The Ory docs page walks through the SMS courier configuration end-to-end using T
 
 1. Sign up at [twilio.com](https://www.twilio.com); copy the **Account SID** and **Auth Token** from the console.
 2. Buy an SMS-enabled Twilio phone number — this is your `From`.
-3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) (the example uses Twilio directly).
+3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) (the example uses Twilio directly). Set the `basic_auth` `user` and `password` to the plain Account SID and Auth Token strings, and the `Content-Type` header to `application/x-www-form-urlencoded`. With that content type, the courier turns the object the template returns into form fields, so every value must be a string. Encode the template and set it as `body: base64://<base64-encoded-jsonnet>`.
 
 ```jsonnet
 function(ctx) {
-  body: "To=" + std.encodeURI(ctx.recipient)
-      + "&From=" + std.encodeURI("+1XXXXXXXXXX")
-      + "&Body=" + std.encodeURI(ctx.body),
+  To: ctx.recipient,
+  From: '+1XXXXXXXXXX',
+  Body: ctx.body,
 }
 ```
 
-For production, consider a Twilio **Messaging Service** (sender pool, country-specific routing, compliance) — replace the `From=...` parameter with `MessagingServiceSid=MGxxxx...`.
+For production, consider a Twilio **Messaging Service** (sender pool, country-specific routing, compliance) — replace the `From` field with `MessagingServiceSid: 'MGxxxx...'`.
 
 ## Notes
 

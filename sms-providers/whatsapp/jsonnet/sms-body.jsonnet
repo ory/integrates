@@ -1,10 +1,20 @@
 // Body template Kratos passes to the WhatsApp courier handler.
 //
-// Kratos's HTTP courier renders this jsonnet against its message context (recipient,
-// rendered body text, message_type, etc.). The handler at /whatsapp/send extracts the
-// OTP from `body` and maps it into the WhatsApp Cloud API template payload.
-function(ctx) {
-  recipient: ctx.recipient,
-  body: ctx.body,
-  message_type: if std.objectHas(ctx, "message_type") then ctx.message_type else "verification_code",
-}
+// The code is in template_data.login_code, registration_code, or
+// verification_code depending on the template; the recovery SMS also uses
+// verification_code. The handler falls back to extracting the code from the
+// rendered body when `otp` is null.
+function(ctx)
+  local data = std.get(ctx, 'template_data', null);
+  local field(name) = if data == null then null else std.get(data, name, null);
+  {
+    recipient: ctx.recipient,
+    body: ctx.body,
+    otp: std.foldl(
+      function(found, name) if found != null then found else field(name),
+      ['login_code', 'registration_code', 'verification_code'],
+      null,
+    ),
+    template_type: std.get(ctx, 'template_type', null),
+    message_type: std.get(ctx, 'message_type', null),
+  }

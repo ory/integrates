@@ -9,16 +9,16 @@ type: webhook
 maintainedBy: Community contributors
 description: >-
   Run GBG (which acquired Acuant) identity verification — document + biometric — from an Ory Actions webhook
-  during registration. Calls the GBG GO Journey API, returns the GBG decision (PASS / REFER / FAIL) so Ory can
-  gate the registration flow, and writes the verdict to identity metadata for downstream policy.
+  during registration. Calls the GBG GO Journey API, lets PASS through with the verdict in identity metadata, and
+  rejects FAIL (and, by default, REFER) with a messages response.
 useCase: >-
   A regulated product wants document + biometric identity verification with GBG's deep international document
   coverage (long Acuant heritage), wired into a configurable GBG "journey" so the same Ory action can back
   several risk levels by swapping the journey id.
 coreFunctionality: |-
-  - One sync endpoint POST /gbg/verify-identity called from registration.after with response.parse: true so Ory consumes the GBG decision directly.
+  - One sync endpoint POST /gbg/verify-identity called from the method-specific registration.after hook lists with response.parse: true, before the identity is saved.
   - GBG-side flow defined as a "journey" (journey id is required); journey definition controls which evidence types are required (document, selfie, address, etc.).
-  - Decision values: PASS / REFER / FAIL — the action fails the registration on REFER/FAIL, or writes the verdict into identity.metadata for downstream policy.
+  - Decision values: PASS / REFER / FAIL — the handler returns 200 with the verdict on PASS and 400 with a messages body on FAIL; REFER is rejected unless GBG_REFER_ACTION=allow.
   - Authenticated via X-Webhook-Secret shared with the Ory hook config.
   - First-call cold-path latency can be 5-10s; handler caps at 15s.
 oryMechanism:

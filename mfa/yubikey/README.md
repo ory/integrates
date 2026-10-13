@@ -13,8 +13,8 @@ The full walkthrough lives in the [Ory docs page above](https://www.ory.com/docs
 
 1. In Ory Console → **Authentication** → **Multi-factor**, enable **WebAuthn**.
 2. Configure the **Relying Party (RP)**:
-   - `id`: your auth domain (e.g. `auth.example.com`) — the eTLD+1 the WebAuthn credential is scoped to.
-   - `origins`: the full origins users sign in from (e.g. `https://app.example.com`).
+   - `id`: the domain of your login page or a parent domain of it, without scheme or port (e.g. `example.com` or `auth.example.com` for a login page on `auth.example.com`). The WebAuthn credential is scoped to this domain.
+   - `origins`: the exact origins (scheme, host, and port) of the pages that prompt for WebAuthn (e.g. `https://auth.example.com`). Each origin's host must be the `id` or a subdomain of it.
    - `display_name`: shown to users in the YubiKey enrollment prompt.
 3. (Optional) Enable **Passkeys** as a first factor — same WebAuthn mechanism but used as primary credential rather than second factor.
 4. Users can register YubiKeys (or other FIDO2 authenticators — TouchID, Windows Hello, etc.) via the Settings flow.

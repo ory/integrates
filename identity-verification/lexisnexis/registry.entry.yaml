@@ -8,7 +8,7 @@ category: identity-verification
 type: webhook
 maintainedBy: Ory Engineering
 description: >-
-  Run LexisNexis Risk Solutions InstantID identity verification from Ory Actions during registration. Database-
+  Run LexisNexis Risk Solutions InstantID identity verification from an Ory Action during registration. Database-
   backed scoring (NAS / NAP / CVI) of name/address/phone/SSN/DOB matches — common in US financial services
   and insurance where document scans are too high-friction. Gates login on the stored verification status.
 useCase: >-
@@ -16,11 +16,11 @@ useCase: >-
   signup without document upload, scoring against authoritative US data — and wants the threshold per check
   configurable per product risk profile.
 coreFunctionality: |-
-  - Two endpoints: POST /lexisnexis/verify (sync registration.after with can_interrupt; calls InstantID, evaluates NAS/NAP/CVI vs thresholds, PATCHes verdict to identity); POST /lexisnexis/validate (sync login.after with can_interrupt; blocks identities with failed status).
-  - NAS / NAP / CVI scores returned per inquiry — defaults 50 (calibrated for low-risk consumer flows; tune up for higher risk).
-  - Identity-side state stored in metadata_public via @ory/client (IdentityApi.patchIdentity with JsonPatchOpEnum).
+  - Two endpoints: POST /lexisnexis/verify (registration.after with response.parse, before the identity is saved; calls InstantID, evaluates NAS/NAP/CVI vs thresholds, returns the verdict in the response or rejects the registration); POST /lexisnexis/validate (login.after with response.parse; blocks identities with failed status).
+  - NAS and NAP range from 0 to 12, CVI from 0 to 50; thresholds are required env vars agreed with LexisNexis.
+  - Identity-side state returned in the webhook response as metadata_public, saved by Ory with the new identity.
   - Synchronous-only — no async callback path (InstantID returns its decision in the API response).
-  - SDK: @ory/client for Kratos admin API; native fetch for LexisNexis API.
+  - Native fetch for the LexisNexis API; no Ory Admin API calls.
 oryMechanism:
   - actions
 protocol:

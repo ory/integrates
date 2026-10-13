@@ -47,7 +47,7 @@ ory patch identity-config \
         "authorization": "Bearer <sinch-api-token>",
         "content-type": "application/json"
       },
-      "body": "base64://'"$(base64 < sinch-body.jsonnet)"'"
+      "body": "base64://'"$(base64 < sinch-body.jsonnet | tr -d '\n')"'"
     }
   }]'
 ```

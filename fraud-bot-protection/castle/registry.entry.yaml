@@ -14,12 +14,12 @@ description: >-
 useCase: >-
   A B2C product wants to keep credential-stuffing and account-takeover attempts out of its login flow without blocking
   legitimate users behind a CAPTCHA. Castle scores each login in real time; the integration applies an allow / challenge
-  / deny decision before the session is issued, with challenge events flagged for MFA step-up in the client.
+  / deny decision before the session is issued, and requires a second factor for challenge events.
 coreFunctionality: |-
-  - Receives Ory post-login and post-registration Action webhooks.
-  - Forwards the identity, request context, and Castle device token to Castle's Risk API.
-  - Translates Castle's response into Ory flow control: 400 to block, 200 + requires_mfa_stepup=true to step up, 200 with risk score in metadata to allow.
-  - Records the risk assessment in identity metadata for downstream auditing and policy decisions.
+  - Receives a sync login action (response.parse: true) and a registration action that runs after the identity is saved.
+  - Forwards the identity ID, client IP (True-Client-Ip), request headers, and Castle request token to Castle's Risk API.
+  - At login: 403 with a messages body to block, 200 with required_aal aal2 to require a second factor (webhook_response_directives feature flag), 200 to allow.
+  - At registration: reports the event; on deny, optionally deactivates the identity through the Ory Admin API.
   - Fails open on Castle outages so authentication never breaks because of Castle availability.
 oryMechanism:
   - actions

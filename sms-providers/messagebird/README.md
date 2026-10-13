@@ -20,19 +20,17 @@ The Ory docs page covers the SMS courier configuration in general. MessageBird-s
 
 1. Sign up at [messagebird.com](https://www.messagebird.com); generate a live API key under **Developer → API access**.
 2. Pick an **originator** — a MessageBird virtual number, or an alphanumeric sender ID (up to 11 chars; not supported in US/Canada/China).
-3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) using the values in the table above. The Jsonnet body strips the leading `+` from Ory's E.164 recipient before passing it to MessageBird (which expects MSISDN format).
+3. Configure the SMS courier following the [Ory docs page](https://www.ory.com/docs/kratos/emails-sms/sending-sms) using the values in the table above. The Jsonnet template returns the request body object directly, and strips the leading `+` from Ory's E.164 recipient because MessageBird expects MSISDN format. Encode it and set it as `body: base64://<base64-encoded-jsonnet>`.
 
 ```jsonnet
 function(ctx) {
-  body: std.manifestJsonEx({
-    originator: "YourApp",
-    recipients: [
-      if std.startsWith(ctx.recipient, "+")
-      then std.substr(ctx.recipient, 1, std.length(ctx.recipient) - 1)
-      else ctx.recipient,
-    ],
-    body: ctx.body,
-  }, "  "),
+  originator: 'YourApp',
+  recipients: [
+    if std.startsWith(ctx.recipient, '+')
+    then std.substr(ctx.recipient, 1, std.length(ctx.recipient) - 1)
+    else ctx.recipient,
+  ],
+  body: ctx.body,
 }
 ```
 

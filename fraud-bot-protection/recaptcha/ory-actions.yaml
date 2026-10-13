@@ -1,7 +1,6 @@
 # Google reCAPTCHA verification hooks.
 #
-# Both hooks run synchronously on the after trigger (response.parse: true,
-# can_interrupt: true). The handler returns 400 with a flow message when the
+# Both hooks run synchronously on the after trigger (response.parse: true). The handler returns 400 with a flow message when the
 # token is missing, invalid, or below the v3 score threshold; 200 to let the
 # flow proceed. On login the hook runs before Ory issues a session, on
 # registration before Ory persists the identity, so either can still block.
@@ -13,41 +12,59 @@
 # before hooks: Ory runs those when it creates the flow, before the user has
 # submitted anything.
 
+# On Ory Network, use base64://<base64-encoded-jsonnet> for body.
+# Add the same lists for other methods you enable, such as saml.
+
 selfservice:
   flows:
     registration:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/recaptcha/verify
-              method: POST
-              body: file://./jsonnet/verify.jsonnet
-              can_interrupt: true
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &registration_captcha_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/recaptcha/verify
+                method: POST
+                body: file://./jsonnet/verify.jsonnet
+                response:
+                  parse: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+            - hook: session
+        oidc:
+          hooks: *registration_captcha_hooks
+        code:
+          hooks: *registration_captcha_hooks
+        passkey:
+          hooks: *registration_captcha_hooks
+        webauthn:
+          hooks: *registration_captcha_hooks
     login:
       after:
-        hooks:
-          - hook: web_hook
-            config:
-              url: https://your-deployed-handler.example.com/recaptcha/verify
-              method: POST
-              body: file://./jsonnet/verify.jsonnet
-              can_interrupt: true
-              response:
-                ignore: false
-                parse: true
-              auth:
-                type: api_key
-                config:
-                  name: X-Webhook-Secret
-                  value: <your-shared-secret>
-                  in: header
+        password:
+          hooks: &login_captcha_hooks
+            - hook: web_hook
+              config:
+                url: https://your-deployed-handler.example.com/recaptcha/verify
+                method: POST
+                body: file://./jsonnet/verify.jsonnet
+                response:
+                  parse: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Webhook-Secret
+                    value: <your-shared-secret>
+                    in: header
+        oidc:
+          hooks: *login_captcha_hooks
+        code:
+          hooks: *login_captcha_hooks
+        passkey:
+          hooks: *login_captcha_hooks
+        webauthn:
+          hooks: *login_captcha_hooks

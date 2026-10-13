@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+name: Test verification integrations
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install handler dependencies
+        run: |
+          npm ci --ignore-scripts --prefix identity-verification/prove/webhook
+          npm ci --ignore-scripts --prefix identity-verification/persona/webhook
+          npm ci --ignore-scripts --prefix identity-verification/socure/webhook
+          npm ci --ignore-scripts --prefix fraud-bot-protection/recaptcha/webhook
+      - name: Run isolated regressions
+        run: node --test scripts/test-verification-integrations.cjs

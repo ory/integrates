@@ -2,7 +2,7 @@
 
 > **Maintained by:** Ory Engineering
 
-[Prove](https://www.prove.com) (formerly Payfone) is a phone-anchored identity platform — telecom signals, SIM-swap detection, identity prefill, and continuous phone-ownership verification. This integration calls Prove from Ory Actions across three lifecycle points: pre-registration lookup (prefill), post-registration enrollment, and per-login validation.
+[Prove](https://www.prove.com) (formerly Payfone) is a phone-anchored identity platform — telecom signals, SIM-swap detection, identity prefill, and continuous phone-ownership verification. This integration calls Prove from Ory Actions at two lifecycle points: enrollment after registration, and validation at each sign-in.
 
 **Type:** webhook (Ory Actions over HTTP — code in [`webhook/`](./webhook/))
 **Docs page:** [ory.com/docs/integrates-with/identity-verification/prove](https://www.ory.com/docs/integrates-with/identity-verification/prove)
@@ -11,11 +11,12 @@
 
 | Path | Trigger | Auth | Purpose |
 | --- | --- | --- | --- |
-| `POST /prove/lookup` | sync `registration.before`, `can_interrupt: true` | `X-Webhook-Secret` | Pre-registration phone-number lookup. Returns identity-prefill metadata (name, address, DOB) when Prove knows the phone, or surfaces a SIM-swap / low-trust signal that the registration hook can use to gate the flow. |
-| `POST /prove/enroll` | sync `registration.after` | `X-Webhook-Secret` | Registers the user's phone with Prove's Identity Manager; stores the resulting `prove_identity_id` on `metadata_admin`. |
-| `POST /prove/validate` | sync `login.after`, `can_interrupt: true` | `X-Webhook-Secret` | Confirms the user's stored Prove identity is still in good standing (no recent SIM swap, ownership unchanged); blocks login on a fail. |
+| `POST /prove/enroll` | `registration.after` without `response.parse`, after the identity is saved | `X-Webhook-Secret` | Registers the user's phone with Prove's Identity Manager; stores the resulting `prove_identity_id` in `metadata_public`. |
+| `POST /prove/validate` | `login.after`, `response.parse: true` | `X-Webhook-Secret` | Confirms the phone number Prove has on file still matches the user's; blocks sign-in on a mismatch. |
 
-All three are sync — Prove's APIs return decisions in the response, so there is no async callback path to verify.
+Prove's APIs return decisions in the response, so there is no async callback path to verify.
+
+Prove's prefill isn't part of this integration. A `registration.before` action runs when Ory creates the flow, before the user enters anything, so its payload has no phone number, traits, or identity. To prefill a registration form, call Prove from your application before you show the form.
 
 ## Required env vars
 
@@ -41,9 +42,18 @@ npm start              # runs `tsx server.ts`
 
 ## Configure Ory
 
-1. Use [`ory-actions.yaml`](./ory-actions.yaml) as the snippet for `registration.before` (lookup), `registration.after` (enroll), and `login.after` (validate).
-2. The body templates are in [`jsonnet/`](./jsonnet/).
-3. **Phone collection is a prerequisite** — your identity schema must capture a phone number in E.164 format before the `prove/lookup` hook fires; surface the field on your registration UI.
+1. Merge [`ory-actions.yaml`](./ory-actions.yaml) into your identity configuration. It puts the hooks in the method-specific lists (`selfservice.flows.registration.after.password.hooks` and `selfservice.flows.login.after.password.hooks`). Both lists are aliased into the `oidc`, `code`, `passkey`, and `webauthn` lists, because Ory runs the flow-level `after.hooks` list only for a method that has no hooks of its own. Add any other method you enable, such as `saml`, the same way. Keep the `session` hook last in the registration lists.
+2. The body templates are in [`jsonnet/`](./jsonnet/). On Ory Network, encode each template with `base64 < jsonnet/enroll.jsonnet | tr -d '\n'` and set `body: base64://<encoded>`.
+3. Keep `response.parse` off for `/prove/enroll`. With `response.parse: true`, the action runs before the identity is saved and receives the ID `00000000-0000-0000-0000-000000000000`, so the handler's Admin API update can't find the identity.
+4. Keep `prove_identity_id` in `metadata_public`. The webhook payload doesn't include `metadata_admin`, so the validate action can't read values stored there.
+5. `/prove/validate` blocks sign-in with `403` and this body, which Ory shows to the user. A `200` response always lets the user in, and Ory doesn't save identity changes that a `login.after` action returns:
+
+   ```json
+   {"messages": [{"instance_ptr": "#/", "messages": [{"id": 9001001, "text": "We couldn't confirm your phone number. Please contact support.", "type": "error"}]}]}
+   ```
+
+   Users without a Prove enrollment, and sign-ins while Prove can't be reached, are let through. Change that in the handler if you want to fail closed.
+6. **Phone collection is a prerequisite** — your identity schema must capture a phone number in E.164 format; surface the field on your registration UI.
 
 ## Notes
 

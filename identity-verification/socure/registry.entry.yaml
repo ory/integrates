@@ -17,8 +17,8 @@ useCase: >-
   document checks — device, email, network, phone risk — and wants a single deployment that handles both
   fast and slow Socure verdict paths.
 coreFunctionality: |-
-  - Sync path: POST /socure/verify-identity (Ory Action target on registration.after); calls Socure ID+ POST /api/3.0/EmailAuthScore with configured SOCURE_MODULES; returns reference_id / decision (kyc.fieldValidations) / fraud_score for the response-parse Jsonnet to apply policy.
-  - Async path: POST /socure/results-callback (FROM Socure when async checks complete); HMAC-SHA256 over raw body via X-Socure-Signature; when ORY_SDK_URL + ORY_ADMIN_API_KEY are set, PATCHes the final decision to metadata_public.socure_decision on the matching identity.
+  - Sync path: POST /socure/verify-identity (registration action with response.parse: true); calls Socure ID+ POST /api/3.0/EmailAuthScore with configured SOCURE_MODULES and the handler's own reference as customerUserId; rejects the registration with a messages response when the decision is reject or the fraud score reaches SOCURE_FRAUD_THRESHOLD, otherwise returns the reference as external_id.
+  - Async path: POST /socure/results-callback (FROM Socure when async checks complete); HMAC-SHA256 over raw body via X-Socure-Signature; when ORY_SDK_URL + ORY_ADMIN_API_KEY are set, finds the identity by external_id and writes the final decision to metadata_public.socure_decision.
   - SOCURE_MODULES configures which signals run (commonly kyc, fraud, phonerisk).
   - Single deployment, single binary handles both paths — async config is optional.
   - Authenticated via shared ORY_WEBHOOK_SECRET (sync) and SOCURE_CALLBACK_SECRET (async HMAC).

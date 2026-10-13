@@ -6,7 +6,7 @@
 
 ## Overview
 
-GBG (which acquired Acuant) is a global identity verification provider with deep document and biometric coverage. This integration calls the GBG identity verification API from an Ory Actions webhook during registration to verify document + selfie evidence, and returns the GBG decision so Ory can gate the registration flow.
+GBG (which acquired Acuant) is a global identity verification provider with deep document and biometric coverage. This integration calls the GBG identity verification API from an Ory Actions webhook during registration to verify document + selfie evidence, and rejects the registration unless GBG passes it.
 
 ## How it works
 
@@ -21,10 +21,10 @@ Handler calls GBG GO Journey API with the identity payload
         ↓
 GBG returns decision (PASS / REFER / FAIL)
         ↓
-Handler echoes decision back to Ory
-        ↓
-Ory Action consumes the response — fails the flow on REFER/FAIL,
-or writes the verdict into identity.metadata for downstream policy
+Handler turns the decision into a response:
+  PASS          → 200 with the verdict for identity metadata
+  FAIL          → 400 with a messages body, registration rejected
+  REFER         → rejected, or let through when GBG_REFER_ACTION=allow
 ```
 
 ## Prerequisites
@@ -40,7 +40,7 @@ cd webhook/
 cp .env.example .env
 # Fill GBG_API_BASE, GBG_API_TOKEN, GBG_JOURNEY_ID, ORY_WEBHOOK_SECRET
 npm install
-node server.js
+npm start
 ```
 
 Endpoints:
@@ -50,10 +50,29 @@ Endpoints:
 
 ## Configure Ory
 
-1. Use the snippet in [`ory-actions.yaml`](ory-actions.yaml) to register the webhook on your registration flow's `after` hooks.
+1. Use the snippet in [`ory-actions.yaml`](ory-actions.yaml) to register the webhook on your registration method's `after` hooks.
 2. The body template is [`jsonnet/identity.jsonnet`](jsonnet/identity.jsonnet) — extend it if your identity schema carries additional verification inputs (document image, selfie image, address).
 3. Set `ORY_WEBHOOK_SECRET` in `.env` to match the `X-Webhook-Secret` value declared in the Ory hook config.
-4. Set `response.parse: true` and `response.ignore: false` on the hook (already set in `ory-actions.yaml`) so Ory consumes the GBG decision.
+4. Keep `response.parse: true` on the hook (already set in `ory-actions.yaml`) so the handler can reject the registration and return metadata. Ory doesn't interpret the GBG decision, and any `200` lets the registration through.
+5. Set `GBG_REFER_ACTION=allow` to let `REFER` cases register and review them later; the default rejects them.
+
+- Put the hook in the method-specific list, such as `selfservice.flows.registration.after.password.hooks`, and repeat it for every method you enable, such as `oidc` or `code`. Ory runs the global `registration.after.hooks` list only for a method that has no hooks of its own. Keep the `session` hook last.
+- `body: file://./jsonnet/...` works for self-hosted Ory Kratos. On Ory Network, encode the template with `base64 < jsonnet/identity.jsonnet | tr -d '\n'` and set `body: base64://<encoded>`.
+- With `response.parse: true`, the action runs before the identity is saved, so `ctx.identity.id` is `00000000-0000-0000-0000-000000000000`. The handler sends its own reference to the vendor and returns it as the identity's `external_id`; look the identity up later with `GET /admin/identities/by/external/<reference>`.
+- Ory waits about 30 seconds for the handler and retries a `5xx` response (three attempts in total).
+
+To reject the flow, the handler responds with a `4xx` status code and this body. Ory shows the `text` to the user:
+
+```json
+{
+  "messages": [
+    {
+      "instance_ptr": "#/",
+      "messages": [{ "id": 9000202, "text": "We couldn't verify your identity documents.", "type": "error" }]
+    }
+  ]
+}
+```
 
 ## Troubleshooting
 

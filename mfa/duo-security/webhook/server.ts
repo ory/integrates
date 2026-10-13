@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Reference webhook handler for the Ory <> Duo Security integration.
-// Sends a Duo push, polls /auth_status until the user responds (or the deadline
-// elapses), and returns the verdict so an Ory Action can step up authentication.
+// Verifies a Duo passcode that the login UI collected with the primary
+// credentials and blocks the sign-in unless Duo allows it.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -17,8 +17,6 @@ const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
 const DUO_API_HOST = process.env.DUO_API_HOST;
 const DUO_INTEGRATION_KEY = process.env.DUO_INTEGRATION_KEY;
 const DUO_SECRET_KEY = process.env.DUO_SECRET_KEY;
-const POLL_DEADLINE_MS =
-  Number.parseInt(process.env.DUO_POLL_DEADLINE_SECONDS || "45", 10) * 1000;
 
 if (!ORY_WEBHOOK_SECRET || !DUO_API_HOST || !DUO_INTEGRATION_KEY || !DUO_SECRET_KEY) {
   console.error(
@@ -28,9 +26,9 @@ if (!ORY_WEBHOOK_SECRET || !DUO_API_HOST || !DUO_INTEGRATION_KEY || !DUO_SECRET_
 }
 
 interface OryDuoRequest {
-  duo_username?: string;
-  client_ip?: string;
-  status_msg?: string;
+  username?: string;
+  passcode?: string | null;
+  ipaddr?: string | null;
 }
 
 interface DuoSignedHeaders {
@@ -43,8 +41,9 @@ interface DuoCallResult {
   status: number;
   body: {
     response?: {
-      txid?: string;
       result?: string;
+      status?: string;
+      status_msg?: string;
     };
     [key: string]: unknown;
   };
@@ -125,60 +124,60 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+// Ory Kratos Identities shows these messages to the user when the handler
+// responds with a 4xx status code. Ory retries a 5xx, so every failure after
+// the passcode reached Duo is reported as a 4xx.
+function block(res: Response, status: number, id: number, text: string) {
+  res.status(status).json({
+    messages: [
+      {
+        instance_ptr: "#/",
+        messages: [{ id, text, type: "error" }],
+      },
+    ],
+  });
+}
+
 app.post(
-  "/duo/challenge",
+  "/duo/verify",
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, OryDuoRequest>, res: Response) => {
-    const { duo_username, client_ip } = req.body;
+    const { username, passcode, ipaddr } = req.body ?? {};
 
-    if (!duo_username) {
-      res.status(400).json({ error: "duo_username is required" });
+    if (!username) {
+      block(res, 400, 9001001, "Duo verification failed. Please contact support.");
+      return;
+    }
+    if (!passcode) {
+      block(res, 403, 9001002, "Enter your Duo passcode.");
       return;
     }
 
     try {
-      // Initiate the push asynchronously so we can poll for the response.
-      const init = await duoCall("POST", "/auth/v2/auth", {
-        username: duo_username,
-        factor: "push",
-        device: "auto",
-        async: "1",
-        ipaddr: client_ip || "0.0.0.0",
-      });
+      const params: Record<string, string> = {
+        username,
+        factor: "passcode",
+        passcode,
+      };
+      if (ipaddr) params.ipaddr = ipaddr;
 
-      const txid = init.body?.response?.txid;
-      if (!init.ok || !txid) {
-        console.error(`Duo auth init ${init.status}: ${JSON.stringify(init.body)}`);
-        res.status(502).json({ error: "duo_init_failed" });
+      const auth = await duoCall("POST", "/auth/v2/auth", params);
+      const result = auth.body?.response?.result;
+      if (!auth.ok || !result) {
+        console.error(`Duo auth ${auth.status}: ${JSON.stringify(auth.body)}`);
+        block(res, 403, 9001003, "Duo verification is unavailable. Please try again.");
         return;
       }
 
-      const deadline = Date.now() + POLL_DEADLINE_MS;
-      let result: string | undefined = "waiting";
-
-      // Long-poll loop. Duo's /auth_status blocks server-side until state
-      // changes or its own internal timeout fires (~30s), then returns. We
-      // loop until our local deadline.
-      while (Date.now() < deadline) {
-        const status = await duoCall("GET", "/auth/v2/auth_status", { txid });
-        if (!status.ok) {
-          console.error(`Duo auth_status ${status.status}: ${JSON.stringify(status.body)}`);
-          res.status(502).json({ error: "duo_status_failed" });
-          return;
-        }
-        result = status.body?.response?.result;
-        if (result && result !== "waiting") break;
+      if (result !== "allow") {
+        block(res, 403, 9001004, "Duo verification failed.");
+        return;
       }
 
-      res.json({
-        ok: true,
-        result, // "allow", "deny", "waiting" (if deadline hit)
-        status_msg: req.body?.status_msg ?? null,
-        mfa_passed: result === "allow",
-      });
+      res.status(200).json({});
     } catch (err) {
       console.error("Duo error:", (err as Error).message);
-      res.status(502).json({ error: "duo_failed" });
+      block(res, 403, 9001003, "Duo verification is unavailable. Please try again.");
     }
   },
 );

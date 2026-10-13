@@ -6,8 +6,11 @@
 //   POST /socure/results-callback     — async callback FROM Socure with final decision
 //                                       (HMAC-SHA256 signature over the raw body)
 //
-// When ORY_SDK_URL and ORY_ADMIN_API_KEY are set, the async callback writes the
-// final decision back to the identity's metadata_public via the Admin API.
+// The sync call runs before Ory saves the identity, so the handler sends its own
+// reference to Socure as customerUserId and returns it as the identity's
+// external_id. When ORY_SDK_URL and ORY_ADMIN_API_KEY are set, the async
+// callback finds the identity by that external_id and writes the final decision
+// to metadata_public via the Admin API.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -25,6 +28,9 @@ const SOCURE_MODULES = (process.env.SOCURE_MODULES || "kyc,fraud")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+const SOCURE_FRAUD_THRESHOLD = parseFloat(
+  process.env.SOCURE_FRAUD_THRESHOLD || "0.9",
+);
 const SOCURE_CALLBACK_SECRET = process.env.SOCURE_CALLBACK_SECRET;
 const ORY_SDK_URL = process.env.ORY_SDK_URL;
 const ORY_ADMIN_API_KEY = process.env.ORY_ADMIN_API_KEY;
@@ -35,7 +41,6 @@ if (!ORY_WEBHOOK_SECRET || !SOCURE_API_KEY) {
 }
 
 interface OrySocureRequest {
-  identity_id?: string;
   email?: string;
   first_name?: string;
   last_name?: string;
@@ -53,6 +58,7 @@ interface OrySocureRequest {
 
 interface SocureIdPlusResponse {
   referenceId?: string;
+  decision?: { value?: string };
   kyc?: { fieldValidations?: Record<string, unknown> };
   fraud?: { scores?: Array<{ score?: number }> };
 }
@@ -91,6 +97,14 @@ function verifyWebhookSecret(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Ory Kratos Identities rejects the flow and shows `text` to the user only for
+// a 4xx response in this shape.
+function rejectFlow(res: Response, id: number, text: string) {
+  res.status(400).json({
+    messages: [{ instance_ptr: "#/", messages: [{ id, text, type: "error" }] }],
+  });
+}
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
@@ -100,7 +114,6 @@ app.post(
   verifyWebhookSecret,
   async (req: Request<unknown, unknown, OrySocureRequest>, res: Response) => {
     const {
-      identity_id,
       email,
       first_name,
       last_name,
@@ -111,35 +124,44 @@ app.post(
     } = req.body;
 
     if (!email || !first_name || !last_name) {
-      res.status(400).json({ error: "email, first_name, last_name are required" });
+      rejectFlow(
+        res,
+        9000301,
+        "Please provide your first name, last name, and email address.",
+      );
       return;
     }
 
+    const reference = crypto.randomUUID();
+
     try {
-      const socureRes = await fetch(`${SOCURE_API_BASE}/api/3.0/EmailAuthScore`, {
-        method: "POST",
-        headers: {
-          // Socure's header name is camelCase per its API spec, not a typo.
-          SocureApiKey: SOCURE_API_KEY as string,
-          "content-type": "application/json",
+      const socureRes = await fetch(
+        `${SOCURE_API_BASE}/api/3.0/EmailAuthScore`,
+        {
+          method: "POST",
+          headers: {
+            // Socure's header name is camelCase per its API spec, not a typo.
+            SocureApiKey: SOCURE_API_KEY as string,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            modules: SOCURE_MODULES,
+            firstName: first_name,
+            surName: last_name,
+            email,
+            dob: date_of_birth,
+            nationalId: ssn,
+            physicalAddress: address?.street1,
+            city: address?.city,
+            state: address?.state,
+            zip: address?.zip,
+            country: address?.country ?? "US",
+            deviceSessionId: device_session_id,
+            customerUserId: reference,
+          }),
+          signal: AbortSignal.timeout(15000),
         },
-        body: JSON.stringify({
-          modules: SOCURE_MODULES,
-          firstName: first_name,
-          surName: last_name,
-          email,
-          dob: date_of_birth,
-          nationalId: ssn,
-          physicalAddress: address?.street1,
-          city: address?.city,
-          state: address?.state,
-          zip: address?.zip,
-          country: address?.country ?? "US",
-          deviceSessionId: device_session_id,
-          customerUserId: identity_id,
-        }),
-        signal: AbortSignal.timeout(15000),
-      });
+      );
 
       if (!socureRes.ok) {
         console.error(`Socure ${socureRes.status}: ${await socureRes.text()}`);
@@ -148,11 +170,30 @@ app.post(
       }
 
       const result = (await socureRes.json()) as SocureIdPlusResponse;
+      const decision = result.decision?.value?.toLowerCase() ?? null;
+      const fraudScore = result.fraud?.scores?.[0]?.score ?? null;
+      if (
+        decision === "reject" ||
+        (fraudScore !== null && fraudScore >= SOCURE_FRAUD_THRESHOLD)
+      ) {
+        console.log(
+          `Socure rejected registration: ref=${result.referenceId} decision=${decision} fraud_score=${fraudScore}`,
+        );
+        rejectFlow(res, 9000302, "We couldn't verify your identity.");
+        return;
+      }
+
       res.json({
-        ok: true,
-        reference_id: result.referenceId,
-        decision: result.kyc?.fieldValidations ?? null,
-        fraud_score: result.fraud?.scores?.[0]?.score ?? null,
+        identity: {
+          external_id: reference,
+          metadata_public: {
+            socure_verification_status: decision ?? "pending",
+          },
+          metadata_admin: {
+            socure_reference_id: result.referenceId ?? null,
+            socure_fraud_score: fraudScore,
+          },
+        },
       });
     } catch (err) {
       console.error("Verify error:", (err as Error).message);
@@ -161,11 +202,25 @@ app.post(
   },
 );
 
-async function writeIdentityMetadata(identityId: string, decision: unknown): Promise<void> {
-  if (!ORY_SDK_URL || !ORY_ADMIN_API_KEY) {
-    console.log(`Socure callback for ${identityId}: ORY_SDK_URL / ORY_ADMIN_API_KEY unset, skipping write-back`);
-    return;
+async function writeIdentityMetadata(
+  reference: string,
+  decision: unknown,
+): Promise<void> {
+  const lookup = await fetch(
+    `${ORY_SDK_URL}/admin/identities/by/external/${encodeURIComponent(reference)}`,
+    {
+      headers: { authorization: `Bearer ${ORY_ADMIN_API_KEY}` },
+      signal: AbortSignal.timeout(5000),
+    },
+  );
+  if (lookup.status === 404) {
+    throw new Error(`Identity with external_id ${reference} is not saved yet`);
   }
+  if (!lookup.ok) {
+    const detail = await lookup.text().catch(() => "");
+    throw new Error(`Ory lookup ${lookup.status}: ${detail}`);
+  }
+  const { id: identityId } = (await lookup.json()) as { id: string };
   const res = await fetch(`${ORY_SDK_URL}/admin/identities/${identityId}`, {
     method: "PATCH",
     headers: {
@@ -173,7 +228,7 @@ async function writeIdentityMetadata(identityId: string, decision: unknown): Pro
       "content-type": "application/json",
     },
     body: JSON.stringify([
-      { op: "replace", path: "/metadata_public/socure_decision", value: decision },
+      { op: "add", path: "/metadata_public/socure_decision", value: decision },
     ]),
     signal: AbortSignal.timeout(5000),
   });
@@ -189,7 +244,7 @@ async function writeIdentityMetadata(identityId: string, decision: unknown): Pro
 app.post(
   "/socure/results-callback",
   async (req: Request<unknown, unknown, SocureCallbackBody>, res: Response) => {
-    if (!SOCURE_CALLBACK_SECRET) {
+    if (!SOCURE_CALLBACK_SECRET || !ORY_SDK_URL || !ORY_ADMIN_API_KEY) {
       res.status(503).json({ error: "callback_disabled" });
       return;
     }
@@ -199,7 +254,10 @@ app.post(
       return;
     }
     const sig = req.header("x-socure-signature") ?? "";
-    const expected = crypto.createHmac("sha256", SOCURE_CALLBACK_SECRET).update(rawBody).digest("hex");
+    const expected = crypto
+      .createHmac("sha256", SOCURE_CALLBACK_SECRET)
+      .update(rawBody)
+      .digest("hex");
     const a = Buffer.from(sig);
     const b = Buffer.from(expected);
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
@@ -207,21 +265,29 @@ app.post(
       return;
     }
 
-    const identityId = req.body.customerUserId;
+    const reference = req.body.customerUserId;
     const decision = req.body.decision;
 
-    console.log(`Socure async result: ref=${req.body.referenceId} identity=${identityId}`);
+    console.log(
+      `Socure async result: ref=${req.body.referenceId} customerUserId=${reference}`,
+    );
 
-    if (identityId) {
-      try {
-        await writeIdentityMetadata(identityId, decision);
-      } catch (err) {
-        console.error(`Socure callback write-back failed: ${(err as Error).message}`);
-        // Still 200 to Socure — they retry on 5xx but the callback is logged
-        // and can be replayed manually from the Socure dashboard.
-      }
+    if (!reference) {
+      res.json({ ok: true, ignored: true });
+      return;
     }
-    res.json({ ok: true });
+
+    // The callback is acknowledged only after the identity is updated, so
+    // Socure retries a delivery that failed to apply.
+    try {
+      await writeIdentityMetadata(reference, decision);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error(
+        `Socure callback write-back failed: ${(err as Error).message}`,
+      );
+      res.status(500).json({ error: "processing_failed" });
+    }
   },
 );
 

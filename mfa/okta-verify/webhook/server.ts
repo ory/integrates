@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 // Reference webhook handler for the Ory <> Okta Verify integration.
-// Triggers an Okta Verify push factor and polls until the user responds (or
-// the deadline elapses), then returns the verdict so an Ory Action can step
-// up authentication or fail the flow.
+// Verifies an Okta Verify one-time code that the login UI collected with the
+// primary credentials and blocks the sign-in unless Okta accepts it.
 
 import "dotenv/config";
 import crypto from "node:crypto";
@@ -17,27 +16,28 @@ const PORT = Number(process.env.PORT) || 3000;
 const ORY_WEBHOOK_SECRET = process.env.ORY_WEBHOOK_SECRET;
 const OKTA_ORG_URL = process.env.OKTA_ORG_URL; // e.g. https://your-org.okta.com
 const OKTA_API_TOKEN = process.env.OKTA_API_TOKEN;
-const POLL_DEADLINE_MS =
-  Number.parseInt(process.env.OKTA_POLL_DEADLINE_SECONDS || "60", 10) * 1000;
+const OKTA_ALLOW_UNENROLLED = process.env.OKTA_ALLOW_UNENROLLED === "true";
 
 if (!ORY_WEBHOOK_SECRET || !OKTA_ORG_URL || !OKTA_API_TOKEN) {
   console.error("ORY_WEBHOOK_SECRET, OKTA_ORG_URL, OKTA_API_TOKEN must be set");
   process.exit(1);
 }
 
-interface OktaChallengeRequest {
-  okta_user_id?: string;
+interface OktaVerifyRequest {
+  identity_id?: string;
+  okta_user_id?: string | null;
+  pass_code?: string | null;
 }
 
 interface OktaFactor {
   id: string;
   factorType: string;
+  provider: string;
   status: string;
 }
 
 interface OktaVerifyResponse {
   factorResult?: string;
-  _links?: { poll?: { href?: string } };
 }
 
 const app = express();
@@ -60,17 +60,49 @@ const oktaHeaders: Record<string, string> = {
   "content-type": "application/json",
 };
 
-async function findPushFactorId(userId: string): Promise<string | null> {
-  const res = await fetch(`${OKTA_ORG_URL}/api/v1/users/${userId}/factors`, {
-    headers: oktaHeaders,
-    signal: AbortSignal.timeout(10000),
-  });
+class UnenrolledError extends Error {}
+
+// Okta Verify registers its one-time code as a software TOTP factor.
+async function findTotpFactorId(userId: string): Promise<string> {
+  const res = await fetch(
+    `${OKTA_ORG_URL}/api/v1/users/${encodeURIComponent(userId)}/factors`,
+    { headers: oktaHeaders, signal: AbortSignal.timeout(8000) },
+  );
+  if (res.status === 404) throw new UnenrolledError("okta user not found");
   if (!res.ok) {
     throw new Error(`okta factors ${res.status}: ${await res.text()}`);
   }
   const factors = (await res.json()) as OktaFactor[];
-  const push = factors.find((f) => f.factorType === "push" && f.status === "ACTIVE");
-  return push?.id ?? null;
+  const totp = factors.find(
+    (f) =>
+      f.factorType === "token:software:totp" &&
+      f.provider === "OKTA" &&
+      f.status === "ACTIVE",
+  );
+  if (!totp) throw new UnenrolledError("no active Okta Verify code factor");
+  return totp.id;
+}
+
+// Ory Kratos Identities shows these messages to the user when the handler
+// responds with a 4xx status code. Ory retries a 5xx, so failures are reported
+// as a 4xx.
+function block(res: Response, id: number, text: string) {
+  res.status(403).json({
+    messages: [
+      {
+        instance_ptr: "#/",
+        messages: [{ id, text, type: "error" }],
+      },
+    ],
+  });
+}
+
+function unenrolled(res: Response) {
+  if (OKTA_ALLOW_UNENROLLED) {
+    res.status(200).json({});
+    return;
+  }
+  block(res, 9002001, "Set up Okta Verify before you sign in.");
 }
 
 app.get("/health", (_req, res) => {
@@ -78,67 +110,57 @@ app.get("/health", (_req, res) => {
 });
 
 app.post(
-  "/okta-verify/challenge",
+  "/okta-verify/verify",
   verifyWebhookSecret,
-  async (req: Request<unknown, unknown, OktaChallengeRequest>, res: Response) => {
-    const { okta_user_id } = req.body;
+  async (req: Request<unknown, unknown, OktaVerifyRequest>, res: Response) => {
+    const { okta_user_id, pass_code } = req.body ?? {};
     if (!okta_user_id) {
-      res.status(400).json({ error: "okta_user_id is required" });
+      unenrolled(res);
       return;
     }
 
     try {
-      const factorId = await findPushFactorId(okta_user_id);
-      if (!factorId) {
-        res.json({ ok: true, mfa_passed: false, reason: "no_push_factor_enrolled" });
+      const factorId = await findTotpFactorId(okta_user_id);
+      if (!pass_code) {
+        block(res, 9002002, "Enter the code from Okta Verify.");
         return;
       }
 
       const verifyRes = await fetch(
-        `${OKTA_ORG_URL}/api/v1/users/${okta_user_id}/factors/${factorId}/verify`,
-        { method: "POST", headers: oktaHeaders, signal: AbortSignal.timeout(10000) },
+        `${OKTA_ORG_URL}/api/v1/users/${encodeURIComponent(okta_user_id)}/factors/${encodeURIComponent(factorId)}/verify`,
+        {
+          method: "POST",
+          headers: oktaHeaders,
+          body: JSON.stringify({ passCode: pass_code }),
+          signal: AbortSignal.timeout(8000),
+        },
       );
 
+      // Okta answers an invalid code with 403 (E0000068).
+      if (verifyRes.status === 403) {
+        block(res, 9002003, "The Okta Verify code is invalid.");
+        return;
+      }
       if (!verifyRes.ok) {
         console.error(`Okta verify ${verifyRes.status}: ${await verifyRes.text()}`);
-        res.status(502).json({ error: "okta_verify_failed" });
+        block(res, 9002004, "Okta Verify is unavailable. Please try again.");
         return;
       }
 
-      let body = (await verifyRes.json()) as OktaVerifyResponse;
-      const pollUrl = body._links?.poll?.href;
-      if (!pollUrl) {
-        res.status(502).json({ error: "missing_poll_url" });
+      const body = (await verifyRes.json()) as OktaVerifyResponse;
+      if (body.factorResult !== "SUCCESS") {
+        block(res, 9002003, "The Okta Verify code is invalid.");
         return;
       }
 
-      const deadline = Date.now() + POLL_DEADLINE_MS;
-      let result: string | undefined = body.factorResult;
-
-      while (Date.now() < deadline && result === "WAITING") {
-        // 2-second backoff between polls. Okta returns immediately rather than long-polling.
-        await new Promise((r) => setTimeout(r, 2000));
-        const pollRes = await fetch(pollUrl, {
-          headers: oktaHeaders,
-          signal: AbortSignal.timeout(10000),
-        });
-        if (!pollRes.ok) {
-          console.error(`Okta poll ${pollRes.status}: ${await pollRes.text()}`);
-          res.status(502).json({ error: "okta_poll_failed" });
-          return;
-        }
-        body = (await pollRes.json()) as OktaVerifyResponse;
-        result = body.factorResult;
-      }
-
-      res.json({
-        ok: true,
-        result, // SUCCESS / REJECTED / TIMEOUT / WAITING (if deadline hit)
-        mfa_passed: result === "SUCCESS",
-      });
+      res.status(200).json({});
     } catch (err) {
+      if (err instanceof UnenrolledError) {
+        unenrolled(res);
+        return;
+      }
       console.error("Okta error:", (err as Error).message);
-      res.status(502).json({ error: "okta_failed" });
+      block(res, 9002004, "Okta Verify is unavailable. Please try again.");
     }
   },
 );

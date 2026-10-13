@@ -16,9 +16,9 @@ useCase: >-
   regions, in addition to or instead of US-centric Twilio.
 coreFunctionality: |-
   - Configured via Kratos's HTTP SMS courier (no code) per docs/kratos/emails-sms/sending-sms.
-  - Endpoint POST https://rest.nexmo.com/sms/json. Authentication is API key + secret in the request BODY (not headers), so the Kratos courier `auth` block stays empty and credentials live in the Jsonnet template.
-  - JSON body: api_key, api_secret, from (alphanumeric ID up to 11 chars OR a Vonage virtual number — alphanumeric not allowed in US/Canada), to, text.
-  - Vonage accepts E.164 with or without leading "+"; strip in Jsonnet if a country rejects the + form.
+  - Endpoint POST https://rest.nexmo.com/sms/json with HTTP Basic auth (API key : API secret) through the courier's basic_auth block.
+  - Content-Type application/x-www-form-urlencoded; form fields from (alphanumeric ID up to 11 chars OR a Vonage virtual number — alphanumeric not allowed in US/Canada), to, text.
+  - The Jsonnet template strips the leading "+" from Ory's E.164 recipient.
   - Newer Messages API (api.nexmo.com/v1/messages) available with JWT/header auth; the REST SMS API above is simpler for SMS-only use.
 oryMechanism:
   - courier-spi
