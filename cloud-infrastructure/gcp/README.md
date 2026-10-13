@@ -16,13 +16,12 @@ Deployment patterns for running with Ory on Google Cloud. **Not a vendor integra
 
 - Outbound HTTPS to `*.oryapis.com` from the workload's VPC. Default GKE/Cloud Run egress allows this; restrict via Cloud NAT + Firewall rules if needed.
 - Store the Ory API key in **Secret Manager**; mount via Workload Identity (GKE) or runtime secret references (Cloud Run).
-- Use **Cloud DNS** to map your custom auth domain to `custom.oryapis.com` (CNAME). Configure on the Ory side via `ory update project --custom-domain`.
+- Use **Cloud DNS** to map your custom auth domain to `<your-project-slug>.projects.oryapis.com` (CNAME). Add the domain to your project in the Ory Console. See [Set up custom domains](https://www.ory.com/docs/guides/custom-domains).
 
 ### Pattern B — Self-hosted Ory on GKE
 
 - **GKE Autopilot** or Standard with Workload Identity enabled.
 - **Cloud SQL for PostgreSQL** (HA configuration) for Kratos/Hydra/Keto datastores. Connect via the Cloud SQL Auth Proxy sidecar (preferred) or private IP with VPC peering.
-- **Memorystore for Redis** (optional) for session caching.
 - Deploy via the official Helm charts (`helm repo add ory https://k8s.ory.sh/helm/charts`).
 - **GKE Gateway** (or Ingress with GCLB) for HTTPS termination with a Google-managed certificate.
 

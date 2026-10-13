@@ -13,7 +13,15 @@
 
 Pulumi can consume any Terraform provider via [`pulumi-terraform-bridge`](https://github.com/pulumi/pulumi-terraform-bridge), turning the official [`ory/ory` Terraform provider](https://registry.terraform.io/providers/ory/ory) into a Pulumi-callable SDK. This is the closest you get to a first-class experience without a hand-written Pulumi provider.
 
-The trade-off: you maintain the bridge build for your team or generate the SDK on demand; you do not get an official, regularly published Pulumi package.
+Generate a local SDK from the Terraform provider:
+
+```bash
+pulumi package add terraform-provider ory/ory <version>
+```
+
+Replace `<version>` with a provider release, for example `26.3.5`. In a TypeScript project, import the generated SDK as `@pulumi/ory`. `pulumi install` regenerates the SDK in a fresh checkout.
+
+The trade-off: there's no published Ory Pulumi package, so each project generates its own SDK.
 
 ### Option 2 — Call the Ory Network REST API from a `dynamic` Pulumi resource
 

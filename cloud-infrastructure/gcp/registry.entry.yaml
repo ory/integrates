@@ -16,8 +16,8 @@ useCase: >-
   VPC, or to self-host the open-source Ory stack on GKE with the typical GCP managed services (Cloud SQL,
   Secret Manager, Workload Identity, GKE Gateway).
 coreFunctionality: |-
-  - Pattern A (Ory Network from GCP): outbound HTTPS egress to *.oryapis.com; API key in Secret Manager via Workload Identity; Cloud DNS CNAME to custom.oryapis.com.
-  - Pattern B (self-hosted on GKE): GKE Autopilot or Standard with Workload Identity, Cloud SQL for PostgreSQL HA, optional Memorystore Redis. Connect to Cloud SQL via the Cloud SQL Auth Proxy sidecar (preferred) or private IP with VPC peering.
+  - Pattern A (Ory Network from GCP): outbound HTTPS egress to *.oryapis.com; API key in Secret Manager via Workload Identity; Cloud DNS CNAME from the custom auth domain to <project-slug>.projects.oryapis.com.
+  - Pattern B (self-hosted on GKE): GKE Autopilot or Standard with Workload Identity, Cloud SQL for PostgreSQL HA. Connect to Cloud SQL via the Cloud SQL Auth Proxy sidecar (preferred) or private IP with VPC peering.
   - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
   - GKE Gateway or Ingress with GCLB for HTTPS termination with a Google-managed certificate.
   - For Google identity provider configuration, see social-sign-in/google and enterprise-sso/google-workspace (separate concerns from cloud deployment).

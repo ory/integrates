@@ -1,8 +1,10 @@
 # Copy this to terraform.tfvars and fill in your values.
 # IMPORTANT: Never commit terraform.tfvars to version control.
 # Add it to .gitignore.
+#
+# The project and API keys come from ORY_PROJECT_ID, ORY_PROJECT_SLUG,
+# ORY_WORKSPACE_API_KEY, and ORY_PROJECT_API_KEY in your environment.
 
-project_id       = "your-ory-project-id"
 app_url          = "https://app.example.com"
 webhook_base_url = "https://webhooks.example.com"
 

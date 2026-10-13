@@ -1,12 +1,16 @@
 # Terraform Configuration for Ory Network
 #
 # This example manages Ory Network project configuration as code,
-# including identity schemas, OAuth2 clients, and webhook definitions.
+# including identity schemas, OAuth2 clients, and webhook actions.
 #
 # Prerequisites:
-#   1. Install the Ory Terraform provider
-#   2. Set ORY_API_KEY environment variable (from Ory Console → Settings → API Keys)
-#      IMPORTANT: Store this key in a secret manager, not in .tfvars files.
+#   1. Export the provider credentials (store the keys in a secret manager,
+#      not in .tfvars files):
+#        export ORY_WORKSPACE_API_KEY="ory_wak_..."  # project config, schemas, actions
+#        export ORY_PROJECT_API_KEY="ory_pat_..."    # OAuth2 clients, identities
+#        export ORY_PROJECT_ID="<project-id>"
+#        export ORY_PROJECT_SLUG="<project-slug>"
+#   2. export TF_VAR_webhook_secret="<shared-webhook-secret>"
 #   3. terraform init && terraform plan
 
 terraform {
@@ -14,22 +18,21 @@ terraform {
   required_providers {
     ory = {
       source  = "ory/ory"
-      version = "~> 0.1" # Check https://registry.terraform.io/providers/ory/ory for latest
+      version = "~> 26.3"
     }
   }
 }
 
-# The Ory provider authenticates via API key.
-# SECURITY: Set ORY_API_KEY as an environment variable.
-#   export ORY_API_KEY="ory_pat_..."
-# Or use Terraform's native secret management.
+# Reads ORY_WORKSPACE_API_KEY, ORY_PROJECT_API_KEY, ORY_PROJECT_ID, and
+# ORY_PROJECT_SLUG from the environment.
 provider "ory" {}
 
 # --- Variables ---
 
-variable "project_id" {
-  description = "Ory Network project ID"
-  type        = string
+variable "auth_methods" {
+  description = "Authentication methods whose registration/login actions are managed"
+  type        = set(string)
+  default     = ["password", "oidc", "code", "passkey", "webauthn"]
 }
 
 variable "app_url" {
@@ -52,40 +55,31 @@ variable "webhook_secret" {
 
 # --- Ory Project Configuration ---
 
-resource "ory_project" "main" {
-  id   = var.project_id
-  name = "My Application"
+resource "ory_project_config" "main" {
+  cors_enabled = true
+  cors_origins = [
+    var.app_url,
+    "http://localhost:3000", # Local development
+  ]
 
-  # CORS configuration
-  cors_public {
-    enabled = true
-    origins = [
-      var.app_url,
-      "http://localhost:3000", # Local development
-    ]
-  }
-
-  # Custom UI URLs
-  selfservice_ui {
-    login_url        = "${var.app_url}/auth/login"
-    registration_url = "${var.app_url}/auth/registration"
-    recovery_url     = "${var.app_url}/auth/recovery"
-    verification_url = "${var.app_url}/auth/verification"
-    settings_url     = "${var.app_url}/auth/settings"
-    error_url        = "${var.app_url}/auth/error"
-  }
+  selfservice_flows_login_ui_url        = "${var.app_url}/auth/login"
+  selfservice_flows_registration_ui_url = "${var.app_url}/auth/registration"
+  selfservice_flows_recovery_ui_url     = "${var.app_url}/auth/recovery"
+  selfservice_flows_verification_ui_url = "${var.app_url}/auth/verification"
+  selfservice_flows_settings_ui_url     = "${var.app_url}/auth/settings"
+  selfservice_flows_error_ui_url        = "${var.app_url}/auth/error"
 }
 
 # --- Identity Schema ---
 
-resource "ory_identity_schema" "default" {
-  project_id = var.project_id
-  name       = "default"
+resource "ory_identity_schema" "customer" {
+  schema_id   = "customer"
+  set_default = true
 
   schema = jsonencode({
-    "$id"     = "https://schemas.ory.sh/presets/kratos/identity.basic.schema.json"
+    "$id"     = "https://example.com/schemas/customer.schema.json"
     "$schema" = "http://json-schema.org/draft-07/schema#"
-    title     = "User"
+    title     = "Customer"
     type      = "object"
     properties = {
       traits = {
@@ -111,7 +105,7 @@ resource "ory_identity_schema" "default" {
             }
           }
         }
-        required           = ["email"]
+        required             = ["email"]
         additionalProperties = false
       }
     }
@@ -121,10 +115,8 @@ resource "ory_identity_schema" "default" {
 # --- OAuth2 Client (for your application) ---
 
 resource "ory_oauth2_client" "app" {
-  project_id = var.project_id
-
-  client_name = "My Application"
-  grant_types = ["authorization_code", "refresh_token"]
+  client_name    = "My Application"
+  grant_types    = ["authorization_code", "refresh_token"]
   response_types = ["code"]
 
   redirect_uris = [
@@ -137,12 +129,10 @@ resource "ory_oauth2_client" "app" {
   ]
 
   scope    = "openid offline_access email profile"
-  audience = ["${var.app_url}"]
+  audience = [var.app_url]
 
   token_endpoint_auth_method = "client_secret_post"
-
-  # Access token settings
-  access_token_strategy = "jwt"
+  access_token_strategy      = "jwt"
 
   metadata = jsonencode({
     environment = "production"
@@ -154,59 +144,40 @@ resource "ory_oauth2_client" "app" {
 
 # Stripe integration — create customer on registration
 resource "ory_action" "stripe_registration" {
-  project_id = var.project_id
-  flow       = "registration"
-  hook       = "after"
+  for_each = var.auth_methods
 
-  config = jsonencode({
-    hook = "web_hook"
-    config = {
-      url    = "${var.webhook_base_url}/webhooks/stripe/registration"
-      method = "POST"
-      body   = base64encode(file("${path.module}/jsonnet/registration.jsonnet"))
-      response = {
-        parse  = true
-        ignore = false
-      }
-      can_interrupt = false
-      auth = {
-        type = "api_key"
-        config = {
-          name  = "X-Webhook-Secret"
-          value = var.webhook_secret
-          in    = "header"
-        }
-      }
-    }
-  })
+  flow            = "registration"
+  timing          = "after"
+  auth_method     = each.value
+  url             = "${var.webhook_base_url}/stripe/registration"
+  method          = "POST"
+  body            = file("${path.module}/jsonnet/registration.jsonnet")
+  response_ignore = true
+  can_interrupt   = false
+
+  webhook_auth_type          = "api_key"
+  webhook_auth_api_key_name  = "X-Webhook-Secret"
+  webhook_auth_api_key_value = var.webhook_secret
+  webhook_auth_api_key_in    = "header"
 }
 
 # Segment integration — track login events
 resource "ory_action" "segment_login" {
-  project_id = var.project_id
-  flow       = "login"
-  hook       = "after"
+  for_each = var.auth_methods
 
-  config = jsonencode({
-    hook = "web_hook"
-    config = {
-      url    = "${var.webhook_base_url}/webhooks/segment/login"
-      method = "POST"
-      body   = base64encode(file("${path.module}/jsonnet/login.jsonnet"))
-      response = {
-        ignore = true
-      }
-      can_interrupt = false
-      auth = {
-        type = "api_key"
-        config = {
-          name  = "X-Webhook-Secret"
-          value = var.webhook_secret
-          in    = "header"
-        }
-      }
-    }
-  })
+  flow            = "login"
+  timing          = "after"
+  auth_method     = each.value
+  url             = "${var.webhook_base_url}/segment/login"
+  method          = "POST"
+  body            = file("${path.module}/jsonnet/login.jsonnet")
+  response_ignore = true
+  can_interrupt   = false
+
+  webhook_auth_type          = "api_key"
+  webhook_auth_api_key_name  = "X-Webhook-Secret"
+  webhook_auth_api_key_value = var.webhook_secret
+  webhook_auth_api_key_in    = "header"
 }
 
 # --- Outputs ---

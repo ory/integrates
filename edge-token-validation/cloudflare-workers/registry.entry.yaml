@@ -22,10 +22,11 @@ useCase: >-
   and adds identity headers so downstream services can attribute the request without re-validating.
 coreFunctionality: |-
   - Cloudflare Worker deployed via wrangler — runs in V8 isolates at the Cloudflare edge.
-  - Two validation modes: session cookie (forwards to Ory /sessions/whoami with 30 s edge cache) and JWT Bearer token (validates RSASSA-PKCS1-v1_5 signatures against Ory's JWKS, JWKS cached at the edge for 1 h).
-  - Forwards authenticated requests to origin with X-User-Id, X-Session-Id, X-User-Email, X-User-Name, X-Auth-AAL, X-User-Metadata headers.
-  - Configurable PUBLIC_PATHS to skip auth on health, public, and static paths.
-  - Optional LOGIN_REDIRECT_URL turns 401 into a 302 to login with return_to.
+  - JWT Bearer tokens: RS256 only, key selected by kid with JWKS refresh on unknown kid, and iss, aud (JWT_AUDIENCE), exp, and nbf enforced. Requires JWT access tokens enabled on the Ory project.
+  - Sessions: ory_session_* or ory_kratos_session cookies and ory_st_ session tokens are checked with Ory /sessions/whoami; active sessions are cached per credential hash for 30 s in bounded isolate memory.
+  - Removes client-supplied identity headers, then forwards authenticated requests to origin with X-User-Id, X-Session-Id, X-User-Email, X-User-Name, X-Auth-AAL, X-User-Metadata headers.
+  - Configurable PUBLIC_PATHS (exact path or prefix followed by /) to skip auth on health, public, and static paths.
+  - Optional LOGIN_REDIRECT_URL redirects browser requests to login with return_to.
 oryMechanism:
   - session-validation
 protocol:

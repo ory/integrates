@@ -1,19 +1,19 @@
 # Cloudflare Workers — Ory Session & JWT Validation at the Edge
 
-Validate Ory Network session tokens and JWTs at Cloudflare's edge, before requests reach your origin server.
+Validate Ory Network sessions and JWT access tokens at Cloudflare's edge, before requests reach your origin server.
 
 **Docs page:** [ory.com/docs/integrates-with/edge-token-validation/cloudflare-workers](https://www.ory.com/docs/integrates-with/edge-token-validation/cloudflare-workers)
 
 ## Overview
 
-This integration deploys a Cloudflare Worker that intercepts incoming requests, validates Ory session cookies or Bearer JWTs against your Ory Network project, and forwards authenticated requests to your origin with enriched headers. Unauthenticated requests are rejected at the edge with zero load on your backend.
+This integration deploys a Cloudflare Worker ([`src/worker.ts`](src/worker.ts)) that intercepts incoming requests, validates Ory sessions or Bearer JWTs against your Ory Network project, and forwards authenticated requests to your origin with identity headers. Unauthenticated requests are rejected at the edge.
 
 | Feature | Details |
 |---------|---------|
 | Platform | Cloudflare Workers |
-| Runtime | V8 isolates (JavaScript/TypeScript) |
-| Validation modes | Session cookie, JWT (access token) |
-| JWKS caching | Cloudflare Cache API (edge-cached) |
+| Runtime | V8 isolates (TypeScript, Web Crypto) |
+| Validation modes | JWT access token (local, against the JWKS); session cookie or session token (`/sessions/whoami`) |
+| Caching | JWKS and active sessions in isolate memory |
 | Ory Platform | Ory Network (managed cloud) |
 
 ## Architecture
@@ -21,353 +21,106 @@ This integration deploys a Cloudflare Worker that intercepts incoming requests, 
 ```
 Client
   |
-  | (request with ory_session cookie or Bearer token)
+  | (request with ory_session_<slug> cookie, X-Session-Token, or Bearer token)
   v
 Cloudflare Edge (Worker)
   |
-  |-- 1. Extract session cookie or Authorization header
-  |-- 2. Validate token:
-  |     - Session cookie → call Ory /sessions/whoami
-  |     - JWT → validate signature against JWKS (cached at edge)
-  |-- 3. Reject 401 if invalid
-  |-- 4. Forward to origin with X-User-Id, X-User-Email headers
+  |-- 1. Remove client-supplied identity headers
+  |-- 2. Validate the credential:
+  |     - Bearer JWT       → verify against the JWKS and check alg, iss, aud, exp, nbf
+  |     - Session cookie   → call Ory /sessions/whoami
+  |     - Session token    → call Ory /sessions/whoami
+  |-- 3. Reject with 401 if invalid (503 if Ory is unreachable)
+  |-- 4. Forward to origin with X-User-Id and related headers
   v
 Origin Server
 ```
 
-## Prerequisites
+## Prerequisites for JWT validation
 
-- Ory Network project with a custom domain or SDK URL
-- Cloudflare account with Workers enabled
-- Node.js >= 18 and npm
-- Wrangler CLI (`npm install -g wrangler`)
-
-## Project Setup
+Ory issues opaque access tokens (`ory_at_…`) by default, and the `aud` claim is empty unless the client requests an audience. To issue JWTs that the Worker can verify:
 
 ```bash
-mkdir ory-edge-auth && cd ory-edge-auth
-npm init -y
-npm install wrangler --save-dev
-npm install jose
+# 1. Switch the project to JWT access tokens.
+ory patch oauth2-config --project <project-id> --replace '/strategies/access_token="jwt"'
+
+# 2. Create a client that may request your API's audience.
+ory create oauth2-client --project <project-id> --name "<client-name>" \
+  --grant-type client_credentials --audience https://api.example.com
+
+# 3. Request the audience when you get a token.
+curl https://<project>.projects.oryapis.com/oauth2/token -u "<client-id>:<client-secret>" \
+  -d grant_type=client_credentials -d audience=https://api.example.com
 ```
 
-## wrangler.toml
+The token's `iss` claim is `https://<project>.projects.oryapis.com`, without a trailing slash. For the client credentials grant, `sub` is the client ID. See [JWT access tokens](https://www.ory.com/docs/oauth2-oidc/jwt-access-token).
 
-```toml
-name = "ory-edge-auth"
-main = "src/worker.js"
-compatibility_date = "2024-12-01"
+## What the Worker checks
 
-[vars]
-ORY_SDK_URL = "https://your-project.projects.oryapis.com"
-# Cookie name used by Ory (default: ory_session_*)
-ORY_SESSION_COOKIE_PREFIX = "ory_session_"
+- **JWTs:** `alg` must be `RS256`. The key is selected by the token's `kid`. When the `kid` isn't in the cached key set, the Worker fetches the JWKS again (at most once every 30 seconds) before rejecting the token. `iss` must equal `JWT_ISSUER` (default: `ORY_SDK_URL`), `aud` must contain `JWT_AUDIENCE`, `exp` must be in the future, and `nbf`, when present, must not be in the future. Without `JWT_AUDIENCE`, every JWT is rejected.
+- **Sessions:** cookies named `ory_session_*` (Ory Network, where the suffix is your project slug without dashes) or `ory_kratos_session` (self-hosted Kratos), or a session token (`ory_st_…`) in `X-Session-Token` or as a Bearer token. Only the `ory_` cookies are sent to Ory. Active sessions are cached for 30 seconds under a SHA-256 hash of the credential, in isolate memory, bounded to 1,000 entries. A revoked session can therefore pass for up to 30 seconds.
+- **Identity headers:** `X-User-Id`, `X-User-Email`, `X-User-Name`, `X-Session-Id`, `X-Auth-AAL`, and `X-User-Metadata` are removed from every incoming request, including public paths, and set only from validated data. `X-User-Metadata` is JSON with non-ASCII characters escaped. `X-User-Email` and `X-User-Name` are omitted when they contain non-ASCII characters.
 
-# For JWT validation
-ORY_JWKS_URL = "https://your-project.projects.oryapis.com/.well-known/jwks.json"
-ORY_ISSUER = "https://your-project.projects.oryapis.com"
+## Configuration
 
-# Paths that do not require authentication (comma-separated)
-PUBLIC_PATHS = "/health,/public,/.well-known"
+[`wrangler.toml`](wrangler.toml):
 
-# Where to redirect unauthenticated browser requests (empty = return 401 JSON)
-LOGIN_REDIRECT_URL = ""
+| Variable | Description |
+|----------|-------------|
+| `ORY_SDK_URL` | Your project URL, for example `https://<project>.projects.oryapis.com`. |
+| `JWT_AUDIENCE` | The audience your API requires. Required for JWT validation. |
+| `JWT_ISSUER` | Optional. Defaults to `ORY_SDK_URL`. Set it when tokens carry a custom-domain issuer. |
+| `PUBLIC_PATHS` | Comma-separated paths that skip authentication. Matches the exact path or a prefix followed by `/`. |
+| `LOGIN_REDIRECT_URL` | Optional. Browser requests (`Accept: text/html`) without a valid session are redirected here with `return_to`. |
 
-# JWKS cache TTL in seconds
-JWKS_CACHE_TTL = "3600"
-```
-
-## Worker Script
-
-```javascript
-// src/worker.js
-import { createRemoteJWKSet, jwtVerify } from "jose";
-
-// ---------- JWKS Cache ----------
-
-let cachedJWKS = null;
-let jwksCachedAt = 0;
-
-function getJWKS(env) {
-  const ttl = parseInt(env.JWKS_CACHE_TTL || "3600", 10) * 1000;
-  const now = Date.now();
-
-  if (!cachedJWKS || now - jwksCachedAt > ttl) {
-    cachedJWKS = createRemoteJWKSet(new URL(env.ORY_JWKS_URL));
-    jwksCachedAt = now;
-  }
-
-  return cachedJWKS;
-}
-
-// ---------- Helpers ----------
-
-function isPublicPath(pathname, env) {
-  const publicPaths = (env.PUBLIC_PATHS || "").split(",").map((p) => p.trim());
-  return publicPaths.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
-  );
-}
-
-function getSessionCookie(request, env) {
-  const cookieHeader = request.headers.get("Cookie") || "";
-  const prefix = env.ORY_SESSION_COOKIE_PREFIX || "ory_session_";
-  const cookies = cookieHeader.split(";").map((c) => c.trim());
-  const sessionCookie = cookies.find((c) => c.startsWith(prefix));
-  return sessionCookie || null;
-}
-
-function getBearerToken(request) {
-  const auth = request.headers.get("Authorization") || "";
-  if (auth.startsWith("Bearer ")) {
-    return auth.slice(7);
-  }
-  return null;
-}
-
-function unauthorizedResponse(message, env, request) {
-  // If LOGIN_REDIRECT_URL is set and request accepts HTML, redirect
-  if (env.LOGIN_REDIRECT_URL && request.headers.get("Accept")?.includes("text/html")) {
-    const returnTo = encodeURIComponent(request.url);
-    return Response.redirect(
-      `${env.LOGIN_REDIRECT_URL}?return_to=${returnTo}`,
-      302
-    );
-  }
-
-  return new Response(JSON.stringify({ error: message }), {
-    status: 401,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-// ---------- Session Cookie Validation ----------
-
-async function validateSessionCookie(request, env) {
-  const sessionCookie = getSessionCookie(request, env);
-  if (!sessionCookie) return null;
-
-  const response = await fetch(`${env.ORY_SDK_URL}/sessions/whoami`, {
-    headers: {
-      Cookie: sessionCookie,
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) return null;
-
-  const session = await response.json();
-  if (!session.active) return null;
-
-  return {
-    subject: session.identity.id,
-    email: session.identity.traits?.email || "",
-    session_id: session.id,
-    metadata: session.identity.metadata_public || {},
-  };
-}
-
-// ---------- JWT Validation ----------
-
-async function validateJWT(token, env) {
-  try {
-    const jwks = getJWKS(env);
-    const { payload } = await jwtVerify(token, jwks, {
-      issuer: env.ORY_ISSUER,
-    });
-
-    return {
-      subject: payload.sub,
-      email: payload.email || "",
-      session_id: payload.sid || "",
-      metadata: payload.ext || {},
-    };
-  } catch (err) {
-    console.error("JWT validation failed:", err.message);
-    return null;
-  }
-}
-
-// ---------- Main Handler ----------
-
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-
-    // Allow public paths through without auth
-    if (isPublicPath(url.pathname, env)) {
-      return fetch(request);
-    }
-
-    // Try JWT first (API clients), then session cookie (browser clients)
-    let identity = null;
-    const bearerToken = getBearerToken(request);
-
-    if (bearerToken) {
-      identity = await validateJWT(bearerToken, env);
-    } else {
-      identity = await validateSessionCookie(request, env);
-    }
-
-    if (!identity) {
-      return unauthorizedResponse("Authentication required", env, request);
-    }
-
-    // Clone request and add identity headers for the origin
-    const modifiedHeaders = new Headers(request.headers);
-    modifiedHeaders.set("X-User-Id", identity.subject);
-    modifiedHeaders.set("X-User-Email", identity.email);
-    modifiedHeaders.set("X-Session-Id", identity.session_id);
-    modifiedHeaders.set(
-      "X-User-Metadata",
-      JSON.stringify(identity.metadata)
-    );
-
-    // Remove the original auth headers so the origin does not see raw tokens
-    // (optional — remove these lines if your origin also needs the raw token)
-    // modifiedHeaders.delete("Authorization");
-    // modifiedHeaders.delete("Cookie");
-
-    const modifiedRequest = new Request(request, {
-      headers: modifiedHeaders,
-    });
-
-    return fetch(modifiedRequest);
-  },
-};
-```
-
-## Advanced: JWKS Caching with Cloudflare Cache API
-
-For high-traffic deployments, cache the JWKS response in Cloudflare's edge cache to eliminate repeated fetches to Ory:
-
-```javascript
-// src/jwks-cache.js
-
-/**
- * Fetch JWKS with Cloudflare Cache API.
- * The JWKS response is cached at the edge for the configured TTL.
- */
-export async function fetchCachedJWKS(env, ctx) {
-  const cache = caches.default;
-  const cacheKey = new Request(env.ORY_JWKS_URL, { method: "GET" });
-
-  // Check edge cache
-  let response = await cache.match(cacheKey);
-  if (response) {
-    return response.json();
-  }
-
-  // Cache miss — fetch from Ory
-  response = await fetch(env.ORY_JWKS_URL, {
-    headers: { Accept: "application/json" },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch JWKS: ${response.status}`);
-  }
-
-  // Clone and cache the response
-  const ttl = parseInt(env.JWKS_CACHE_TTL || "3600", 10);
-  const cachedResponse = new Response(response.body, {
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": `public, max-age=${ttl}`,
-    },
-  });
-
-  ctx.waitUntil(cache.put(cacheKey, cachedResponse.clone()));
-
-  return cachedResponse.json();
-}
-```
-
-## Deployment
+## Develop and deploy
 
 ```bash
-# Authenticate with Cloudflare
-wrangler login
-
-# Set secrets (not stored in wrangler.toml)
-wrangler secret put ORY_API_KEY
-
-# Deploy to production
-wrangler deploy
-
-# Deploy to staging
-wrangler deploy --env staging
-
-# Tail logs
-wrangler tail
+npm install
+npm run dev        # wrangler dev, runs src/worker.ts
+npm run typecheck
+npx wrangler login
+npm run deploy     # wrangler deploy
 ```
 
 ## Testing
 
 ```bash
-# Test with session cookie
+# Session cookie
 curl -v https://your-worker.your-subdomain.workers.dev/api/me \
-  -H "Cookie: ory_session_projectslug=<session-token>"
+  -H "Cookie: ory_session_<slug>=<cookie-value>"
 
-# Test with JWT
+# Session token
+curl -v https://your-worker.your-subdomain.workers.dev/api/me \
+  -H "X-Session-Token: <ory_st_...>"
+
+# JWT access token
 curl -v https://your-worker.your-subdomain.workers.dev/api/me \
   -H "Authorization: Bearer <jwt-access-token>"
 
-# Test public path (should pass through)
+# Public path (passes through)
 curl -v https://your-worker.your-subdomain.workers.dev/health
 
-# Test unauthenticated (should return 401)
+# Unauthenticated (401)
 curl -v https://your-worker.your-subdomain.workers.dev/api/me
 ```
 
-Expected 401 response:
-```json
-{
-  "error": "Authentication required"
-}
-```
-
-Expected authenticated response headers forwarded to origin:
-```
-X-User-Id: 7a3b1c2d-...
-X-User-Email: user@example.com
-X-Session-Id: 9f8e7d6c-...
-X-User-Metadata: {"plan":"pro"}
-```
-
-## Multi-Environment Configuration
-
-```toml
-# wrangler.toml
-
-[env.staging]
-name = "ory-edge-auth-staging"
-vars = { ORY_SDK_URL = "https://staging-project.projects.oryapis.com", ORY_JWKS_URL = "https://staging-project.projects.oryapis.com/.well-known/jwks.json", ORY_ISSUER = "https://staging-project.projects.oryapis.com", PUBLIC_PATHS = "/health,/public", JWKS_CACHE_TTL = "300" }
-
-[env.production]
-name = "ory-edge-auth-production"
-vars = { ORY_SDK_URL = "https://prod-project.projects.oryapis.com", ORY_JWKS_URL = "https://prod-project.projects.oryapis.com/.well-known/jwks.json", ORY_ISSUER = "https://prod-project.projects.oryapis.com", PUBLIC_PATHS = "/health", JWKS_CACHE_TTL = "3600" }
-```
-
-## Performance Considerations
+## Performance considerations
 
 | Concern | Mitigation |
 |---------|-----------|
-| JWKS fetch latency | Edge-cached via Cache API; refreshed every `JWKS_CACHE_TTL` seconds |
-| `/sessions/whoami` latency | Ory Network has edge presence; consider JWT mode for lowest latency |
-| Cold starts | V8 isolates start in <5ms; negligible |
-| Worker CPU time | JWT validation uses <1ms CPU; session validation depends on Ory response time |
+| JWKS fetch latency | Cached per isolate for one hour; the subrequest is edge-cached for five minutes |
+| `/sessions/whoami` latency | Active sessions cached per isolate for 30 seconds; use JWT mode for the lowest latency |
+| Worker CPU time | Workers on the Free plan get 10 ms of CPU time per request. Waiting on `fetch()` doesn't count toward CPU time |
 
-## Security Considerations
+## Security considerations
 
-- Always use HTTPS for your Ory SDK URL
-- Store the `ORY_API_KEY` as a Wrangler secret, not in `wrangler.toml`
-- Strip forwarded identity headers from incoming requests to prevent spoofing (the Worker overwrites them)
-- Consider IP-allowlisting or mTLS between the Worker and your origin
-- Rotate JWKS cache on key rotation by reducing `JWKS_CACHE_TTL` or deploying a cache-busting update
+- Use HTTPS for `ORY_SDK_URL`.
+- Make sure the origin is reachable only through the Worker, for example with IP allowlisting or mTLS, so clients can't bypass it and set identity headers themselves.
+- The Worker forwards the original `Authorization` and `Cookie` headers to origin. Remove them in `forward()` if your origin doesn't need them.
 
 ## References
 
-- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
-- [Ory Session Validation](https://www.ory.sh/docs/kratos/session-management/overview)
-- [Ory JWKS Endpoint](https://www.ory.sh/docs/hydra/jwks)
-- [jose (JavaScript JOSE library)](https://github.com/panva/jose)
+- [Cloudflare Workers documentation](https://developers.cloudflare.com/workers/)
+- [Ory session management](https://www.ory.com/docs/kratos/session-management/overview)
+- [Ory JWT access tokens](https://www.ory.com/docs/oauth2-oidc/jwt-access-token)

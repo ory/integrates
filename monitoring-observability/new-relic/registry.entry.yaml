@@ -17,9 +17,9 @@ useCase: >-
   observability data — to debug latency in login/registration/MFA, alert on auth-error rates, and correlate
   identity events with downstream service calls.
 coreFunctionality: |-
-  - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). OTLP/gRPC also supported.
+  - OTLP/HTTP endpoints: otlp.nr-data.net:4318 (US) or otlp.eu01.nr-data.net:4318 (EU). Ory's exporter uses OTLP/HTTP only.
   - Auth via header `api-key: <NEW_RELIC_LICENSE_KEY>` — use Account/Ingest-scope license keys, NEVER full user keys.
-  - Self-hosted Ory: standard OTel env vars (TRACING_PROVIDER=otel, OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME).
+  - Self-hosted Ory: TRACING_PROVIDER=otel, TRACING_PROVIDERS_OTLP_SERVER_URL=otlp.nr-data.net:4318 (host:port, no scheme), OTEL_EXPORTER_OTLP_HEADERS=api-key=${NEW_RELIC_LICENSE_KEY}, TRACING_SERVICE_NAME. Ory ignores OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_SERVICE_NAME.
   - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
   - For production, prefer an OpenTelemetry Collector in front for batching/retries/sampling.
   - New Relic enforces attribute count/size limits — identity.id fine, identity.traits as flat blob not. Sample at SDK/collector level, not backend side, to preserve head-of-trace context.

@@ -16,7 +16,7 @@ useCase: >-
   backend services don't need to re-validate every request and can read the trusted `sub` from request context.
 coreFunctionality: |-
   - REST API: Lambda authorizer (Node.js / Python) verifies bearer JWT against https://<project>.projects.oryapis.com/.well-known/jwks.json with kid-based key selection; returns IAM policy + principalId (= JWT sub).
-  - HTTP API: native JWT authorizer pointing directly at the Ory issuer URL — no Lambda required for standard verification.
+  - HTTP API: native JWT authorizer with issuer https://<project>.projects.oryapis.com and your API's audience — no Lambda required for standard verification. Requires JWT access tokens and an audience requested in the token request.
   - Caching: REST uses authorizerResultTtlInSeconds (default 300s); HTTP uses resultsCacheTtlInSeconds. Tune for cold-start vs. revocation latency.
   - Use Lambda authorizer over native JWT when custom claim-based authorization logic is needed beyond signature/issuer/audience checks.
   - Cold start matters — keep the authorizer minimal; aws-jwt-verify is a lean JWKS library.

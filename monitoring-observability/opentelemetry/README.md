@@ -16,17 +16,24 @@ The OTLP exporter carries **traces**. Metrics are exposed separately on each ser
 
 ## Self-hosted Ory — native OTLP exporter
 
-Each Ory product accepts standard OTel environment variables to ship traces directly to a collector or backend:
+Each Ory product reads its exporter settings from the `tracing` configuration, which you can set with environment variables to ship traces directly to a collector or backend:
 
 ```bash
 TRACING_PROVIDER=otel
-OTEL_EXPORTER_OTLP_ENDPOINT=https://otel-collector.example.com:4318
-OTEL_SERVICE_NAME=ory-kratos                    # or hydra/keto/oathkeeper
-OTEL_RESOURCE_ATTRIBUTES=service.namespace=identity,deployment.environment=production
+TRACING_PROVIDERS_OTLP_SERVER_URL=otel-collector.example.com:4318
+TRACING_PROVIDERS_OTLP_INSECURE=true
+TRACING_SERVICE_NAME=ory-kratos                 # or ory-hydra / ory-keto / ory-oathkeeper
+TRACING_DEPLOYMENT_ENVIRONMENT=production
+OTEL_RESOURCE_ATTRIBUTES=service.namespace=identity
 TRACING_PROVIDERS_OTLP_SAMPLING_SAMPLING_RATIO=1.0   # tune in production
 ```
 
-`TRACING_PROVIDER` accepts `otel`, `jaeger`, or `zipkin`. Use `otel` for OTLP.
+- `TRACING_PROVIDER` accepts `otel`, `jaeger`, or `zipkin`. Use `otel` for OTLP.
+- The exporter sends OTLP over HTTP only, so point `TRACING_PROVIDERS_OTLP_SERVER_URL` at the collector's OTLP/HTTP port, 4318 by default. The value is a host and port without a scheme.
+- Ory connects over HTTPS. Set `TRACING_PROVIDERS_OTLP_INSECURE=true` only for a collector that accepts plain HTTP.
+- Ory ignores `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_SERVICE_NAME`.
+- Ory merges `OTEL_RESOURCE_ATTRIBUTES` into its resource, but `service.name` and `deployment.environment.name` always come from `TRACING_SERVICE_NAME` and `TRACING_DEPLOYMENT_ENVIRONMENT`.
+- Ory applies `OTEL_EXPORTER_OTLP_HEADERS` unless `TRACING_PROVIDERS_OTLP_AUTHORIZATION_HEADER` is set, which replaces those headers.
 
 ## Recommended pipeline
 

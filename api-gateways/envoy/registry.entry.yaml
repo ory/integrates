@@ -17,8 +17,8 @@ useCase: >-
   validated at the proxy so upstream services receive a trusted identity (or a 401 from the edge) without
   re-validating every request themselves.
 coreFunctionality: |-
-  - Path A (Hydra JWTs): `jwt_authn` HTTP filter with a remote_jwks pointing at https://<project>.projects.oryapis.com/.well-known/jwks.json; set issuer to the Ory project URL and audiences to the API's audience. Envoy caches the JWKS and refreshes on the configured interval.
-  - Path B (Kratos sessions): `ext_authz` HTTP filter calls Ory Oathkeeper (or a small validator) which hits /sessions/whoami; on success Envoy forwards identity headers (X-User-Id, X-User-Email) upstream, on failure returns 401 at the edge.
+  - Path A (Hydra JWTs): `jwt_authn` HTTP filter with a remote_jwks pointing at https://<project>.projects.oryapis.com/.well-known/jwks.json; set issuer to https://<project>.projects.oryapis.com (no trailing slash) and audiences to the audience requested in the token request. The remote_jwks cluster must use an UpstreamTlsContext with sni and a validation_context (trusted_ca plus a DNS SAN matcher). Requires JWT access tokens enabled on the Ory project. Envoy caches the JWKS and refreshes on the configured interval.
+  - Path B (Kratos sessions): `ext_authz` HTTP filter calls Ory Oathkeeper (or a small validator) which hits /sessions/whoami; on success Envoy forwards identity headers (X-User-Id, X-User-Email) read from the whoami response body upstream, on failure returns 401 at the edge.
   - Verified JWT claims can be forwarded upstream via the filter's payload_in_metadata / forwarding settings for downstream authorization.
   - Works the same whether Envoy is standalone, an Istio sidecar/gateway, or the data plane under a managed gateway.
   - Tetrate Agent Router Enterprise (see agent-identity/tetrate) is built on Envoy AI Gateway and applies this pattern to AI-agent traffic.

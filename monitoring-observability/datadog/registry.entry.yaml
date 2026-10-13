@@ -18,7 +18,7 @@ useCase: >-
 coreFunctionality: |-
   - There is no `datadog` tracing provider: TRACING_PROVIDER accepts otel, jaeger, or zipkin. Reach Datadog with TRACING_PROVIDER=otel over OTLP.
   - Ory's span helper sets Datadog-convention error attributes (error.message, error.stack, error.type), so OTLP traces render correctly in Datadog APM.
-  - Ingest either via the Datadog Agent's OTLP receiver (otlp_config.receiver, ports 4317/4318) or directly to Datadog's OTLP intake (DD-API-KEY header, region-specific endpoints).
+  - Ory's exporter is OTLP over HTTP only. Ingest either via the Datadog Agent's OTLP HTTP receiver (port 4318) or directly to Datadog's OTLP intake on port 443 (dd-api-key header via OTEL_EXPORTER_OTLP_HEADERS, region-specific hosts). Configure with TRACING_PROVIDERS_OTLP_SERVER_URL (host:port, no scheme).
   - Prometheus metrics on /metrics/prometheus (each Ory service, admin port); ingest via the Datadog Agent's OpenMetrics check.
   - Ory Network: not available — managed project config excludes operational settings (tracing, logging, port).
 oryMechanism:

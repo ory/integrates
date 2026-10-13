@@ -16,8 +16,8 @@ useCase: >-
   a VNet, or to self-host the open-source Ory stack on AKS with the typical Azure managed services (PostgreSQL
   Flexible Server, Key Vault, Workload Identity, Application Gateway Ingress).
 coreFunctionality: |-
-  - Pattern A (Ory Network from Azure): outbound HTTPS egress to *.oryapis.com (NSG + optional Azure Firewall app rule); API key in Azure Key Vault; Azure DNS CNAME to custom.oryapis.com.
-  - Pattern B (self-hosted on AKS): AKS with Workload Identity, Azure Database for PostgreSQL Flexible Server (Zone-Redundant HA in production), optional Azure Cache for Redis.
+  - Pattern A (Ory Network from Azure): outbound HTTPS egress to *.oryapis.com (NSG + optional Azure Firewall app rule); API key in Azure Key Vault; Azure DNS CNAME from the custom auth domain to <project-slug>.projects.oryapis.com.
+  - Pattern B (self-hosted on AKS): AKS with Workload Identity, Azure Database for PostgreSQL Flexible Server (Zone-Redundant HA in production).
   - Deploy via the official Helm charts (helm repo add ory https://k8s.ory.sh/helm/charts).
   - Application Gateway Ingress Controller (AGIC) for HTTPS termination with a Key Vault-stored certificate.
   - For Microsoft Entra ID identity provider configuration, see social-sign-in/microsoft and enterprise-sso/microsoft-entra-id (separate concerns from cloud deployment).

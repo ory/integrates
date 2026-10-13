@@ -22,6 +22,9 @@ Official Helm charts for deploying the self-hosted Ory stack (Kratos, Hydra, Ket
 helm repo add ory https://k8s.ory.sh/helm/charts
 helm repo update
 
+helm show values ory/kratos > kratos-values.yaml
+helm show values ory/hydra > hydra-values.yaml
+# Edit the values files, then install the charts:
 helm install kratos ory/kratos --namespace ory --create-namespace -f kratos-values.yaml
 helm install hydra ory/hydra --namespace ory -f hydra-values.yaml
 ```

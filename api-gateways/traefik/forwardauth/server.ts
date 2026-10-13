@@ -73,11 +73,12 @@ function unauthorized(res: Response, requestPath: string): void {
   res.status(401).json({ error: "unauthorized" });
 }
 
-app.all("*", async (req: Request, res: Response) => {
-  // Traefik exposes the original request path via X-Forwarded-Uri.
-  const requestPath = req.header("x-forwarded-uri") || req.path;
+app.use(async (req: Request, res: Response) => {
+  // Traefik exposes the original request URI, including the query string, via X-Forwarded-Uri.
+  const requestPath = req.header("x-forwarded-uri") || req.originalUrl;
+  const { pathname } = new URL(requestPath, "http://localhost");
 
-  if (isPublicPath(requestPath)) {
+  if (isPublicPath(pathname)) {
     res.status(200).end();
     return;
   }
@@ -121,23 +122,21 @@ app.all("*", async (req: Request, res: Response) => {
     const identity = session.identity ?? {};
     const traits = identity.traits ?? {};
 
-    res.setHeader("X-User-Id", identity.id ?? "");
-    res.setHeader("X-Session-Id", session.id ?? "");
-    if (traits.email) res.setHeader("X-User-Email", traits.email);
+    setIfHeaderSafe(res, "X-User-Id", identity.id);
+    setIfHeaderSafe(res, "X-Session-Id", session.id);
+    setIfHeaderSafe(res, "X-User-Email", traits.email);
 
     const fullName = [traits.name?.first, traits.name?.last]
       .filter((s): s is string => Boolean(s))
       .join(" ");
-    if (fullName) res.setHeader("X-User-Name", fullName);
+    setIfHeaderSafe(res, "X-User-Name", fullName);
+    setIfHeaderSafe(res, "X-Auth-AAL", session.authenticator_assurance_level);
 
-    if (session.authenticator_assurance_level) {
-      res.setHeader("X-Auth-AAL", session.authenticator_assurance_level);
-    }
     if (
       identity.metadata_public &&
       Object.keys(identity.metadata_public).length > 0
     ) {
-      res.setHeader("X-User-Metadata", JSON.stringify(identity.metadata_public));
+      res.setHeader("X-User-Metadata", asciiJson(identity.metadata_public));
     }
 
     res.status(200).end();
@@ -146,6 +145,21 @@ app.all("*", async (req: Request, res: Response) => {
     res.status(503).json({ error: "auth_service_unavailable" });
   }
 });
+
+// HTTP header values must be visible ASCII. Optional values that are not,
+// such as a non-Latin name, are omitted instead of failing the request.
+function setIfHeaderSafe(res: Response, name: string, value: string | undefined): void {
+  if (value && /^[\x20-\x7e]*$/.test(value)) {
+    res.setHeader(name, value);
+  }
+}
+
+function asciiJson(value: Record<string, unknown>): string {
+  return JSON.stringify(value).replace(
+    /[\u007f-\uffff]/g,
+    (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"),
+  );
+}
 
 app.listen(PORT, () => {
   console.log(`Traefik ForwardAuth service listening on port ${PORT}`);

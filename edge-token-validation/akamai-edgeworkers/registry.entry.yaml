@@ -20,7 +20,7 @@ coreFunctionality: |-
   - Hydra JWT: verify signature against cached Ory JWKS using EdgeWorkers Crypto API.
   - Kratos session: call https://<project>.projects.oryapis.com/sessions/whoami via httpRequest (EdgeWorkers doesn't have a fetch global). Cache responses in EdgeKV for 30-60s (fallback: per-isolate Map).
   - On valid: inject X-User-Id header; on invalid: 401 from the edge.
-  - CPU budget ~50ms wall-clock — JWKS verification fits comfortably; whoami calls eat into this.
+  - CPU time per event handler depends on the resource tier (10 ms Basic, 20 ms Dynamic, 70 ms Enterprise Compute), and HTTP sub-requests are capped; each whoami call is a sub-request.
   - Wired via Akamai Property Manager attaching the EdgeWorker to a behavior on the relevant hostname/path.
   - Reference implementation: edge-token-validation/cloudflare-workers (same pattern, different runtime).
   - Status: community/proposed — documented at ory.com/docs/integrates-with/edge-token-validation/akamai-edgeworkers.

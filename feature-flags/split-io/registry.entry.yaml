@@ -19,7 +19,7 @@ coreFunctionality: |-
   - sdk-client integration: not a webhook — application code resolves the Ory session, extracts attributes, and passes them to the Split SDK at evaluation time.
   - Stable key: use identity.id (not email) so bucketing is stable across identity changes.
   - Common attribute mapping: identity.traits.email → email; metadata_public.org_id → org_id; metadata_public.subscription_tier → tier; metadata_public.groups → groups.
-  - Server-side: Split server SDK; client-side: Split JavaScript SDK with Track API for attributes.
+  - Server-side: Split server SDK; client-side: Split JavaScript SDK. Pass attributes to getTreatment (or setAttributes in the JavaScript SDK) after whenReady(); track() records metric events, not attributes.
   - Impact measurement features need event-stream integration too — separate concern; see cdp-analytics/segment.
   - Status: community/proposed — convention guide, not turnkey code.
 oryMechanism:
